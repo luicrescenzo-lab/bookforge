@@ -4,23 +4,17 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BookForge — Scrivi e Pubblica con AI</title>
-  <meta name="description" content="La piattaforma AI per scrittori italiani. Scrivi, illustra, pubblica su Amazon KDP."/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#0f0e17; }
-    #root { height:100vh; }
-  </style>
+  <style>* {margin:0;padding:0;box-sizing:border-box;} body {background:#0f0e17;} #root {height:100vh;}</style>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel" data-presets="react">
 const { useState, useEffect, useRef, useCallback } = React;
-
 
 /* ─────────────────────────────────────────────
    CONSTANTS
@@ -43,7 +37,7 @@ const GENRE_GROUPS = [
 ];
 const GENRES = GENRE_GROUPS.flatMap(g=>g.items);
 const KDP_SIZES = [
-  { label:'Tascabile 5×8"', pts:[5,8] },{ label:'Standard 6×9"', pts:[6,9] },{ label:'Grande 8.5×11"', pts:[8.5,11] },
+  { label:'Tascabile 5x8', pts:[5,8] },{ label:'Standard 6x9', pts:[6,9] },{ label:'Grande 8.5x11', pts:[8.5,11] },
 ];
 const COVER_THEMES = [
   { id:"dark",    label:"Drammatico", bg:"#0a0614", accent:"#c084fc", text:"#f8fafc" },
@@ -956,26 +950,7 @@ function CoverPanel({book}){
   const genTagline=async()=>{
     setAiLoading(true);
     const r=await callClaude(`Genera UNA sola frase tagline (max 10 parole) per il libro "${title}" genere "${book.genre||"narrativa"}". Solo la frase, niente altro.`);
-    setAiTagline(r.trim().replace(/^["']|["']$/g,""));
-    setAiLoading(false);
-  };
-
-  // ── Back cover generators ──────────────────────────────────────────
-  const genBlurb=async()=>{
-    setBackBlurbLoading(true);
-    const chSample=book.chapters.slice(0,3).map(c=>c.content?.slice(0,200)||"").join(" ");
-    const r=await callClaude(
-      `Scrivi un testo di quarta di copertina (blurb) per il libro "${book.title||"Senza titolo"}" genere "${book.genre||"saggio"}". ${chSample?`Estratto: ${chSample}`:""}
-Il blurb deve: catturare l'attenzione in 3-4 frasi, creare curiosità, terminare con una domanda o affermazione forte. Max 80 parole. Solo il testo, niente commenti.`
-    );
-    setBackBlurb(r.trim());
-    setBackBlurbLoading(false);
-  };
-
-  const genBio=async()=>{
-    setBackBioLoading(true);
-    const r=await callClaude(
-      `Scrivi una breve bio d'autore (40-50 parole) per ${book.author||"l'autore"} che ha scritto "${book.title||"questo libro"}" nel genere "${book.genre||"saggio"}". Tono professionale ma caldo. Solo la bio, niente altro.`
+    setAiTagline(r.trim().replace(/^["']|["']$/g,""));\n    setAiLoading(false);\n  };\n\n  // ── Back cover generators ──────────────────────────────────────────\n  const genBlurb=async()=>{\n    setBackBlurbLoading(true);\n    const chSample=book.chapters.slice(0,3).map(c=>c.content?.slice(0,200)||"").join(" ");\n    const r=await callClaude(\n      `Scrivi un testo di quarta di copertina (blurb) per il libro "${book.title||"Senza titolo"}" genere "${book.genre||"saggio"}". ${chSample?`Estratto: ${chSample}`:""}\nIl blurb deve: catturare l'attenzione in 3-4 frasi, creare curiosità, terminare con una domanda o affermazione forte. Max 80 parole. Solo il testo, niente commenti.`\n    );\n    setBackBlurb(r.trim());\n    setBackBlurbLoading(false);\n  };\n\n  const genBio=async()=>{\n    setBackBioLoading(true);\n    const r=await callClaude(\n      `Scrivi una breve bio d'autore (40-50 parole) per ${book.author||"l'autore"} che ha scritto "${book.title||"questo libro"}" nel genere "${book.genre||"saggio"}". Tono professionale ma caldo. Solo la bio, niente altro.`
     );
     setBackBio(r.trim());
     setBackBioLoading(false);
@@ -1044,8 +1019,7 @@ Il blurb deve: catturare l'attenzione in 3-4 frasi, creare curiosità, terminare
 
     // Bullets (se presenti)
     if(backBullets){
-      const items=backBullets.split("
-").filter(b=>b.trim()).slice(0,4);
+      const items=backBullets.split('\n').filter(b=>b.trim()).slice(0,4);
       ctx.font="13px Georgia";
       for(const item of items){
         ctx.fillStyle=t.accent;
@@ -1065,199 +1039,9 @@ Il blurb deve: catturare l'attenzione in 3-4 frasi, creare curiosità, terminare
     if(backBio){
       ctx.font="bold 11px monospace";
       ctx.fillStyle=t.accent;
-      ctx.fillText("L'AUTORE",PAD,H-112);
-      ctx.font="11px Georgia";
-      ctx.fillStyle=t.text+"99";
-      const words=backBio.split(" ");
-      let line="",lineH=16,by=H-96;
-      for(const w of words){
-        const test=line+w+" ";
-        if(ctx.measureText(test).width>W-PAD*2&&line){
-          ctx.fillText(line.trim(),PAD,by);by+=lineH;line=w+" ";
-          if(by>H-52) break;
-        } else line=test;
-      }
-      if(line.trim()&&by<H-52) ctx.fillText(line.trim(),PAD,by);
-    }
-
-    // Barcode placeholder
-    ctx.fillStyle=t.text+"22";
-    ctx.fillRect(W-PAD-60,H-50,60,36);
-    ctx.font="8px monospace";
-    ctx.fillStyle=t.text+"44";
-    ctx.fillText("ISBN",W-PAD-52,H-58);
-    for(let i=0;i<20;i++){
-      ctx.fillStyle=t.text+(i%3===0?"88":"44");
-      ctx.fillRect(W-PAD-58+i*3,H-50,2,28);
-    }
-
-    // Titolo piccolo in fondo
-    ctx.font="bold 10px monospace";
-    ctx.fillStyle=t.accent+"88";
-    ctx.fillText((book.title||"").toUpperCase().slice(0,30),PAD,H-12);
-    ctx.fillStyle=t.text+"33";
-    ctx.font="9px monospace";
-    ctx.fillText("BookForge Edition",W-PAD-90,H-12);
-  }
-
-  useEffect(()=>{if(coverTab==="back") drawBackCover();},[coverTab,theme,backBlurb,backBio,backBullets,backTagline,book.title,book.author,book.genre]);
-
-  const downloadBack=()=>{
-    const a=document.createElement("a");
-    a.href=backCanvasRef.current.toDataURL("image/png");
-    a.download=`quarta_copertina_${(book.title||"libro").replace(/\s+/g,"_")}.png`;
-    a.click();
-  };
-
-  const download=()=>{
-    const a=document.createElement("a");
-    a.href=canvasRef.current.toDataURL("image/png");
-    a.download=`copertina_${title.replace(/\s+/g,"_")}.png`;
-    a.click();
-  };
-
-  return(
-    <div style={{display:"flex",flex:1,overflow:"hidden",flexDirection:"column"}}>
-      {/* Tab switcher Fronte / Retro */}
-      <div style={{display:"flex",gap:0,borderBottom:"1px solid #1a1929",background:"#0c0b18",padding:"0 20px"}}>
-        {[["front","🎨 Copertina (Fronte)"],["back","📋 Quarta di Copertina (Retro)"]].map(([tab,label])=>(
-          <button key={tab} onClick={()=>setCoverTab(tab)} style={{padding:"12px 20px",border:"none",borderBottom:`2px solid ${coverTab===tab?"#f5c842":"transparent"}`,background:"transparent",color:coverTab===tab?"#f5c842":"#5a5870",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:coverTab===tab?700:400,transition:"all 0.15s"}}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* FRONTE */}
-      {coverTab==="front"&&(
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-      {/* Pannello controlli */}
-      <div style={{width:300,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}}>
-        <div style={{fontSize:13,color:"#f5c842",marginBottom:4,fontFamily:"'Playfair Display',serif"}}>🎨 COPERTINA FRONTE</div>
-
-        {/* Tema */}
-        <Lbl>Tema visivo</Lbl>
-        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:4}}>
-          {COVER_THEMES.map((ct,i)=>(
-            <button key={i} onClick={()=>setTheme(i)} style={{padding:"5px 10px",borderRadius:6,cursor:"pointer",fontSize:11,border:theme===i?`1px solid ${ct.accent}`:"1px solid #2e2d3e",background:theme===i?ct.accent+"22":"transparent",color:theme===i?ct.accent:"#7a7890"}}>{ct.label}</button>
-          ))}
-        </div>
-
-        {/* Testo */}
-        <Lbl>Sottotitolo</Lbl>
-        <input value={subtitle} onChange={e=>setSubtitle(e.target.value)} placeholder="es. 100 ricette della tradizione..." style={inp} />
-        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
-          <span style={{fontSize:11,color:"#5a5870",flexShrink:0}}>Dimensione: {subtitleSize}px</span>
-          <input type="range" min={12} max={28} value={subtitleSize} onChange={e=>setSubtitleSize(+e.target.value)} style={{flex:1}} />
-        </div>
-
-        <Lbl>Dimensione titolo</Lbl>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
-          {[null,28,34,42,50,58].map(v=>(
-            <button key={v||"auto"} onClick={()=>setTitleSize(v)} style={{padding:"4px 10px",borderRadius:16,border:`1px solid ${titleSize===v?"#f5c842":"#2e2d3e"}`,background:titleSize===v?"#f5c84222":"transparent",color:titleSize===v?"#f5c842":"#5a5870",cursor:"pointer",fontSize:11}}>
-              {v||"Auto"}
-            </button>
-          ))}
-        </div>
-
-        <Lbl>Tagline AI</Lbl>
-        <button onClick={genTagline} disabled={aiLoading} style={{...goldBtn,width:"100%",fontSize:12,padding:"9px 0"}}>
-          {aiLoading?"⏳ Generando...":"✨ Genera tagline AI"}
-        </button>
-        {aiTagline&&(
-          <div style={{background:"#1a1829",borderRadius:8,padding:"8px 10px",marginTop:6,fontSize:11,color:"#f5c842",fontStyle:"italic",border:"1px solid #f5c84244",display:"flex",justifyContent:"space-between",alignItems:"center",gap:6}}>
-            <span>"{aiTagline}"</span>
-            <button onClick={()=>setAiTagline("")} style={{background:"none",border:"none",color:"#5a5870",cursor:"pointer",fontSize:14,flexShrink:0}}>×</button>
-          </div>
-        )}
-
-        {/* Foto sfondo */}
-        <div style={{height:1,background:"#1e1d2e",margin:"16px 0"}} />
-        <div style={{fontSize:12,color:"#38bdf8",fontFamily:"'Playfair Display',serif",marginBottom:10}}>📸 Foto di sfondo</div>
-
-        {/* Upload foto */}
-        <div onClick={()=>fileInputRef.current?.click()}
-          style={{border:"2px dashed #2e2d3e",borderRadius:10,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#0c0b18"}}>
-          <span style={{fontSize:20}}>📷</span>
-          <div>
-            <div style={{fontSize:12,color:"#c8c6d8"}}>Carica tua foto</div>
-            <div style={{fontSize:10,color:"#5a5870"}}>JPG, PNG, WebP</div>
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&handlePhotoUpload(e.target.files[0])} />
-        </div>
-
-        {/* Generazione AI immagine */}
-        <div style={{background:"#0c0b18",borderRadius:10,padding:"12px",marginBottom:10,border:"1px solid #1e2d3e"}}>
-          <div style={{fontSize:11,color:"#38bdf8",marginBottom:8}}>🤖 Genera immagine con AI</div>
-          <textarea value={imgPrompt} onChange={e=>setImgPrompt(e.target.value)}
-            placeholder={"Es: piatto di pasta al pomodoro su tavolo rustico in legno, luce naturale calda, fotografia gastronomica professionale"}
-            rows={3} style={{...inp,fontSize:11,lineHeight:1.5,resize:"none",marginBottom:8}} />
-          <button onClick={generateAIImage} disabled={imgGenLoading||!imgPrompt.trim()} style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid #38bdf8",background:imgGenLoading?"#38bdf811":"transparent",color:"#38bdf8",cursor:imgGenLoading||!imgPrompt.trim()?"not-allowed":"pointer",fontSize:12,fontFamily:"inherit",opacity:!imgPrompt.trim()?0.5:1}}>
-            {imgGenLoading?"⏳ Generazione in corso (20-30s)...":"🎨 Genera immagine"}
-          </button>
-          {imgGenError&&<div style={{fontSize:11,color:"#f87171",marginTop:6}}>⚠️ {imgGenError}</div>}
-        </div>
-
-        {/* Opacità foto + rimuovi */}
-        {bgImage&&(
-          <div style={{background:"#0c1a12",borderRadius:10,padding:"10px 12px",marginBottom:10,border:"1px solid #4ade8033"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <span style={{fontSize:11,color:"#4ade80"}}>✅ Foto caricata</span>
-              <button onClick={removeBg} style={{background:"none",border:"1px solid #ef444433",borderRadius:6,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 8px"}}>Rimuovi</button>
-            </div>
-            <div style={{fontSize:11,color:"#5a5870",marginBottom:4}}>Opacità sfondo: {Math.round(bgOpacity*100)}%</div>
-            <input type="range" min={0.1} max={0.9} step={0.05} value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{width:"100%"}} />
-          </div>
-        )}
-
-        <div style={{height:1,background:"#1e1d2e",margin:"16px 0"}} />
-        <button onClick={download} style={{...goldBtn,width:"100%",fontSize:13}}>📥 Scarica PNG</button>
-        <div style={{fontSize:10,color:"#5a5870",marginTop:6,textAlign:"center"}}>400×600px · KDP richiede min 1000px</div>
-      </div>
-
-      {/* Canvas preview fronte */}
-      <div style={{flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40}}>
-        <div style={{boxShadow:"0 30px 80px rgba(0,0,0,0.8)",borderRadius:4}}>
-          <canvas ref={canvasRef} width={400} height={600} style={{display:"block",borderRadius:4}} />
-        </div>
-      </div>
-    </div>
-      )}
-
-      {/* RETRO */}
-      {coverTab==="back"&&(
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-        {/* Controlli retro */}
-        <div style={{width:320,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}}>
-          <div style={{fontSize:13,color:"#c084fc",marginBottom:16,fontFamily:"'Playfair Display',serif"}}>📋 QUARTA DI COPERTINA</div>
-
-          {/* Tema sincronizzato con fronte */}
-          <div style={{fontSize:11,color:"#5a5870",marginBottom:8}}>Il tema visivo segue quello della copertina fronte.</div>
-
-          {/* Tagline */}
-          <Lbl>Tagline (citazione in apertura)</Lbl>
-          <input value={backTagline} onChange={e=>setBackTagline(e.target.value)} placeholder="es. Il libro che ti cambia la vita..." style={inp} />
-
-          {/* Blurb */}
-          <Lbl>Testo di quarta (blurb)</Lbl>
-          <textarea value={backBlurb} onChange={e=>setBackBlurb(e.target.value)}
-            placeholder="Descrizione del libro che cattura il lettore..."
-            rows={5} style={{...inp,resize:"vertical",lineHeight:1.5}} />
-          <button onClick={genBlurb} disabled={backBlurbLoading} style={{...goldBtn,width:"100%",fontSize:12,padding:"8px 0",marginTop:6}}>
-            {backBlurbLoading?"⏳ Generando...":"✨ Genera blurb con AI"}
-          </button>
-
-          {/* Bullets promozionali */}
-          <Lbl>Punti chiave (uno per riga)</Lbl>
-          <textarea value={backBullets} onChange={e=>setBackBullets(e.target.value)}
-            placeholder={"Scopri come perdere 5 kg in 4 settimane
+      ctx.fillText("L'AUTORE",PAD,H-112);\n      ctx.font="11px Georgia";\n      ctx.fillStyle=t.text+"99";\n      const words=backBio.split(" ");\n      let line="",lineH=16,by=H-96;\n      for(const w of words){\n        const test=line+w+" ";\n        if(ctx.measureText(test).width>W-PAD*2&&line){\n          ctx.fillText(line.trim(),PAD,by);by+=lineH;line=w+" ";\n          if(by>H-52) break;\n        } else line=test;\n      }\n      if(line.trim()&&by<H-52) ctx.fillText(line.trim(),PAD,by);\n    }\n\n    // Barcode placeholder\n    ctx.fillStyle=t.text+"22";\n    ctx.fillRect(W-PAD-60,H-50,60,36);\n    ctx.font="8px monospace";\n    ctx.fillStyle=t.text+"44";\n    ctx.fillText("ISBN",W-PAD-52,H-58);\n    for(let i=0;i<20;i++){\n      ctx.fillStyle=t.text+(i%3===0?"88":"44");\n      ctx.fillRect(W-PAD-58+i*3,H-50,2,28);\n    }\n\n    // Titolo piccolo in fondo\n    ctx.font="bold 10px monospace";\n    ctx.fillStyle=t.accent+"88";\n    ctx.fillText((book.title||"").toUpperCase().slice(0,30),PAD,H-12);\n    ctx.fillStyle=t.text+"33";\n    ctx.font="9px monospace";\n    ctx.fillText("BookForge Edition",W-PAD-90,H-12);\n  }\n\n  useEffect(()=>{if(coverTab==="back") drawBackCover();},[coverTab,theme,backBlurb,backBio,backBullets,backTagline,book.title,book.author,book.genre]);\n\n  const downloadBack=()=>{\n    const a=document.createElement("a");\n    a.href=backCanvasRef.current.toDataURL("image/png");\n    a.download=`quarta_copertina_${(book.title||"libro").replace(/\s+/g,"_")}.png`;\n    a.click();\n  };\n\n  const download=()=>{\n    const a=document.createElement("a");\n    a.href=canvasRef.current.toDataURL("image/png");\n    a.download=`copertina_${title.replace(/\s+/g,"_")}.png`;\n    a.click();\n  };\n\n  return(\n    <div style={{display:"flex",flex:1,overflow:"hidden",flexDirection:"column"}}>\n      {/* Tab switcher Fronte / Retro */}\n      <div style={{display:"flex",gap:0,borderBottom:"1px solid #1a1929",background:"#0c0b18",padding:"0 20px"}}>\n        {[["front","🎨 Copertina (Fronte)"],["back","📋 Quarta di Copertina (Retro)"]].map(([tab,label])=>(\n          <button key={tab} onClick={()=>setCoverTab(tab)} style={{padding:"12px 20px",border:"none",borderBottom:`2px solid ${coverTab===tab?"#f5c842":"transparent"}`,background:"transparent",color:coverTab===tab?"#f5c842":"#5a5870",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:coverTab===tab?700:400,transition:"all 0.15s"}}>\n            {label}\n          </button>\n        ))}\n      </div>\n\n      {/* FRONTE */}\n      {coverTab==="front"&&(\n      <div style={{display:"flex",flex:1,overflow:"hidden"}}>\n      {/* Pannello controlli */}\n      <div style={{width:300,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}}>\n        <div style={{fontSize:13,color:"#f5c842",marginBottom:4,fontFamily:"'Playfair Display',serif"}}>🎨 COPERTINA FRONTE</div>\n\n        {/* Tema */}\n        <Lbl>Tema visivo</Lbl>\n        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:4}}>\n          {COVER_THEMES.map((ct,i)=>(\n            <button key={i} onClick={()=>setTheme(i)} style={{padding:"5px 10px",borderRadius:6,cursor:"pointer",fontSize:11,border:theme===i?`1px solid ${ct.accent}`:"1px solid #2e2d3e",background:theme===i?ct.accent+"22":"transparent",color:theme===i?ct.accent:"#7a7890"}}>{ct.label}</button>\n          ))}\n        </div>\n\n        {/* Testo */}\n        <Lbl>Sottotitolo</Lbl>\n        <input value={subtitle} onChange={e=>setSubtitle(e.target.value)} placeholder="es. 100 ricette della tradizione..." style={inp} />\n        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>\n          <span style={{fontSize:11,color:"#5a5870",flexShrink:0}}>Dimensione: {subtitleSize}px</span>\n          <input type="range" min={12} max={28} value={subtitleSize} onChange={e=>setSubtitleSize(+e.target.value)} style={{flex:1}} />\n        </div>\n\n        <Lbl>Dimensione titolo</Lbl>\n        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>\n          {[null,28,34,42,50,58].map(v=>(\n            <button key={v||"auto"} onClick={()=>setTitleSize(v)} style={{padding:"4px 10px",borderRadius:16,border:`1px solid ${titleSize===v?"#f5c842":"#2e2d3e"}`,background:titleSize===v?"#f5c84222":"transparent",color:titleSize===v?"#f5c842":"#5a5870",cursor:"pointer",fontSize:11}}>\n              {v||"Auto"}\n            </button>\n          ))}\n        </div>\n\n        <Lbl>Tagline AI</Lbl>\n        <button onClick={genTagline} disabled={aiLoading} style={{...goldBtn,width:"100%",fontSize:12,padding:"9px 0"}}>\n          {aiLoading?"⏳ Generando...":"✨ Genera tagline AI"}\n        </button>\n        {aiTagline&&(\n          <div style={{background:"#1a1829",borderRadius:8,padding:"8px 10px",marginTop:6,fontSize:11,color:"#f5c842",fontStyle:"italic",border:"1px solid #f5c84244",display:"flex",justifyContent:"space-between",alignItems:"center",gap:6}}>\n            <span>"{aiTagline}"</span>\n            <button onClick={()=>setAiTagline("")} style={{background:"none",border:"none",color:"#5a5870",cursor:"pointer",fontSize:14,flexShrink:0}}>×</button>\n          </div>\n        )}\n\n        {/* Foto sfondo */}\n        <div style={{height:1,background:"#1e1d2e",margin:"16px 0"}} />\n        <div style={{fontSize:12,color:"#38bdf8",fontFamily:"'Playfair Display',serif",marginBottom:10}}>📸 Foto di sfondo</div>\n\n        {/* Upload foto */}\n        <div onClick={()=>fileInputRef.current?.click()}\n          style={{border:"2px dashed #2e2d3e",borderRadius:10,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:10,background:"#0c0b18"}}>\n          <span style={{fontSize:20}}>📷</span>\n          <div>\n            <div style={{fontSize:12,color:"#c8c6d8"}}>Carica tua foto</div>\n            <div style={{fontSize:10,color:"#5a5870"}}>JPG, PNG, WebP</div>\n          </div>\n          <input ref={fileInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&handlePhotoUpload(e.target.files[0])} />\n        </div>\n\n        {/* Generazione AI immagine */}\n        <div style={{background:"#0c0b18",borderRadius:10,padding:"12px",marginBottom:10,border:"1px solid #1e2d3e"}}>\n          <div style={{fontSize:11,color:"#38bdf8",marginBottom:8}}>🤖 Genera immagine con AI</div>\n          <textarea value={imgPrompt} onChange={e=>setImgPrompt(e.target.value)}\n            placeholder={"Es: piatto di pasta al pomodoro su tavolo rustico in legno, luce naturale calda, fotografia gastronomica professionale"}\n            rows={3} style={{...inp,fontSize:11,lineHeight:1.5,resize:"none",marginBottom:8}} />\n          <button onClick={generateAIImage} disabled={imgGenLoading||!imgPrompt.trim()} style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid #38bdf8",background:imgGenLoading?"#38bdf811":"transparent",color:"#38bdf8",cursor:imgGenLoading||!imgPrompt.trim()?"not-allowed":"pointer",fontSize:12,fontFamily:"inherit",opacity:!imgPrompt.trim()?0.5:1}}>\n            {imgGenLoading?"⏳ Generazione in corso (20-30s)...":"🎨 Genera immagine"}\n          </button>\n          {imgGenError&&<div style={{fontSize:11,color:"#f87171",marginTop:6}}>⚠️ {imgGenError}</div>}\n        </div>\n\n        {/* Opacità foto + rimuovi */}\n        {bgImage&&(\n          <div style={{background:"#0c1a12",borderRadius:10,padding:"10px 12px",marginBottom:10,border:"1px solid #4ade8033"}}>\n            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>\n              <span style={{fontSize:11,color:"#4ade80"}}>✅ Foto caricata</span>\n              <button onClick={removeBg} style={{background:"none",border:"1px solid #ef444433",borderRadius:6,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 8px"}}>Rimuovi</button>\n            </div>\n            <div style={{fontSize:11,color:"#5a5870",marginBottom:4}}>Opacità sfondo: {Math.round(bgOpacity*100)}%</div>\n            <input type="range" min={0.1} max={0.9} step={0.05} value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{width:"100%"}} />\n          </div>\n        )}\n\n        <div style={{height:1,background:"#1e1d2e",margin:"16px 0"}} />\n        <button onClick={download} style={{...goldBtn,width:"100%",fontSize:13}}>📥 Scarica PNG</button>\n        <div style={{fontSize:10,color:"#5a5870",marginTop:6,textAlign:"center"}}>400×600px · KDP richiede min 1000px</div>\n      </div>\n\n      {/* Canvas preview fronte */}\n      <div style={{flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40}}>\n        <div style={{boxShadow:"0 30px 80px rgba(0,0,0,0.8)",borderRadius:4}}>\n          <canvas ref={canvasRef} width={400} height={600} style={{display:"block",borderRadius:4}} />\n        </div>\n      </div>\n    </div>\n      )}\n\n      {/* RETRO */}\n      {coverTab==="back"&&(\n      <div style={{display:"flex",flex:1,overflow:"hidden"}}>\n        {/* Controlli retro */}\n        <div style={{width:320,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}}>\n          <div style={{fontSize:13,color:"#c084fc",marginBottom:16,fontFamily:"'Playfair Display',serif"}}>📋 QUARTA DI COPERTINA</div>\n\n          {/* Tema sincronizzato con fronte */}\n          <div style={{fontSize:11,color:"#5a5870",marginBottom:8}}>Il tema visivo segue quello della copertina fronte.</div>\n\n          {/* Tagline */}\n          <Lbl>Tagline (citazione in apertura)</Lbl>\n          <input value={backTagline} onChange={e=>setBackTagline(e.target.value)} placeholder="es. Il libro che ti cambia la vita..." style={inp} />\n\n          {/* Blurb */}\n          <Lbl>Testo di quarta (blurb)</Lbl>\n          <textarea value={backBlurb} onChange={e=>setBackBlurb(e.target.value)}\n            placeholder="Descrizione del libro che cattura il lettore..."\n            rows={5} style={{...inp,resize:"vertical",lineHeight:1.5}} />\n          <button onClick={genBlurb} disabled={backBlurbLoading} style={{...goldBtn,width:"100%",fontSize:12,padding:"8px 0",marginTop:6}}>\n            {backBlurbLoading?"⏳ Generando...":"✨ Genera blurb con AI"}\n          </button>\n\n          {/* Bullets promozionali */}\n          <Lbl>Punti chiave (uno per riga)</Lbl>\n          <textarea value={backBullets} onChange={e=>setBackBullets(e.target.value)}\n            placeholder={"Scopri come perdere 5 kg in 4 settimane
 Ricette pronte in meno di 20 minuti
-Lista della spesa inclusa"}
-            rows={4} style={{...inp,resize:"vertical",lineHeight:1.6,fontSize:12}} />
-
-          {/* Bio autore */}
-          <Lbl>Bio autore</Lbl>
-          <textarea value={backBio} onChange={e=>setBackBio(e.target.value)}
-            placeholder="Breve bio dell'autore (40-50 parole)..."
+Lista della spesa inclusa"}\n            rows={4} style={{...inp,resize:"vertical",lineHeight:1.6,fontSize:12}} />\n\n          {/* Bio autore */}\n          <Lbl>Bio autore</Lbl>\n          <textarea value={backBio} onChange={e=>setBackBio(e.target.value)}\n            placeholder="Breve bio dell'autore (40-50 parole)..."
             rows={3} style={{...inp,resize:"vertical",lineHeight:1.5}} />
           <button onClick={genBio} disabled={backBioLoading} style={{...goldBtn,width:"100%",fontSize:12,padding:"8px 0",marginTop:6,background:"transparent",border:"1px solid #c084fc44",color:"#c084fc"}}>
             {backBioLoading?"⏳ Generando...":"✨ Genera bio con AI"}
@@ -1857,133 +1641,7 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
           <div style={{...card,marginBottom:16}}>
             <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}}>📖 DI COSA PARLA IL LIBRO?</div>
             <Lbl>Trama / Premessa principale *</Lbl>
-            <textarea value={brief.premise} onChange={e=>setBrief(b=>({...b,premise:e.target.value}))} rows={3} placeholder="es. Un detective in pensione scopre che la sua città nasconde un'organizzazione criminale..." style={{...inp,lineHeight:1.6,resize:"vertical"}} />
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:4}}>
-              <div><Lbl>Protagonista</Lbl><input value={brief.protagonist} onChange={e=>setBrief(b=>({...b,protagonist:e.target.value}))} placeholder="Nome, età, carattere..." style={inp} /></div>
-              <div><Lbl>Antagonista / Conflitto</Lbl><input value={brief.antagonist} onChange={e=>setBrief(b=>({...b,antagonist:e.target.value}))} placeholder="Chi o cosa si oppone..." style={inp} /></div>
-              <div><Lbl>Ambientazione</Lbl><input value={brief.setting} onChange={e=>setBrief(b=>({...b,setting:e.target.value}))} placeholder="Dove e quando..." style={inp} /></div>
-              <div><Lbl>Tema centrale</Lbl><input value={brief.theme} onChange={e=>setBrief(b=>({...b,theme:e.target.value}))} placeholder="es. Redenzione, amore, tradimento..." style={inp} /></div>
-            </div>
-          </div>
-          <div style={{...card,marginBottom:16}}>
-            <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}}>⚙️ STILE E STRUTTURA</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <div><Lbl>Tono narrativo</Lbl><select value={brief.tone} onChange={e=>setBrief(b=>({...b,tone:e.target.value}))} style={{...sel,width:"100%"}}>{TONES.map(t=><option key={t}>{t}</option>)}</select></div>
-              <div><Lbl>Punto di vista</Lbl><select value={brief.pov} onChange={e=>setBrief(b=>({...b,pov:e.target.value}))} style={{...sel,width:"100%"}}>{POV.map(p=><option key={p}>{p}</option>)}</select></div>
-              <div><Lbl>Lunghezza capitoli</Lbl><select value={brief.chapterLength} onChange={e=>setBrief(b=>({...b,chapterLength:e.target.value}))} style={{...sel,width:"100%"}}>{CHAPTER_LENGTHS.map(l=><option key={l}>{l}</option>)}</select></div>
-              <div><Lbl>Numero di capitoli: {brief.numChapters}</Lbl><input type="range" min={3} max={20} value={brief.numChapters} onChange={e=>setBrief(b=>({...b,numChapters:+e.target.value}))} style={{width:"100%",marginTop:8}} /><div style={{fontSize:11,color:"#5a5870",marginTop:4}}>3 → 20 capitoli</div></div>
-            </div>
-            <Lbl>Note aggiuntive</Lbl>
-            <textarea value={brief.extraNotes} onChange={e=>setBrief(b=>({...b,extraNotes:e.target.value}))} rows={2} placeholder="es. Includi un colpo di scena al capitolo 5..." style={{...inp,lineHeight:1.6,resize:"vertical"}} />
-          </div>
-          {genError&&<div style={{background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:16}}>{genError}</div>}
-          <button onClick={generateOutlines} disabled={generating||!brief.premise} style={{...goldBtn,opacity:(generating||!brief.premise)?0.5:1,cursor:(generating||!brief.premise)?"not-allowed":"pointer"}}>{generating?"⏳ Generando scaletta...":"📋 Genera scaletta con AI →"}</button>
-          {!brief.premise&&<div style={{fontSize:12,color:"#5a5870",marginTop:8}}>* Inserisci almeno la trama per continuare</div>}
-        </div>
-      )}
-
-      {/* STEP 1: Scaletta + SCELTA MODALITÀ */}
-      {step===1&&(
-        <div style={{maxWidth:700}}>
-          {/* ── SCELTA MODALITÀ ── */}
-          <div style={{...card,marginBottom:20,border:"1px solid #f5c84244"}}>
-            <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}}>⚡ COME VUOI GENERARE IL LIBRO?</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {/* Modalità INTERO */}
-              <div onClick={()=>setMode("intero")} style={{borderRadius:12,border:`2px solid ${mode==="intero"?"#f5c842":"#2e2d3e"}`,background:mode==="intero"?"#f5c84211":"#0f0e17",padding:18,cursor:"pointer",transition:"all 0.2s"}}>
-                <div style={{fontSize:28,marginBottom:8}}>📚</div>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:mode==="intero"?"#f5c842":"#c8c6d8",marginBottom:6}}>Scrivi tutto il libro</div>
-                <div style={{fontSize:12,color:"#7a7890",lineHeight:1.5}}>L'AI genera tutti i capitoli in sequenza automaticamente. Ideale se vuoi avere subito una prima bozza completa.</div>
-                {mode==="intero"&&<div style={{marginTop:10,fontSize:11,color:"#f5c842"}}>✓ Selezionato</div>}
-              </div>
-              {/* Modalità SINGOLO */}
-              <div onClick={()=>setMode("singolo")} style={{borderRadius:12,border:`2px solid ${mode==="singolo"?"#c084fc":"#2e2d3e"}`,background:mode==="singolo"?"#c084fc11":"#0f0e17",padding:18,cursor:"pointer",transition:"all 0.2s"}}>
-                <div style={{fontSize:28,marginBottom:8}}>✏️</div>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:mode==="singolo"?"#c084fc":"#c8c6d8",marginBottom:6}}>Capitolo per capitolo</div>
-                <div style={{fontSize:12,color:"#7a7890",lineHeight:1.5}}>L'AI genera un capitolo alla volta. Tu lo leggi, lo modifichi, poi decidi di accettarlo prima di passare al successivo.</div>
-                {mode==="singolo"&&<div style={{marginTop:10,fontSize:11,color:"#c084fc"}}>✓ Selezionato</div>}
-              </div>
-            </div>
-          </div>
-
-          {/* Scaletta */}
-          <div style={{...card,marginBottom:20}}>
-            <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:4}}>📋 SCALETTA — Rivedila e personalizza</div>
-            <div style={{fontSize:12,color:"#7a7890",marginBottom:16}}>Modifica titoli, riassunti e aggiungi istruzioni per ogni capitolo.</div>
-            {chapterBriefs.map((cb,i)=>(
-              <div key={i} style={{background:"#0f0e17",borderRadius:10,padding:16,marginBottom:10,border:`1px solid ${mode==="singolo"&&i===singleIdx?"#c084fc":"#2e2d3e"}`,position:"relative"}}>
-                {mode==="singolo"&&(
-                  <div style={{position:"absolute",top:10,right:10,fontSize:10,color:i===singleIdx?"#c084fc":"#5a5870",background:i===singleIdx?"#c084fc22":"transparent",padding:"2px 8px",borderRadius:10,cursor:"pointer"}} onClick={()=>setSingleIdx(i)}>
-                    {i<singleIdx?"✓ fatto":i===singleIdx?"▶ in corso":"in attesa"}
-                  </div>
-                )}
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                  <div style={{width:28,height:28,borderRadius:"50%",background:"#f5c84222",border:"1px solid #f5c842",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#f5c842",fontWeight:700,flexShrink:0}}>{i+1}</div>
-                  <input value={cb.title} onChange={e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],title:e.target.value};return n;})} style={{...inp,fontFamily:"'Playfair Display',serif",fontSize:14}} />
-                </div>
-                <textarea value={cb.summary} onChange={e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],summary:e.target.value};return n;})} rows={2} style={{...inp,fontSize:12,lineHeight:1.6,resize:"vertical",marginBottom:8}} />
-                <input value={cb.customInstructions} onChange={e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],customInstructions:e.target.value};return n;})} placeholder="Istruzioni extra per questo capitolo (opzionale)..." style={{...inp,fontSize:12}} />
-              </div>
-            ))}
-          </div>
-
-          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            <button onClick={()=>setStep(0)} style={{padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}}>← Modifica brief</button>
-            {mode==="intero"?(
-              <button onClick={generateAllChapters} style={goldBtn}>📚 Scrivi tutto il libro →</button>
-            ):(
-              <button onClick={()=>setStep(2)} style={{...goldBtn,background:"linear-gradient(135deg,#c084fc,#8b5cf6)"}}>✏️ Inizia capitolo per capitolo →</button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 2: Generazione - INTERO */}
-      {step===2&&mode==="intero"&&(
-        <div style={{maxWidth:600}}>
-          <div style={{...card,marginBottom:20,textAlign:"center",padding:40}}>
-            <div style={{fontSize:48,marginBottom:16}}>✍️</div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#f5c842",marginBottom:8}}>L'AI sta scrivendo il tuo libro...</div>
-            <div style={{color:"#7a7890",fontSize:14,marginBottom:24}}>Capitolo {currentGen.chapter} di {chapterBriefs.length}: <span style={{color:"#e8e6f0"}}>{currentGen.status}</span></div>
-            <div style={{background:"#0f0e17",borderRadius:8,height:12,overflow:"hidden",marginBottom:12}}><div style={{width:`${(currentGen.chapter/chapterBriefs.length)*100}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:8,transition:"width 0.8s"}} /></div>
-            <div style={{fontSize:13,color:"#5a5870"}}>{Math.round((currentGen.chapter/chapterBriefs.length)*100)}% completato</div>
-          </div>
-          {generatedChapters.length>0&&(<div style={{...card}}><div style={{fontSize:12,color:"#4ade80",marginBottom:8}}>✅ Completati: {generatedChapters.length}/{chapterBriefs.length}</div>{generatedChapters.map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ade80",fontSize:14}}>✓</span><span style={{color:"#c8c6d8",fontSize:13,fontFamily:"'Playfair Display',serif"}}>{c.title}</span><span style={{color:"#5a5870",fontSize:11,marginLeft:"auto"}}>{c.content.trim().split(/\s+/).length}w</span></div>))}</div>)}
-          {genError&&<div style={{background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginTop:16}}>{genError}</div>}
-        </div>
-      )}
-
-      {/* STEP 2: Modalità CAPITOLO PER CAPITOLO */}
-      {step===2&&mode==="singolo"&&(
-        <div style={{maxWidth:760}}>
-          <div style={{...card,marginBottom:16,background:"#0c0b1e",border:"1px solid #c084fc44"}}>
-            {/* Header del capitolo corrente */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <div>
-                <div style={{fontSize:11,color:"#c084fc",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Capitolo {singleIdx+1} di {chapterBriefs.length}</div>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#e8e6f0"}}>{chapterBriefs[singleIdx]?.title}</div>
-              </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>singleIdx>0&&setSingleIdx(i=>i-1)} disabled={singleIdx===0} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13,opacity:singleIdx===0?0.4:1}}>← Prec.</button>
-                <button onClick={()=>singleIdx<chapterBriefs.length-1&&setSingleIdx(i=>i+1)} disabled={singleIdx===chapterBriefs.length-1} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13,opacity:singleIdx===chapterBriefs.length-1?0.4:1}}>Succ. →</button>
-              </div>
-            </div>
-
-            {/* Progressione capitoli */}
-            <div style={{display:"flex",gap:4,marginBottom:20,flexWrap:"wrap"}}>
-              {chapterBriefs.map((_,i)=>{
-                const isWritten=book.chapters[i]?.content?.trim();
-                return(
-                  <div key={i} onClick={()=>setSingleIdx(i)} style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,cursor:"pointer",fontWeight:700,border:`2px solid ${i===singleIdx?"#c084fc":isWritten?"#4ade80":"#2e2d3e"}`,background:i===singleIdx?"#c084fc22":isWritten?"#4ade8022":"transparent",color:i===singleIdx?"#c084fc":isWritten?"#4ade80":"#5a5870"}}>{isWritten?"✓":i+1}</div>
-                );
-              })}
-            </div>
-
-            {/* Genera bozza */}
-            {!singleDraft&&!singleGenerating&&(
-              <div style={{textAlign:"center",padding:"20px 0"}}>
-                <div style={{fontSize:14,color:"#7a7890",marginBottom:16}}>
-                  {book.chapters[singleIdx]?.content?.trim()?"Questo capitolo è già stato scritto. Puoi rigenerare una nuova bozza o modificarlo direttamente nell'editor.":"Premi il pulsante per generare la bozza di questo capitolo."}
+            <textarea value={brief.premise} onChange={e=>setBrief(b=>({...b,premise:e.target.value}))} rows={3} placeholder="es. Un detective in pensione scopre che la sua città nasconde un'organizzazione criminale..." style={{...inp,lineHeight:1.6,resize:"vertical"}} />\n            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:4}}>\n              <div><Lbl>Protagonista</Lbl><input value={brief.protagonist} onChange={e=>setBrief(b=>({...b,protagonist:e.target.value}))} placeholder="Nome, età, carattere..." style={inp} /></div>\n              <div><Lbl>Antagonista / Conflitto</Lbl><input value={brief.antagonist} onChange={e=>setBrief(b=>({...b,antagonist:e.target.value}))} placeholder="Chi o cosa si oppone..." style={inp} /></div>\n              <div><Lbl>Ambientazione</Lbl><input value={brief.setting} onChange={e=>setBrief(b=>({...b,setting:e.target.value}))} placeholder="Dove e quando..." style={inp} /></div>\n              <div><Lbl>Tema centrale</Lbl><input value={brief.theme} onChange={e=>setBrief(b=>({...b,theme:e.target.value}))} placeholder="es. Redenzione, amore, tradimento..." style={inp} /></div>\n            </div>\n          </div>\n          <div style={{...card,marginBottom:16}}>\n            <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}}>⚙️ STILE E STRUTTURA</div>\n            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>\n              <div><Lbl>Tono narrativo</Lbl><select value={brief.tone} onChange={e=>setBrief(b=>({...b,tone:e.target.value}))} style={{...sel,width:"100%"}}>{TONES.map(t=><option key={t}>{t}</option>)}</select></div>\n              <div><Lbl>Punto di vista</Lbl><select value={brief.pov} onChange={e=>setBrief(b=>({...b,pov:e.target.value}))} style={{...sel,width:"100%"}}>{POV.map(p=><option key={p}>{p}</option>)}</select></div>\n              <div><Lbl>Lunghezza capitoli</Lbl><select value={brief.chapterLength} onChange={e=>setBrief(b=>({...b,chapterLength:e.target.value}))} style={{...sel,width:"100%"}}>{CHAPTER_LENGTHS.map(l=><option key={l}>{l}</option>)}</select></div>\n              <div><Lbl>Numero di capitoli: {brief.numChapters}</Lbl><input type="range" min={3} max={20} value={brief.numChapters} onChange={e=>setBrief(b=>({...b,numChapters:+e.target.value}))} style={{width:"100%",marginTop:8}} /><div style={{fontSize:11,color:"#5a5870",marginTop:4}}>3 → 20 capitoli</div></div>\n            </div>\n            <Lbl>Note aggiuntive</Lbl>\n            <textarea value={brief.extraNotes} onChange={e=>setBrief(b=>({...b,extraNotes:e.target.value}))} rows={2} placeholder="es. Includi un colpo di scena al capitolo 5..." style={{...inp,lineHeight:1.6,resize:"vertical"}} />\n          </div>\n          {genError&&<div style={{background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:16}}>{genError}</div>}\n          <button onClick={generateOutlines} disabled={generating||!brief.premise} style={{...goldBtn,opacity:(generating||!brief.premise)?0.5:1,cursor:(generating||!brief.premise)?"not-allowed":"pointer"}}>{generating?"⏳ Generando scaletta...":"📋 Genera scaletta con AI →"}</button>\n          {!brief.premise&&<div style={{fontSize:12,color:"#5a5870",marginTop:8}}>* Inserisci almeno la trama per continuare</div>}\n        </div>\n      )}\n\n      {/* STEP 1: Scaletta + SCELTA MODALITÀ */}\n      {step===1&&(\n        <div style={{maxWidth:700}}>\n          {/* ── SCELTA MODALITÀ ── */}\n          <div style={{...card,marginBottom:20,border:"1px solid #f5c84244"}}>\n            <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}}>⚡ COME VUOI GENERARE IL LIBRO?</div>\n            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>\n              {/* Modalità INTERO */}\n              <div onClick={()=>setMode("intero")} style={{borderRadius:12,border:`2px solid ${mode==="intero"?"#f5c842":"#2e2d3e"}`,background:mode==="intero"?"#f5c84211":"#0f0e17",padding:18,cursor:"pointer",transition:"all 0.2s"}}>\n                <div style={{fontSize:28,marginBottom:8}}>📚</div>\n                <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:mode==="intero"?"#f5c842":"#c8c6d8",marginBottom:6}}>Scrivi tutto il libro</div>\n                <div style={{fontSize:12,color:"#7a7890",lineHeight:1.5}}>L'AI genera tutti i capitoli in sequenza automaticamente. Ideale se vuoi avere subito una prima bozza completa.</div>\n                {mode==="intero"&&<div style={{marginTop:10,fontSize:11,color:"#f5c842"}}>✓ Selezionato</div>}\n              </div>\n              {/* Modalità SINGOLO */}\n              <div onClick={()=>setMode("singolo")} style={{borderRadius:12,border:`2px solid ${mode==="singolo"?"#c084fc":"#2e2d3e"}`,background:mode==="singolo"?"#c084fc11":"#0f0e17",padding:18,cursor:"pointer",transition:"all 0.2s"}}>\n                <div style={{fontSize:28,marginBottom:8}}>✏️</div>\n                <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:mode==="singolo"?"#c084fc":"#c8c6d8",marginBottom:6}}>Capitolo per capitolo</div>\n                <div style={{fontSize:12,color:"#7a7890",lineHeight:1.5}}>L'AI genera un capitolo alla volta. Tu lo leggi, lo modifichi, poi decidi di accettarlo prima di passare al successivo.</div>\n                {mode==="singolo"&&<div style={{marginTop:10,fontSize:11,color:"#c084fc"}}>✓ Selezionato</div>}\n              </div>\n            </div>\n          </div>\n\n          {/* Scaletta */}\n          <div style={{...card,marginBottom:20}}>\n            <div style={{fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:4}}>📋 SCALETTA — Rivedila e personalizza</div>\n            <div style={{fontSize:12,color:"#7a7890",marginBottom:16}}>Modifica titoli, riassunti e aggiungi istruzioni per ogni capitolo.</div>\n            {chapterBriefs.map((cb,i)=>(\n              <div key={i} style={{background:"#0f0e17",borderRadius:10,padding:16,marginBottom:10,border:`1px solid ${mode==="singolo"&&i===singleIdx?"#c084fc":"#2e2d3e"}`,position:"relative"}}>\n                {mode==="singolo"&&(\n                  <div style={{position:"absolute",top:10,right:10,fontSize:10,color:i===singleIdx?"#c084fc":"#5a5870",background:i===singleIdx?"#c084fc22":"transparent",padding:"2px 8px",borderRadius:10,cursor:"pointer"}} onClick={()=>setSingleIdx(i)}>\n                    {i<singleIdx?"✓ fatto":i===singleIdx?"▶ in corso":"in attesa"}\n                  </div>\n                )}\n                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>\n                  <div style={{width:28,height:28,borderRadius:"50%",background:"#f5c84222",border:"1px solid #f5c842",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#f5c842",fontWeight:700,flexShrink:0}}>{i+1}</div>\n                  <input value={cb.title} onChange={e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],title:e.target.value};return n;})} style={{...inp,fontFamily:"'Playfair Display',serif",fontSize:14}} />\n                </div>\n                <textarea value={cb.summary} onChange={e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],summary:e.target.value};return n;})} rows={2} style={{...inp,fontSize:12,lineHeight:1.6,resize:"vertical",marginBottom:8}} />\n                <input value={cb.customInstructions} onChange={e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],customInstructions:e.target.value};return n;})} placeholder="Istruzioni extra per questo capitolo (opzionale)..." style={{...inp,fontSize:12}} />\n              </div>\n            ))}\n          </div>\n\n          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>\n            <button onClick={()=>setStep(0)} style={{padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}}>← Modifica brief</button>\n            {mode==="intero"?(\n              <button onClick={generateAllChapters} style={goldBtn}>📚 Scrivi tutto il libro →</button>\n            ):(\n              <button onClick={()=>setStep(2)} style={{...goldBtn,background:"linear-gradient(135deg,#c084fc,#8b5cf6)"}}>✏️ Inizia capitolo per capitolo →</button>\n            )}\n          </div>\n        </div>\n      )}\n\n      {/* STEP 2: Generazione - INTERO */}\n      {step===2&&mode==="intero"&&(\n        <div style={{maxWidth:600}}>\n          <div style={{...card,marginBottom:20,textAlign:"center",padding:40}}>\n            <div style={{fontSize:48,marginBottom:16}}>✍️</div>\n            <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#f5c842",marginBottom:8}}>L'AI sta scrivendo il tuo libro...</div>\n            <div style={{color:"#7a7890",fontSize:14,marginBottom:24}}>Capitolo {currentGen.chapter} di {chapterBriefs.length}: <span style={{color:"#e8e6f0"}}>{currentGen.status}</span></div>\n            <div style={{background:"#0f0e17",borderRadius:8,height:12,overflow:"hidden",marginBottom:12}}><div style={{width:`${(currentGen.chapter/chapterBriefs.length)*100}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:8,transition:"width 0.8s"}} /></div>\n            <div style={{fontSize:13,color:"#5a5870"}}>{Math.round((currentGen.chapter/chapterBriefs.length)*100)}% completato</div>\n          </div>\n          {generatedChapters.length>0&&(<div style={{...card}}><div style={{fontSize:12,color:"#4ade80",marginBottom:8}}>✅ Completati: {generatedChapters.length}/{chapterBriefs.length}</div>{generatedChapters.map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ade80",fontSize:14}}>✓</span><span style={{color:"#c8c6d8",fontSize:13,fontFamily:"'Playfair Display',serif"}}>{c.title}</span><span style={{color:"#5a5870",fontSize:11,marginLeft:"auto"}}>{c.content.trim().split(/\s+/).length}w</span></div>))}</div>)}\n          {genError&&<div style={{background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginTop:16}}>{genError}</div>}\n        </div>\n      )}\n\n      {/* STEP 2: Modalità CAPITOLO PER CAPITOLO */}\n      {step===2&&mode==="singolo"&&(\n        <div style={{maxWidth:760}}>\n          <div style={{...card,marginBottom:16,background:"#0c0b1e",border:"1px solid #c084fc44"}}>\n            {/* Header del capitolo corrente */}\n            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>\n              <div>\n                <div style={{fontSize:11,color:"#c084fc",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Capitolo {singleIdx+1} di {chapterBriefs.length}</div>\n                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#e8e6f0"}}>{chapterBriefs[singleIdx]?.title}</div>\n              </div>\n              <div style={{display:"flex",gap:8}}>\n                <button onClick={()=>singleIdx>0&&setSingleIdx(i=>i-1)} disabled={singleIdx===0} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13,opacity:singleIdx===0?0.4:1}}>← Prec.</button>\n                <button onClick={()=>singleIdx<chapterBriefs.length-1&&setSingleIdx(i=>i+1)} disabled={singleIdx===chapterBriefs.length-1} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13,opacity:singleIdx===chapterBriefs.length-1?0.4:1}}>Succ. →</button>\n              </div>\n            </div>\n\n            {/* Progressione capitoli */}\n            <div style={{display:"flex",gap:4,marginBottom:20,flexWrap:"wrap"}}>\n              {chapterBriefs.map((_,i)=>{\n                const isWritten=book.chapters[i]?.content?.trim();\n                return(\n                  <div key={i} onClick={()=>setSingleIdx(i)} style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,cursor:"pointer",fontWeight:700,border:`2px solid ${i===singleIdx?"#c084fc":isWritten?"#4ade80":"#2e2d3e"}`,background:i===singleIdx?"#c084fc22":isWritten?"#4ade8022":"transparent",color:i===singleIdx?"#c084fc":isWritten?"#4ade80":"#5a5870"}}>{isWritten?"✓":i+1}</div>\n                );\n              })}\n            </div>\n\n            {/* Genera bozza */}\n            {!singleDraft&&!singleGenerating&&(\n              <div style={{textAlign:"center",padding:"20px 0"}}>\n                <div style={{fontSize:14,color:"#7a7890",marginBottom:16}}>\n                  {book.chapters[singleIdx]?.content?.trim()?"Questo capitolo è già stato scritto. Puoi rigenerare una nuova bozza o modificarlo direttamente nell'editor.":"Premi il pulsante per generare la bozza di questo capitolo."}
                 </div>
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
                   <button onClick={generateSingleChapter} style={{...goldBtn,background:"linear-gradient(135deg,#c084fc,#8b5cf6)"}}>✍️ Genera bozza capitolo {singleIdx+1}</button>
@@ -4572,9 +4230,7 @@ function ChatPanel({book}){
 
   const bookContext=()=>{
     const chapters=book.chapters.map((c,i)=>`CAPITOLO ${i+1} "${c.title}":
-${c.content?.slice(0,400)||"(vuoto)"}`).join("
-
-");
+${c.content?.slice(0,400)||"(vuoto)"}`).join('\n\n');
     const totalWords=book.chapters.reduce((a,c)=>a+(c.content?.trim()?c.content.trim().split(/\s+/).length:0),0);
     return `Sei l'assistente letterario del libro "${book.title||"Senza titolo"}" di ${book.author||"Autore sconosciuto"}.
 Genere: ${book.genre||"Non specificato"} | Parole totali: ${totalWords.toLocaleString()} | Capitoli: ${book.chapters.length}
@@ -4753,8 +4409,7 @@ function GlossarioPanel({book,setBook}){
 
   const generateGlossary=async()=>{
     setLoading(true);
-    const text=book.chapters.map(c=>c.content||"").join("
-").slice(0,4000);
+    const text=book.chapters.map(c=>c.content||"").join('\n').slice(0,4000);
     const prompt=`Analizza questo testo e crea un glossario dei termini principali.
 Identifica: personaggi (nome, ruolo), luoghi (nome, descrizione), oggetti importanti, concetti chiave.
 Rispondi SOLO con JSON:
@@ -5698,9 +5353,6 @@ function BookForge(){
     </div>
   );
 }
-
-window.__BookForgeApp = BookForge;
-
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(React.createElement(BookForge));
