@@ -1838,40 +1838,7 @@ function VoiceDictation({ onText, style = {} }) {
   );
 }
 
-function BookForge(){
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  useEffect(()=>{
-    getFirebaseAuth().then(auth=>{
-      auth.onAuthStateChanged(u=>{
-        setUser(u);
-        setAuthLoading(false);
-      });
-    });
-  },[]);
-
-  const handleLogout = async () => {
-    const auth = await getFirebaseAuth();
-    await auth.signOut();
-  };
-
-  if(authLoading) return (
-    React.createElement('div', { style: {minHeight:"100vh",background:"#0f0e17",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1840}}
-      , React.createElement('div', { style: {color:"#f5c842",fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1841}}, "BookForge")
-    )
-  );
-
-  if(!user) return React.createElement(AuthPanel, { onLogin: setUser, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1845}});
-
-  const [appStatus,setAppStatus]=useState("loading");
-  const [projects,setProjects]=useState([]);
-  const [currentId,setCurrentId]=useState(null);
-  const [book,setBook]=useState(null);
-  const [active,setActive]=useState("write");
-  const [savedAt,setSavedAt]=useState(null);
-  const saveTimer=useRef(null);
-
+function AppInner({user, handleLogout}){
   useEffect(()=>{
     const t=setTimeout(()=>setAppStatus("projects"),2000);
     (async()=>{
@@ -1899,11 +1866,11 @@ function BookForge(){
   const handleSetActive=(panel)=>{if(panel==="projects")setAppStatus("projects");else{setActive(panel);setAppStatus("editor");}};
   useEffect(()=>{if(appStatus==="loading")return;saveProjectsList(projects);},[projects]);
 
-  if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1882}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1882}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1882}}, "Caricamento BookForge..." )));
+  if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1849}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1849}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1849}}, "Caricamento BookForge..." )));
 
   return(
-    React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#e8e6f0",fontFamily:"Georgia,serif",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1885}}
-      , React.createElement('style', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1886}}, `
+    React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#e8e6f0",fontFamily:"Georgia,serif",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1852}}
+      , React.createElement('style', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1853}}, `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
         textarea,input,select{font-family:inherit;color:inherit;}
@@ -1914,25 +1881,55 @@ function BookForge(){
         button:hover{opacity:0.85;}
         h2,h3{margin:0;}
       `)
-      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1897}} )
-      , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1898}}
-        , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1899}} )
+      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1864}} )
+      , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1865}}
+        , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1866}} )
         , appStatus==="editor"&&book&&(
           React.createElement(React.Fragment, null
-            , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1902}} )
-            , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}} )
-            , active==="chapters"  &&React.createElement(ChaptersPanel, {  book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}} )
-            , active==="cover"     &&React.createElement(CoverPanel, {     book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1905}} )
-            , active==="format"    &&React.createElement(FormatPanel, {    book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
-            , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1907}} )
-            , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1908}} )
-            , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1909}} )
+            , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1869}} )
+            , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1870}} )
+            , active==="chapters"  &&React.createElement(ChaptersPanel, {  book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1871}} )
+            , active==="cover"     &&React.createElement(CoverPanel, {     book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1872}} )
+            , active==="format"    &&React.createElement(FormatPanel, {    book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1873}} )
+            , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1874}} )
+            , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1875}} )
+            , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1876}} )
           )
         )
       )
     )
   );
 }
+
+function BookForge(){
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(()=>{
+    getFirebaseAuth().then(auth=>{
+      auth.onAuthStateChanged(u=>{
+        setUser(u);
+        setAuthLoading(false);
+      });
+    });
+  },[]);
+
+  const handleLogout = async () => {
+    const auth = await getFirebaseAuth();
+    await auth.signOut();
+  };
+
+  if(authLoading) return (
+    React.createElement('div', { style: {minHeight:"100vh",background:"#0f0e17",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}}
+      , React.createElement('div', { style: {color:"#f5c842",fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}}, "BookForge")
+    )
+  );
+
+  if(!user) return React.createElement(AuthPanel, { onLogin: setUser, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1908}});
+
+  return React.createElement(AppInner, { user: user, handleLogout: handleLogout, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1910}});
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(React.createElement(BookForge));
   </script>
