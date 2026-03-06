@@ -1,10 +1,10 @@
-<!-- BOOKFORGE VERSION 3.4 BUILD 20260306 -->
+<!-- BOOKFORGE VERSION 3.5 BUILD 20260306 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BookForge v3.4 — Scrivi e Pubblica con AI</title>
+  <title>BookForge v3.5 — Scrivi e Pubblica con AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -261,7 +261,7 @@ function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete}){
 /* ─────────────────────────────────────────────
    SIDEBAR
 ───────────────────────────────────────────── */
-function Sidebar({book,setBook,active,setActive,savedAt}){
+function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout}){
   const totalW=book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0);
   const nav=[
     {id:"projects",icon:"📚",label:"Progetti"},
@@ -1890,7 +1890,7 @@ function AppInner({user, handleLogout}){
         button:hover{opacity:0.85;}
         h2,h3{margin:0;}
       `)
-      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1872}} )
+      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1872}})
       , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1873}}
         , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1874}} )
         , appStatus==="editor"&&book&&(
