@@ -66,29 +66,23 @@ function Badge({children,color="#f5c842"}){return React.createElement('span', { 
    CLAUDE API
 ───────────────────────────────────────────── */
 // ⚠️ NOTA: In produzione usare un backend proxy per proteggere la API key
-const ANTHROPIC_API_KEY = ""; // Lascia vuoto — gestito dal proxy
+// API chiamata tramite proxy backend sicuro
 
 async function callClaude(prompt,system=""){
   const body={model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]};
   if(system)body.system=system;
   try {
-    // Prima prova senza API key (funziona dentro Claude.ai artifacts)
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
+    const res=await fetch("/api/claude",{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "anthropic-version":"2023-06-01",
-        "anthropic-dangerous-direct-browser-access":"true",
-        ...(ANTHROPIC_API_KEY ? {"x-api-key": ANTHROPIC_API_KEY} : {})
-      },
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(body)
     });
     if(!res.ok){
       const err=await res.json();
-      throw new Error(_optionalChain([err, 'access', _2 => _2.error, 'optionalAccess', _3 => _3.message])||"Errore API "+res.status);
+      throw new Error((err&&err.error&&err.error.message)||"Errore API "+res.status);
     }
     const data=await res.json();
-    return _optionalChain([data, 'access', _4 => _4.content, 'optionalAccess', _5 => _5.map, 'call', _6 => _6(b=>b.text||""), 'access', _7 => _7.filter, 'call', _8 => _8(Boolean), 'access', _9 => _9.join, 'call', _10 => _10("")])||"";
+    return (data&&data.content&&data.content.map(b=>b.text||"").filter(Boolean).join(""))||"";
   } catch(e) {
     console.error("API Error:", e);
     throw e;
@@ -1035,7 +1029,7 @@ function AIWriterPanel({book,setBook,setActive}){
       const outlines=[];
       for(let i=0;i<brief.numChapters;i++){
         setGenError(`Generando scaletta capitolo ${i+1} di ${brief.numChapters}...`);
-        const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,system:"Rispondi SOLO con un oggetto JSON su una riga. Niente altro.",messages:[{role:"user",content:`Crea la scheda del CAPITOLO ${i+1} di ${brief.numChapters}:\nTITOLO: "${book.title||"Senza titolo"}" | GENERE: ${book.genre} | TRAMA: ${brief.premise} | PROTAGONISTA: ${brief.protagonist||"n/d"} | ANTAGONISTA: ${brief.antagonist||"n/d"} | AMBIENTAZIONE: ${brief.setting||"n/d"} | TONO: ${brief.tone}\n${outlines.length>0?`PRECEDENTI: ${outlines.map((o,j)=>`Cap.${j+1}: ${o.title}`).join(", ")}`:""}
+        const res=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,system:"Rispondi SOLO con un oggetto JSON su una riga. Niente altro.",messages:[{role:"user",content:`Crea la scheda del CAPITOLO ${i+1} di ${brief.numChapters}:\nTITOLO: "${book.title||"Senza titolo"}" | GENERE: ${book.genre} | TRAMA: ${brief.premise} | PROTAGONISTA: ${brief.protagonist||"n/d"} | ANTAGONISTA: ${brief.antagonist||"n/d"} | AMBIENTAZIONE: ${brief.setting||"n/d"} | TONO: ${brief.tone}\n${outlines.length>0?`PRECEDENTI: ${outlines.map((o,j)=>`Cap.${j+1}: ${o.title}`).join(", ")}`:""}
 Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 chars","keyScene":"scena principale 60 chars","emotionalArc":"arco emotivo 50 chars"}`}]})});
         const data=await res.json();
         const r=_optionalChain([data, 'access', _77 => _77.content, 'optionalAccess', _78 => _78.map, 'call', _79 => _79(b=>b.text||""), 'access', _80 => _80.join, 'call', _81 => _81(""), 'access', _82 => _82.trim, 'call', _83 => _83()])||"";
