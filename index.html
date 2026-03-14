@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.11 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.12 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1046,10 +1046,16 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
 
   /* Helper: genera testo di un singolo capitolo */
   const buildChapterPrompt=(i,cb,prevChapters)=>{
-    const prevC=prevChapters.length>0?`\n\nCAPITOLI PRECEDENTI:\n${prevChapters.map((p,idx)=>`Cap.${idx+1}: ${p.slice(0,200)}...`).join("\n")}`:""
+    const prevC=prevChapters.length>0?`\n\nCAPITOLI PRECEDENTI:\n${prevChapters.map((p,idx)=>`Cap.${idx+1}: ${p.slice(0,300)}...`).join("\n")}`:"";
     const lengthGuide=brief.chapterLength.includes("300")?"300-500":brief.chapterLength.includes("500")?"500-1000":brief.chapterLength.includes("1000")?"1000-2000":"2000+";
-    return `Scrivi il capitolo ${i+1} di un libro:\n\nTITOLO LIBRO: "${book.title||"Senza titolo"}"\nGENERE: ${book.genre} | TONO: ${brief.tone} | POV: ${brief.pov} | LUNGHEZZA: ${lengthGuide} parole\n\nTITOLO: ${cb.title}\nCOSA SUCCEDE: ${cb.summary}\nSCENA CHIAVE: ${cb.keyScene}\nARCO EMOTIVO: ${cb.emotionalArc}\n${cb.customInstructions?`EXTRA: ${cb.customInstructions}`:""}${prevC}\n\nScrivi SOLO il testo del capitolo, in italiano, senza titolo iniziale, senza commenti. Paragrafi separati da riga vuota.`;
-  };
+    const protagonistInfo=brief.protagonist?`PROTAGONISTA: ${brief.protagonist}`:"";
+    const antagonistInfo=brief.antagonist?`ANTAGONISTA: ${brief.antagonist}`:"";
+    const settingInfo=brief.setting?`AMBIENTAZIONE: ${brief.setting}`:"";
+    const premiseInfo=brief.premise?`TRAMA PRINCIPALE: ${brief.premise}`:"";
+    const plotTwistInfo=cb.plotTwist?`⚠️ COLPO DI SCENA IN QUESTO CAPITOLO: ${cb.plotTwist}`:"";
+    const contextBlock=[protagonistInfo,antagonistInfo,settingInfo,premiseInfo].filter(Boolean).join("\n");
+    return `Scrivi il capitolo ${i+1} di ${brief.numChapters} di un libro.\n\nINFORMAZIONI FONDAMENTALI DA RISPETTARE SEMPRE:\nTITOLO LIBRO: "${book.title||"Senza titolo"}"\nGENERE: ${book.genre} | TONO: ${brief.tone} | POV: ${brief.pov}\n${contextBlock}\n\nCAPITOLO DA SCRIVERE:\nTITOLO: ${cb.title}\nCOSA SUCCEDE: ${cb.summary}\nSCENA CHIAVE: ${cb.keyScene}\nARCO EMOTIVO: ${cb.emotionalArc}\n${plotTwistInfo}\n${cb.customInstructions?`NOTE EXTRA: ${cb.customInstructions}`:""}\n\nLUNGHEZZA TARGET: ${lengthGuide} parole${prevC}\n\nATTENZIONE: Rispetta SEMPRE i dettagli del protagonista, ambientazione e trama. Non inventare elementi in contraddizione con le informazioni fornite.\n\nScrivi SOLO il testo del capitolo, in italiano, senza titolo iniziale, senza commenti. Paragrafi separati da riga vuota.`;
+  }
 
   /* Genera TUTTO il libro */
   const generateAllChapters=async()=>{
