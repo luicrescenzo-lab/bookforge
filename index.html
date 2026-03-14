@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.19 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.20 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1785,15 +1785,10 @@ function AuthPanel({ onLogin }) {
 ───────────────────────────────────────────── */
 function VoiceDictation({ onText, style = {} }) {
   const [listening, setListening] = useState(false);
-  const [mode, setMode] = useState("direct");
+  const [transcript, setTranscript] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const [supported] = useState(()=>"webkitSpeechRecognition" in window || "SpeechRecognition" in window);
   const recognitionRef = useRef(null);
-
-  const modes = [
-    { id:"direct",    label:"Diretta",    desc:"Testo esatto" },
-    { id:"improve",   label:"AI Migliora",desc:"Testo rifinito" },
-    { id:"creative",  label:"AI Espande", desc:"Testo arricchito" },
-  ];
 
   const start = () => {
     if (!supported) { alert("Il tuo browser non supporta la dettatura vocale. Usa Chrome."); return; }
@@ -1802,23 +1797,12 @@ function VoiceDictation({ onText, style = {} }) {
     rec.lang = "it-IT";
     rec.continuous = true;
     rec.interimResults = false;
-    rec.onresult = async (e) => {
-      const transcript = Array.from(e.results).map(r=>r[0].transcript).join(" ");
+    rec.onresult = (e) => {
+      const t = Array.from(e.results).map(r=>r[0].transcript).join(" ");
       rec.stop();
       setListening(false);
-      if (mode === "direct") {
-        onText(transcript);
-      } else if (mode === "improve") {
-        const improved = await callClaude(
-          "Trascrivi e migliora questo testo dettato, correggendo grammatica e punteggiatura, mantenendo il significato originale: " + transcript
-        );
-        onText(improved);
-      } else {
-        const expanded = await callClaude(
-          "Espandi questo testo dettato in un paragrafo narrativo ricco e dettagliato, mantenendo l'idea originale ma arricchendo lo stile: " + transcript
-        );
-        onText(expanded);
-      }
+      setTranscript(t);
+      onText(t);
     };
     rec.onerror = () => setListening(false);
     rec.onend = () => setListening(false);
@@ -1832,29 +1816,56 @@ function VoiceDictation({ onText, style = {} }) {
     setListening(false);
   };
 
+  const improve = async () => {
+    if (!transcript) return;
+    setAiLoading("improve");
+    try {
+      const result = await callClaude("Migliora questo testo dettato correggendo grammatica e punteggiatura, mantieni il significato originale. Rispondi solo con il testo migliorato: " + transcript);
+      setTranscript(result);
+      onText(result);
+    } catch(e) { alert("Errore AI: " + e.message); }
+    setAiLoading(false);
+  };
+
+  const expand = async () => {
+    if (!transcript) return;
+    setAiLoading("expand");
+    try {
+      const result = await callClaude("Espandi questo testo in un paragrafo narrativo ricco e dettagliato, mantieni l'idea originale ma arricchisci lo stile letterario. Rispondi solo con il testo espanso: " + transcript);
+      setTranscript(result);
+      onText(result);
+    } catch(e) { alert("Errore AI: " + e.message); }
+    setAiLoading(false);
+  };
+
   if (!supported) return null;
 
   return (
     React.createElement('div', { style: {background:"#12111e",border:"1px solid #2e2d3e",borderRadius:12,padding:"14px 16px",...style}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1817}}
-      , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:10,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1818}}, "Dettatura Vocale" )
-      , React.createElement('div', { style: {display:"flex",gap:6,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1819}}
-        , modes.map(m=>(
-          React.createElement('button', { key: m.id, onClick: ()=>setMode(m.id),
-            style: {flex:1,padding:"8px 4px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,
-              background:mode===m.id?"linear-gradient(135deg,#f5c842,#e8a020)":"#1a1829",
-              color:mode===m.id?"#0f0e17":"#888"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1821}}
-            , m.label, React.createElement('br', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1825}}), React.createElement('span', { style: {fontSize:10,fontWeight:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1825}}, m.desc)
-          )
-        ))
-      )
+      , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:10,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1818}}, "🎤 Dettatura Vocale" )
       , React.createElement('button', { onClick: listening?stop:start,
         style: {width:"100%",padding:"10px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
           background:listening?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#7c3aed,#6d28d9)",
-          color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1829}}
+          color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1829}}
         , listening ? (
-          React.createElement(React.Fragment, null, React.createElement('span', { style: {width:10,height:10,borderRadius:"50%",background:"#fff",animation:"pulse 1s infinite"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1834}}), "Registrazione in corso — Clicca per fermare"      )
+          React.createElement(React.Fragment, null, React.createElement('span', { style: {width:10,height:10,borderRadius:"50%",background:"#fff",animation:"pulse 1s infinite"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1834}}), "Registrazione in corso — Clicca per fermare")
         ) : (
-          React.createElement(React.Fragment, null, "[MIC] Inizia a dettare"   )
+          React.createElement(React.Fragment, null, "🎤 Inizia a dettare")
+        )
+      )
+      , transcript && React.createElement('div', { style: {background:"#1a1829",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#c8c6d8",marginBottom:10,lineHeight:1.5,fontStyle:"italic"}}, transcript)
+      , transcript && React.createElement('div', { style: {display:"flex",gap:8}},
+        React.createElement('button', { onClick: improve, disabled: !!aiLoading,
+          style: {flex:1,padding:"8px",borderRadius:8,border:"1px solid #f5c84244",background:"transparent",
+            color:aiLoading==="improve"?"#f5c842":"#f5c842",cursor:"pointer",fontSize:12,fontWeight:700,
+            opacity:aiLoading?0.6:1}},
+          aiLoading==="improve"?"⏳ Migliorando...":"✨ Migliora con AI"
+        ),
+        React.createElement('button', { onClick: expand, disabled: !!aiLoading,
+          style: {flex:1,padding:"8px",borderRadius:8,border:"1px solid #c084fc44",background:"transparent",
+            color:"#c084fc",cursor:"pointer",fontSize:12,fontWeight:700,
+            opacity:aiLoading?0.6:1}},
+          aiLoading==="expand"?"⏳ Espandendo...":"🚀 Espandi con AI"
         )
       )
     )
