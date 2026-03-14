@@ -28,7 +28,16 @@ export default async function handler(req) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch(e) {
+      return new Response(JSON.stringify({ error: "Anthropic error: " + responseText.slice(0, 200) }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify(data), {
       status: response.status,
       headers: { "Content-Type": "application/json" },
