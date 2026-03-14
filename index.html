@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.7 BUILD 20260313 -->
+<!-- BOOKFORGE VERSION 3.8 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -69,7 +69,7 @@ function Badge({children,color="#f5c842"}){return React.createElement('span', { 
 // API chiamata tramite proxy backend sicuro
 
 async function callClaude(prompt,system=""){
-  const body={model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]};
+  const body={model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]};
   if(system)body.system=system;
   try {
     const res=await fetch("/api/claude",{
