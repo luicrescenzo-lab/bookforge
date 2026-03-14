@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.13 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.15 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -95,9 +95,9 @@ async function callClaude(prompt,system=""){
 // ── Storage resiliente: window.storage (artifact) → in-memory fallback ──
 const _mem={};
 const _store={
-  async get(k){try{if(typeof window!=="undefined"&&window.storage){const r=await window.storage.get(k);return r;}  }catch (e2){}return _mem[k]!=null?{value:_mem[k]}:null;},
-  async set(k,v){try{if(typeof window!=="undefined"&&window.storage)await window.storage.set(k,v);}catch (e3){}_mem[k]=v;},
-  async del(k){try{if(typeof window!=="undefined"&&window.storage)await window.storage.delete(k);}catch (e4){}delete _mem[k];}
+  async get(k){try{const v=localStorage.getItem(k);return v!=null?{value:v}:null;}catch(e){return _mem[k]!=null?{value:_mem[k]}:null;}},
+  async set(k,v){try{localStorage.setItem(k,v);}catch(e){}_mem[k]=v;},
+  async del(k){try{localStorage.removeItem(k);}catch(e){}delete _mem[k];}
 };
 async function loadProjectsList(){try{const r=await _store.get(PROJECTS_INDEX_KEY);return _optionalChain([r, 'optionalAccess', _11 => _11.value])?JSON.parse(r.value):[];}catch (e5){return[];}}
 async function saveProjectsList(list){try{await _store.set(PROJECTS_INDEX_KEY,JSON.stringify(list));}catch (e6){}}
@@ -1322,7 +1322,7 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
             , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1301}}, _optionalChain([generatedChapters, 'access', _107 => _107[previewIdx], 'optionalAccess', _108 => _108.content, 'access', _109 => _109.trim, 'call', _110 => _110(), 'access', _111 => _111.split, 'call', _112 => _112(/\s+/), 'access', _113 => _113.length]), " parole" )
           )
           , React.createElement('div', { style: {display:"flex",gap:10,marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1303}}
-            , React.createElement('button', { onClick: ()=>{setStep(0);setGeneratedChapters([]);}, style: {padding:"10px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1304}}, "🔄 Ricomincia" )
+            , React.createElement('button', { onClick: ()=>{if(window.confirm("Sei sicuro? Il libro generato andrà perso e ripartirai dal briefing.")){setStep(0);setGeneratedChapters([]);}}, style: {padding:"10px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1304}}, "🔄 Ricomincia" )
           )
         )
       )
