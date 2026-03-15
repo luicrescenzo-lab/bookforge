@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.28 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.29 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -92,18 +92,86 @@ async function callClaude(prompt,system=""){
 /* ─────────────────────────────────────────────
    STORAGE HELPERS
 ───────────────────────────────────────────── */
-// ── Storage resiliente: window.storage (artifact) → in-memory fallback ──
-const _mem={};
-const _store={
-  async get(k){try{const v=localStorage.getItem(k);return v!=null?{value:v}:null;}catch(e){return _mem[k]!=null?{value:_mem[k]}:null;}},
-  async set(k,v){try{localStorage.setItem(k,v);}catch(e){}_mem[k]=v;},
-  async del(k){try{localStorage.removeItem(k);}catch(e){}delete _mem[k];}
-};
-async function loadProjectsList(){try{const r=await _store.get(PROJECTS_INDEX_KEY);return _optionalChain([r, 'optionalAccess', _11 => _11.value])?JSON.parse(r.value):[];}catch (e5){return[];}}
-async function saveProjectsList(list){try{await _store.set(PROJECTS_INDEX_KEY,JSON.stringify(list));}catch (e6){}}
-async function loadProject(id){try{const r=await _store.get(PROJECT_PREFIX+id);return _optionalChain([r, 'optionalAccess', _12 => _12.value])?JSON.parse(r.value):null;}catch (e7){return null;}}
-async function saveProject(id,book){const updated={...book,updatedAt:Date.now()};try{await _store.set(PROJECT_PREFIX+id,JSON.stringify(updated));}catch (e8){}return updated;}
-async function deleteProject(id){try{await _store.del(PROJECT_PREFIX+id);}catch (e9){}}
+// ── Storage Firestore (cloud sync) con fallback localStorage ──
+let _firestoreDb = null;
+let _currentUserId = null;
+
+function setFirestoreUser(uid) { _currentUserId = uid; }
+
+async function getFirestoreDb() {
+  if (_firestoreDb) return _firestoreDb;
+  return new Promise((resolve) => {
+    if (window.firebase && window.firebase.firestore) {
+      _firestoreDb = window.firebase.firestore();
+      resolve(_firestoreDb);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js';
+    s.onload = () => {
+      _firestoreDb = window.firebase.firestore();
+      resolve(_firestoreDb);
+    };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadProjectsList() {
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      const snap = await db.collection('users').doc(_currentUserId).collection('projects').get();
+      const list = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        list.push({ id: doc.id, title: d.title||'', author: d.author||'', genre: d.genre||'Romanzo', chapters: d.chapters||[], brief: d.brief||{}, chapterBriefs: d.chapterBriefs||[], createdAt: d.createdAt||Date.now(), updatedAt: d.updatedAt||Date.now() });
+      });
+      return list;
+    }
+  } catch(e) { console.error('Firestore load error:', e); }
+  // fallback localStorage
+  try { const v = localStorage.getItem(PROJECTS_INDEX_KEY); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+
+async function saveProjectsList(list) {
+  // Salvato implicitamente da saveProject — non serve azione separata
+  try { localStorage.setItem(PROJECTS_INDEX_KEY, JSON.stringify(list)); } catch(e) {}
+}
+
+async function loadProject(id) {
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      const doc = await db.collection('users').doc(_currentUserId).collection('projects').doc(id).get();
+      if (doc.exists) return doc.data();
+    }
+  } catch(e) { console.error('Firestore loadProject error:', e); }
+  // fallback localStorage
+  try { const v = localStorage.getItem(PROJECT_PREFIX + id); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+
+async function saveProject(id, book) {
+  const updated = { ...book, updatedAt: Date.now() };
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      await db.collection('users').doc(_currentUserId).collection('projects').doc(id).set(updated);
+    }
+  } catch(e) { console.error('Firestore saveProject error:', e); }
+  // salva anche in localStorage come backup
+  try { localStorage.setItem(PROJECT_PREFIX + id, JSON.stringify(updated)); } catch(e) {}
+  return updated;
+}
+
+async function deleteProject(id) {
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      await db.collection('users').doc(_currentUserId).collection('projects').doc(id).delete();
+    }
+  } catch(e) { console.error('Firestore deleteProject error:', e); }
+  try { localStorage.removeItem(PROJECT_PREFIX + id); } catch(e) {}
+}
 
 /* ─────────────────────────────────────────────
    IMAGE UTILS
@@ -2107,6 +2175,7 @@ function BookForge(){
     getFirebaseAuth().then(auth=>{
       auth.onAuthStateChanged(u=>{
         setUser(u);
+        setFirestoreUser(u ? u.uid : null);
         setAuthLoading(false);
       });
     });
