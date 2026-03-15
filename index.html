@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.29 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.30 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -14,6 +14,48 @@
     body {background:#0f0e17;}
     #root {height:100vh;}
     @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.5}}
+    .bf-sidebar { width:240px; flex-shrink:0; transition: transform 0.3s ease; }
+    .bf-hamburger { display:none; }
+    .bf-overlay { display:none; }
+    @media (max-width: 768px) {
+      .bf-sidebar {
+        position: fixed !important;
+        top: 0; left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+        width: 280px !important;
+      }
+      .bf-sidebar.open {
+        transform: translateX(0);
+      }
+      .bf-hamburger {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px; height: 44px;
+        background: #1a1829;
+        border: 1px solid #2e2d3e;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 20px;
+        position: fixed;
+        top: 12px; left: 12px;
+        z-index: 1001;
+        color: #f5c842;
+      }
+      .bf-overlay {
+        display: block;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.6);
+        z-index: 999;
+      }
+      .bf-main-content {
+        padding-top: 60px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -348,7 +390,7 @@ function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete,onMarketAnal
 /* ─────────────────────────────────────────────
    SIDEBAR
 ───────────────────────────────────────────── */
-function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout}){
+function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sidebarOpen,setSidebarOpen}){
   const totalW=book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0);
   const nav=[
     {id:"projects",icon:"📚",label:"Progetti"},
@@ -363,7 +405,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout}){
     {id:"kdpanalyzer",icon:"📊",label:"KDP Analyzer"},
   ];
   return(
-    React.createElement('aside', { style: {width:240,background:"#0c0b18",borderRight:"1px solid #1a1929",display:"flex",flexDirection:"column",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}
+    React.createElement('aside', { className: `bf-sidebar${sidebarOpen?' open':''}`, style: {width:240,background:"#0c0b18",borderRight:"1px solid #1a1929",display:"flex",flexDirection:"column",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}
       , React.createElement('div', { style: {padding:"20px 20px 16px",borderBottom:"1px solid #1a1929"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 280}}
         , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "📖 BookForge" )
         , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginTop:3,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "Write · Format · Publish"    )
@@ -2096,6 +2138,7 @@ function VoiceDictation({ onText, style = {} }) {
 }
 
 function AppInner({user, handleLogout}){
+  const [sidebarOpen,setSidebarOpen]=useState(false);
   const [appStatus,setAppStatus]=useState("loading");
   const [projects,setProjects]=useState([]);
   const [currentId,setCurrentId]=useState(null);
@@ -2128,7 +2171,7 @@ function AppInner({user, handleLogout}){
     const chapters=(proj.chapters||[]).map(ch=>({...ch,images:ch.images||[]}));setBook({...proj,chapters});setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleCreateProject=async()=>{const id=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const newBook=DEFAULT_BOOK();await saveProject(id,newBook);const meta={id,title:"",author:"",genre:"Romanzo",chapters:newBook.chapters,brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:newBook.createdAt,updatedAt:newBook.updatedAt};const newList=[...projects,meta];setProjects(newList);await saveProjectsList(newList);setBook(newBook);setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleDeleteProject=async(id)=>{await deleteProject(id);const newList=projects.filter(p=>p.id!==id);setProjects(newList);await saveProjectsList(newList);if(currentId===id){setBook(null);setCurrentId(null);setAppStatus("projects");}};
-  const handleSetActive=(panel)=>{if(panel==="projects")setAppStatus("projects");else if(panel==="marketanalyzer"){setActive("marketanalyzer");setAppStatus("editor");if(!book){const nb=DEFAULT_BOOK();setBook(nb);}}else{setActive(panel);setAppStatus("editor");}};
+  const handleSetActive=(panel)=>{setSidebarOpen(false);if(panel==="projects")setAppStatus("projects");else if(panel==="marketanalyzer"){setActive("marketanalyzer");setAppStatus("editor");if(!book){const nb=DEFAULT_BOOK();setBook(nb);}}else{setActive(panel);setAppStatus("editor");}};
   useEffect(()=>{if(appStatus==="loading")return;saveProjectsList(projects);},[projects]);
 
   if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "Caricamento BookForge..." )));
@@ -2146,7 +2189,9 @@ function AppInner({user, handleLogout}){
         button:hover{opacity:0.85;}
         h2,h3{margin:0;}
       `)
-      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
+      , React.createElement("button", { className: "bf-hamburger", onClick: ()=>setSidebarOpen(true)}, "☰")
+      , sidebarOpen && React.createElement("div", { className: "bf-overlay", onClick: ()=>setSidebarOpen(false)})
+      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, sidebarOpen: sidebarOpen, setSidebarOpen: setSidebarOpen, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
       , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1895}}
         , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, onMarketAnalyzer: ()=>handleSetActive("marketanalyzer"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
         , appStatus==="editor"&&book&&(
