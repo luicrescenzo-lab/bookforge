@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.27 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.28 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -210,8 +210,10 @@ function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete,onMarketAnal
             , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:32,color:"#f5c842",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 195}}, "📚 Progetti Letterari"  )
             , React.createElement('div', { style: {fontSize:14,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 196}}, "Tutti i tuoi libri salvati — ogni parola al sicuro"         )
           )
-          , React.createElement("button", { onClick: ()=>{ if(onMarketAnalyzer) onMarketAnalyzer(); }, style: {padding:"10px 20px",borderRadius:10,border:"1px solid #f5c84244",background:"transparent",color:"#f5c842",fontWeight:700,fontSize:14,cursor:"pointer",marginRight:8}}, "🔍 Market Analyzer")
-        , React.createElement('button', { onClick: onCreate, style: {...goldBtn,display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, "+"), " Nuovo Libro"  )
+          , React.createElement("div", { style: {display:"flex",gap:8}},
+            React.createElement("button", { onClick: ()=>{ if(onMarketAnalyzer) onMarketAnalyzer(); }, style: {padding:"10px 20px",borderRadius:10,border:"1px solid #f5c84244",background:"transparent",color:"#f5c842",fontWeight:700,fontSize:14,cursor:"pointer"}}, "🔍 Market Analyzer"),
+            React.createElement('button', { onClick: onCreate, style: {...goldBtn,display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, "+"), " Nuovo Libro"  )
+          )
         )
         , projects.length===0?(
           React.createElement('div', { style: {textAlign:"center",padding:"80px 40px",background:"#12111e",borderRadius:20,border:"1px dashed #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 201}}
