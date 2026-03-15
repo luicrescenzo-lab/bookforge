@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.24 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.25 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -288,6 +288,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout}){
     {id:"format",icon:"📐",label:"Impaginazione"},
     {id:"translate",icon:"🌍",label:"Traduci"},
     {id:"publish",icon:"🚀",label:"Pubblica su KDP"},
+    {id:"marketanalyzer",icon:"🔍",label:"Market Analyzer"},
     {id:"kdpanalyzer",icon:"📊",label:"KDP Analyzer"},
   ];
   return(
@@ -569,7 +570,7 @@ function FormatPanel({book}){
 ───────────────────────────────────────────── */
 function TranslatePanel({book,setBook}){
   const [targetLang,setTargetLang]=useState("en");const [loading,setLoading]=useState(false);const [progress,setProgress]=useState({current:0,total:0,name:""});const [translated,setTranslated]=useState(null);const [error,setError]=useState("");
-  const translate=async()=>{setLoading(true);setError("");setTranslated(null);const langLabel=_optionalChain([LANGUAGES, 'access', _38 => _38.find, 'call', _39 => _39(l=>l.code===targetLang), 'optionalAccess', _40 => _40.label])||targetLang;const total=book.chapters.length;const result=[];try{for(let i=0;i<total;i++){const ch=book.chapters[i];setProgress({current:i+1,total,name:ch.title||`Capitolo ${i+1}`});const r=await callClaude(`Traduci fedelmente in ${langLabel} questo testo letterario. Mantieni stile e tono.\nRispondi con:\nTITOLO: [titolo tradotto]\n[testo tradotto]\n\nTITOLO ORIGINALE: ${ch.title}\n\n${ch.content||"(vuoto)"}`,`Sei un traduttore letterario professionista specializzato in ${langLabel}.`);const titleMatch=r.match(/^TITOLO:\s*(.+)\n/);const translatedTitle=titleMatch?titleMatch[1].trim():ch.title;const bodyText=r.replace(/^TITOLO:.+\n/,"").trim();result.push({title:translatedTitle,content:bodyText,images:ch.images||[]});}setTranslated({lang:langLabel,chapters:result});}catch(e){setError("Errore: "+e.message);}setLoading(false);};
+  const translate=async()=>{setLoading(true);setError("");setTranslated(null);const langLabel=_optionalChain([LANGUAGES, 'access', _38 => _38.find, 'call', _39 => _39(l=>l.code===targetLang), 'optionalAccess', _40 => _40.label])||targetLang;const total=book.chapters.length;const result=[];try{for(let i=0;i<total;i++){const ch=book.chapters[i];setProgress({current:i+1,total,name:ch.title||`Capitolo ${i+1}`});const r=await callClaude(`Traduci fedelmente in ${langLabel} questo testo letterario. Mantieni stile e tono.\nRispondi con:\nTITOLO: [titolo tradotto]\n[testo tradotto]\n\nTITOLO ORIGINALE: ${ch.title}\n\n${ch.content||"(vuoto)"}`,`Sei un traduttore letterario professionista specializzato in ${langLabel}. Usa SEMPRE l'ortografia e i caratteri speciali corretti della lingua di destinazione. Per il polacco usa obbligatoriamente: ą, ć, ę, ł, ń, ó, ś, ź, ż. Non omettere mai i diacritici.`);const titleMatch=r.match(/^TITOLO:\s*(.+)\n/);const translatedTitle=titleMatch?titleMatch[1].trim():ch.title;const bodyText=r.replace(/^TITOLO:.+\n/,"").trim();result.push({title:translatedTitle,content:bodyText,images:ch.images||[]});}setTranslated({lang:langLabel,chapters:result});}catch(e){setError("Errore: "+e.message);}setLoading(false);};
   const pct=progress.total?Math.round((progress.current/progress.total)*100):0;
   return(React.createElement('div', { style: {flex:1,padding:36,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('h2', { style: {fontFamily:"'Playfair Display',serif",color:"#f5c842",fontSize:26,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Traduzione Automatica" ), React.createElement('p', { style: {color:"#7a7890",marginBottom:28,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Traduci l'intero libro preservando lo stile letterario."      ), React.createElement('div', { style: {maxWidth:640}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Lingua di destinazione"  ), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:7,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, LANGUAGES.filter(l=>l.code!=="it").map(l=>(React.createElement('button', { key: l.code, onClick: ()=>setTargetLang(l.code), style: {padding:"8px 14px",borderRadius:20,cursor:"pointer",fontSize:13,border:targetLang===l.code?"1px solid #f5c842":"1px solid #2e2d3e",background:targetLang===l.code?"#f5c84222":"transparent",color:targetLang===l.code?"#f5c842":"#7a7890",fontWeight:targetLang===l.code?700:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, l.flag, " " , l.label)))), React.createElement('div', { style: {...card,marginBottom:20,display:"flex",gap:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22,fontWeight:700,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, book.chapters.length), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "capitoli")), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22,fontWeight:700,color:"#c084fc",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0).toLocaleString()), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "parole")), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([LANGUAGES, 'access', _41 => _41.find, 'call', _42 => _42(l=>l.code===targetLang), 'optionalAccess', _43 => _43.flag])), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([LANGUAGES, 'access', _44 => _44.find, 'call', _45 => _45(l=>l.code===targetLang), 'optionalAccess', _46 => _46.label])))), loading&&(React.createElement('div', { style: {marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12,color:"#7a7890"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Capitolo: " , React.createElement('span', { style: {color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, progress.name)), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, pct, "%")), React.createElement('div', { style: {background:"#1a1829",borderRadius:4,height:8,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {width:`${pct}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:4,transition:"width 0.5s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}} )))), error&&React.createElement('div', { style: {background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, error), translated&&(React.createElement('div', { style: {background:"#0d1f0d",border:"1px solid #1a4a1a",borderRadius:12,padding:20,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {color:"#4ade80",fontSize:14,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "✅ Traduzione completata in "    , translated.lang, "!"), React.createElement('div', { style: {color:"#a8d8a8",fontSize:13,lineHeight:1.65,maxHeight:100,overflow:"hidden",fontStyle:"italic"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([translated, 'access', _47 => _47.chapters, 'access', _48 => _48[0], 'optionalAccess', _49 => _49.content, 'optionalAccess', _50 => _50.slice, 'call', _51 => _51(0,280)]), "..."), React.createElement('div', { style: {display:"flex",gap:8,marginTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('button', { onClick: ()=>{setBook(b=>({...b,title:b.title+` [${translated.lang}]`,chapters:translated.chapters}));setTranslated(null);}, style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Applica al progetto"  ), React.createElement('button', { onClick: ()=>setTranslated(null), style: {padding:"10px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Scarta")))), React.createElement('button', { onClick: translate, disabled: loading, style: {...goldBtn,opacity:loading?0.6:1,cursor:loading?"not-allowed":"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, loading?`⏳ Capitolo ${progress.current}/${progress.total}...`:`🌍 Traduci in ${_optionalChain([LANGUAGES, 'access', _52 => _52.find, 'call', _53 => _53(l=>l.code===targetLang), 'optionalAccess', _54 => _54.label])}`))));
 }
@@ -631,7 +632,7 @@ function PublishPanel({book,setBook}){
         const ch=book.chapters[i];
         const r=await callClaude(
           `Traduci fedelmente in ${langLabel} questo testo letterario. Mantieni stile e tono.\nRispondi con:\nTITOLO: [titolo tradotto]\n[testo tradotto]\n\nTITOLO ORIGINALE: ${ch.title}\n\n${ch.content||"(vuoto)"}`,
-          `Sei un traduttore letterario professionista specializzato in ${langLabel}.`
+          `Sei un traduttore letterario professionista specializzato in ${langLabel}. Usa SEMPRE l'ortografia e i caratteri speciali corretti della lingua di destinazione. Per il polacco usa obbligatoriamente: ą, ć, ę, ł, ń, ó, ś, ź, ż. Non omettere mai i diacritici.`
         );
         const tm=r.match(/^TITOLO:\s*(.+)\n/);const tt=tm?tm[1].trim():ch.title;const bt=r.replace(/^TITOLO:.+\n/,"").trim();chapters.push({...ch,title:tt,content:bt});
       }
@@ -1396,6 +1397,149 @@ function calcRoyaltyA(price, pages, format, market){
 const scoreCol=s=>s>=75?"#4ade80":s>=50?"#facc15":s>=30?"#fb923c":"#f87171";
 const compCol=c=>({alta:"#f87171",media:"#facc15",bassa:"#4ade80"})[c]||"#999";
 
+
+function MarketAnalyzerPanel({setActive, setBook, book}) {
+  const [niche, setNiche] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+  const [error, setError] = React.useState("");
+
+  const analyze = async () => {
+    if (!niche.trim()) { setError("Inserisci una nicchia o argomento."); return; }
+    setLoading(true); setError(""); setResult(null);
+    try {
+      const prompt = `Sei un esperto di Amazon KDP e self publishing. Analizza questa nicchia editoriale: "${niche}"
+
+Rispondi SOLO con un oggetto JSON valido su una riga, nessun testo prima o dopo:
+{"demand":"Alta|Media|Bassa","demandExplanation":"spiegazione breve max 100 chars","competition":"Alta|Media|Bassa","competitionExplanation":"spiegazione breve max 100 chars","ebookPrice":"X.XX","paperbackPrice":"X.XX","monthlyRoyaltiesMin":N,"monthlyRoyaltiesMax":N,"relatedNiches":["nicchia1","nicchia2","nicchia3"],"verdict":"SI|NO","verdictReason":"motivazione max 150 chars","suggestedTitle":"titolo libro suggerito","suggestedGenre":"genere"}`;
+
+      const r = await callClaude(prompt, "Sei un esperto di Amazon KDP. Rispondi SOLO con JSON valido, nessun testo aggiuntivo.");
+      const start = r.indexOf("{"), end = r.lastIndexOf("}");
+      if (start === -1 || end === -1) throw new Error("Risposta non valida");
+      const data = JSON.parse(r.slice(start, end + 1));
+      setResult(data);
+    } catch(e) {
+      setError("Errore analisi: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  const startWriting = () => {
+    if (!result) return;
+    setBook(b => ({...b, title: result.suggestedTitle || "", genre: result.suggestedGenre || b.genre}));
+    setActive("aiwriter");
+  };
+
+  const demandColor = (v) => v === "Alta" ? "#4ade80" : v === "Media" ? "#f5c842" : "#ef4444";
+  const compColor = (v) => v === "Alta" ? "#ef4444" : v === "Media" ? "#f5c842" : "#4ade80";
+
+  return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
+    React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "🔍 Market Analyzer"),
+    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Analizza una nicchia prima di scrivere. Scopri se vale la pena investire il tuo tempo."),
+
+    React.createElement("div", { style: {maxWidth:680} },
+      React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:24, marginBottom:24} },
+        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "Nicchia o argomento da analizzare"),
+        React.createElement("div", { style: {display:"flex", gap:12} },
+          React.createElement("input", {
+            value: niche,
+            onChange: e => setNiche(e.target.value),
+            onKeyDown: e => e.key === "Enter" && analyze(),
+            placeholder: "es. ricettario vegano, self-help produttività, romanzo storico ambientato a Roma...",
+            style: {flex:1, background:"#1a1829", border:"1px solid #2e2d3e", borderRadius:8, padding:"12px 16px", color:"#e8e6f0", fontSize:14, outline:"none"}
+          }),
+          React.createElement("button", {
+            onClick: analyze,
+            disabled: loading,
+            style: {padding:"12px 24px", borderRadius:8, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:14, cursor:"pointer", opacity:loading?0.6:1, whiteSpace:"nowrap"}
+          }, loading ? "⏳ Analisi..." : "🔍 Analizza")
+        ),
+        error && React.createElement("div", { style: {color:"#ef4444", fontSize:13, marginTop:8} }, error)
+      ),
+
+      loading && React.createElement("div", { style: {textAlign:"center", padding:40, color:"#7a7890"} },
+        React.createElement("div", { style: {fontSize:32, marginBottom:12} }, "🔍"),
+        React.createElement("div", { style: {fontSize:14} }, "Analisi del mercato Amazon KDP in corso...")
+      ),
+
+      result && React.createElement("div", null,
+        // Verdetto principale
+        React.createElement("div", {
+          style: {
+            background: result.verdict === "SI" ? "#0d1f0d" : "#1f0d0d",
+            border: `2px solid ${result.verdict === "SI" ? "#4ade80" : "#ef4444"}`,
+            borderRadius:14, padding:24, marginBottom:20, textAlign:"center"
+          }
+        },
+          React.createElement("div", { style: {fontSize:40, marginBottom:8} }, result.verdict === "SI" ? "✅" : "❌"),
+          React.createElement("div", { style: {fontSize:22, fontWeight:700, color: result.verdict === "SI" ? "#4ade80" : "#ef4444", marginBottom:8} },
+            result.verdict === "SI" ? "NICCHIA PROFITTEVOLE" : "NICCHIA NON CONSIGLIATA"
+          ),
+          React.createElement("div", { style: {color:"#c8c6d8", fontSize:14, lineHeight:1.6} }, result.verdictReason)
+        ),
+
+        // Metriche principali
+        React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20} },
+          React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20} },
+            React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "📈 Domanda di mercato"),
+            React.createElement("div", { style: {fontSize:24, fontWeight:700, color: demandColor(result.demand), marginBottom:6} }, result.demand),
+            React.createElement("div", { style: {fontSize:12, color:"#7a7890", lineHeight:1.5} }, result.demandExplanation)
+          ),
+          React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20} },
+            React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "⚔️ Competizione"),
+            React.createElement("div", { style: {fontSize:24, fontWeight:700, color: compColor(result.competition), marginBottom:6} }, result.competition),
+            React.createElement("div", { style: {fontSize:12, color:"#7a7890", lineHeight:1.5} }, result.competitionExplanation)
+          )
+        ),
+
+        // Royalties e prezzi
+        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:16, textTransform:"uppercase", letterSpacing:1} }, "💰 Stima Royalties & Prezzi"),
+          React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16} },
+            React.createElement("div", { style: {textAlign:"center"} },
+              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#4ade80", fontFamily:"monospace"} }, `€${result.monthlyRoyaltiesMin}-${result.monthlyRoyaltiesMax}`),
+              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "royalties/mese stimate")
+            ),
+            React.createElement("div", { style: {textAlign:"center"} },
+              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#f5c842", fontFamily:"monospace"} }, `€${result.ebookPrice}`),
+              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "prezzo ebook consigliato")
+            ),
+            React.createElement("div", { style: {textAlign:"center"} },
+              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#c084fc", fontFamily:"monospace"} }, `€${result.paperbackPrice}`),
+              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "prezzo cartaceo consigliato")
+            )
+          )
+        ),
+
+        // Nicchie correlate
+        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:12, textTransform:"uppercase", letterSpacing:1} }, "🎯 Nicchie Correlate Meno Competitive"),
+          React.createElement("div", { style: {display:"flex", flexWrap:"wrap", gap:8} },
+            result.relatedNiches.map((n, i) =>
+              React.createElement("button", {
+                key: i,
+                onClick: () => { setNiche(n); setResult(null); },
+                style: {padding:"8px 16px", borderRadius:20, border:"1px solid #2e2d3e", background:"transparent", color:"#c8c6d8", cursor:"pointer", fontSize:13}
+              }, n)
+            )
+          )
+        ),
+
+        // Titolo suggerito e CTA
+        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "📚 Titolo Suggerito"),
+          React.createElement("div", { style: {fontSize:18, fontFamily:"'Playfair Display',serif", color:"#f5c842", fontStyle:"italic"} }, `"${result.suggestedTitle}"`)
+        ),
+
+        result.verdict === "SI" && React.createElement("button", {
+          onClick: startWriting,
+          style: {width:"100%", padding:"16px", borderRadius:12, border:"none", background:"linear-gradient(135deg,#4ade80,#22c55e)", color:"#0f0e17", fontWeight:700, fontSize:16, cursor:"pointer"}
+        }, "✍️ Inizia a scrivere questo libro →")
+      )
+    )
+  );
+}
+
 function KDPAnalyzerPanel({book}){
   const wordCount=book.chapters.reduce((a,c)=>a+(_optionalChain([c, 'access', _114 => _114.content, 'optionalAccess', _115 => _115.trim, 'call', _116 => _116()])?c.content.trim().split(/\s+/).length:0),0);
   const pageCount=Math.ceil(wordCount/250);
@@ -1943,6 +2087,7 @@ function AppInner({user, handleLogout}){
             , active==="format"    &&React.createElement(FormatPanel, {    book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}} )
             , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}} )
             , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1905}} )
+            , active==="marketanalyzer"&&React.createElement(MarketAnalyzerPanel, { setActive: setActive, setBook: setBook, book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
             , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
           )
         )
