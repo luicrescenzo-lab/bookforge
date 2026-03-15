@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.25 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.26 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -199,7 +199,7 @@ function exportEPUB(book){
 /* ─────────────────────────────────────────────
    PROJECTS PANEL
 ───────────────────────────────────────────── */
-function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete}){
+function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete,onMarketAnalyzer}){
   const [confirmDelete,setConfirmDelete]=useState(null);
   const GENRE_COLORS={"Fantasy":"#c084fc","Thriller":"#ef4444","Romanzo":"#f5c842","Horror":"#ef4444","Romance":"#f472b6","Storico":"#f59e0b","Giallo":"#fbbf24","Saggio":"#38bdf8","Autobiografia":"#4ade80","Self-Help":"#34d399","Business":"#60a5fa","Poesia":"#a78bfa"};
   return(
@@ -210,7 +210,8 @@ function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete}){
             , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:32,color:"#f5c842",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 195}}, "📚 Progetti Letterari"  )
             , React.createElement('div', { style: {fontSize:14,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 196}}, "Tutti i tuoi libri salvati — ogni parola al sicuro"         )
           )
-          , React.createElement('button', { onClick: onCreate, style: {...goldBtn,display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, "+"), " Nuovo Libro"  )
+          , React.createElement("button", { onClick: ()=>{ if(onMarketAnalyzer) onMarketAnalyzer(); }, style: {padding:"10px 20px",borderRadius:10,border:"1px solid #f5c84244",background:"transparent",color:"#f5c842",fontWeight:700,fontSize:14,cursor:"pointer",marginRight:8}}, "🔍 Market Analyzer")
+        , React.createElement('button', { onClick: onCreate, style: {...goldBtn,display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}), React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, "+"), " Nuovo Libro"  )
         )
         , projects.length===0?(
           React.createElement('div', { style: {textAlign:"center",padding:"80px 40px",background:"#12111e",borderRadius:20,border:"1px dashed #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 201}}
@@ -2057,7 +2058,7 @@ function AppInner({user, handleLogout}){
     const chapters=(proj.chapters||[]).map(ch=>({...ch,images:ch.images||[]}));setBook({...proj,chapters});setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleCreateProject=async()=>{const id=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const newBook=DEFAULT_BOOK();await saveProject(id,newBook);const meta={id,title:"",author:"",genre:"Romanzo",chapters:newBook.chapters,brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:newBook.createdAt,updatedAt:newBook.updatedAt};const newList=[...projects,meta];setProjects(newList);await saveProjectsList(newList);setBook(newBook);setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleDeleteProject=async(id)=>{await deleteProject(id);const newList=projects.filter(p=>p.id!==id);setProjects(newList);await saveProjectsList(newList);if(currentId===id){setBook(null);setCurrentId(null);setAppStatus("projects");}};
-  const handleSetActive=(panel)=>{if(panel==="projects")setAppStatus("projects");else{setActive(panel);setAppStatus("editor");}};
+  const handleSetActive=(panel)=>{if(panel==="projects")setAppStatus("projects");else if(panel==="marketanalyzer"){setActive("marketanalyzer");setAppStatus("editor");if(!book){const nb=DEFAULT_BOOK();setBook(nb);}}else{setActive(panel);setAppStatus("editor");}};
   useEffect(()=>{if(appStatus==="loading")return;saveProjectsList(projects);},[projects]);
 
   if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "Caricamento BookForge..." )));
@@ -2077,7 +2078,7 @@ function AppInner({user, handleLogout}){
       `)
       , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
       , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1895}}
-        , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
+        , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, onMarketAnalyzer: ()=>handleSetActive("marketanalyzer"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
         , appStatus==="editor"&&book&&(
           React.createElement(React.Fragment, null
             , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1899}} )
