@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.30 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.31 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -24,7 +24,10 @@
         height: 100vh;
         z-index: 1000;
         transform: translateX(-100%);
-        width: 280px !important;
+        width: 85vw !important;
+        max-width: 320px !important;
+        overflow-y: auto;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.8);
       }
       .bf-sidebar.open {
         transform: translateX(0);
@@ -41,7 +44,7 @@
         font-size: 20px;
         position: fixed;
         top: 12px; left: 12px;
-        z-index: 1001;
+        z-index: 1002;
         color: #f5c842;
       }
       .bf-overlay {
@@ -49,11 +52,18 @@
         position: fixed;
         top: 0; left: 0;
         width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.6);
-        z-index: 999;
+        background: rgba(0,0,0,0.7);
+        z-index: 1001;
       }
       .bf-main-content {
         padding-top: 60px !important;
+        width: 100vw !important;
+        overflow-x: hidden;
+      }
+      /* Fix testo spezzato su mobile */
+      div, p, span {
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
       }
     }
   </style>
