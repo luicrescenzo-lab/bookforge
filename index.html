@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.32 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.33 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -2199,7 +2199,30 @@ function AppInner({user, handleLogout}){
     const chapters=(proj.chapters||[]).map(ch=>({...ch,images:ch.images||[]}));setBook({...proj,chapters});setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleCreateProject=async()=>{const id=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const newBook=DEFAULT_BOOK();await saveProject(id,newBook);const meta={id,title:"",author:"",genre:"Romanzo",chapters:newBook.chapters,brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:newBook.createdAt,updatedAt:newBook.updatedAt};const newList=[...projects,meta];setProjects(newList);await saveProjectsList(newList);setBook(newBook);setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleDeleteProject=async(id)=>{await deleteProject(id);const newList=projects.filter(p=>p.id!==id);setProjects(newList);await saveProjectsList(newList);if(currentId===id){setBook(null);setCurrentId(null);setAppStatus("projects");}};
-  const handleSetActive=(panel)=>{setSidebarOpen(false);if(panel==="projects")setAppStatus("projects");else if(panel==="marketanalyzer"){setActive("marketanalyzer");setAppStatus("editor");if(!book){const nb=DEFAULT_BOOK();setBook(nb);}}else{setActive(panel);setAppStatus("editor");}};
+  const handleSetActive=async(panel)=>{
+    setSidebarOpen(false);
+    if(panel==="projects"){
+      setAppStatus("projects");
+    } else if(panel==="marketanalyzer"){
+      setActive("marketanalyzer");
+      setAppStatus("editor");
+      if(!book){const nb=DEFAULT_BOOK();setBook(nb);}
+    } else {
+      if(!book){
+        // Nessun progetto aperto - apri il primo disponibile o creane uno
+        if(projects.length>0){
+          const proj=await loadProject(projects[0].id);
+          if(proj){setBook(proj);setCurrentId(projects[0].id);}
+        } else {
+          const id=`proj_${Date.now()}`;const nb=DEFAULT_BOOK();
+          await saveProject(id,nb);setBook(nb);setCurrentId(id);
+          setProjects([{id,title:"",author:"",genre:"Romanzo",chapters:nb.chapters,brief:{},chapterBriefs:[],createdAt:nb.createdAt,updatedAt:nb.updatedAt}]);
+        }
+      }
+      setActive(panel);
+      setAppStatus("editor");
+    }
+  };
   useEffect(()=>{if(appStatus==="loading")return;saveProjectsList(projects);},[projects]);
 
   if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "Caricamento BookForge..." )));
