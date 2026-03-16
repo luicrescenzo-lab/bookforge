@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.45 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.46 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -399,7 +399,7 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
 }
 
 function exportEPUB(book){
-  const chapters=book.chapters.map((ch,i)=>({id:`ch${i}`,title:ch.title||`Capitolo ${i+1}`,content:(ch.content||"").split(/\n\n+/).map(p=>`<p>${p.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;")}</p>`).join("\n")}));
+  const chapters=book.chapters.map((ch,i)=>({id:`ch${i}`,title:ch.title||`Capitolo ${i+1}`,content:cleanAIText(ch.content||"").split(/\n\n+/).map(p=>`<p>${p.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;")}</p>`).join("\n")}));
   const uid=`book-${Date.now()}`;
   const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${book.title||"Il Mio Libro"}</dc:title><dc:creator>${book.author||""}</dc:creator><dc:language>it</dc:language><dc:identifier id="uid">${uid}</dc:identifier></metadata><manifest>${chapters.map(c=>`<item id="${c.id}" href="${c.id}.html" media-type="application/xhtml+xml"/>`).join("")}<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest><spine toc="ncx">${chapters.map(c=>`<itemref idref="${c.id}"/>`).join("")}</spine></package>`;
   const txt=`EPUB Source — ${book.title||"Libro"}\n\n--- content.opf ---\n${opf}\n\n${chapters.map(c=>`--- ${c.id}.html ---\n<?xml version="1.0"?><html><head><title>${c.title}</title></head><body><h1>${c.title}</h1>${c.content}</body></html>`).join("\n\n")}`;
