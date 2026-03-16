@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.39 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.40 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -350,11 +350,12 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
   for(let ci=0;ci<book.chapters.length;ci++){
     const ch=book.chapters[ci];
     doc.addPage();pageNum++;
-    doc.setFont(pdfFont,"bold");doc.setFontSize(20);doc.setTextColor(30,30,30);
+    doc.setFont(pdfFont,"bold");doc.setFontSize(18);doc.setTextColor(30,30,30);
     const chTitleText=needsUnicode?sanitizeForPDF(ch.title||`Capitolo ${ci+1}`):(ch.title||`Capitolo ${ci+1}`);
-    const chTitleLines=doc.splitTextToSize(chTitleText,textW);
-    let chTitleY=mmH*0.35;
-    chTitleLines.forEach((line,li)=>{doc.text(line,mmW/2,chTitleY+(li*(fontSize*0.8/2.83)),{align:"center"});});
+    const chTitleLines=doc.splitTextToSize(chTitleText,textW-10);
+    let chTitleY=mmH*0.42;
+    const chLineH=18/2.83*1.4;
+    chTitleLines.forEach((line,li)=>{doc.text(line,mmW/2,chTitleY+(li*chLineH),{align:"center"});});
     addNum();
     if(_optionalChain([ch, 'access', _13 => _13.content, 'optionalAccess', _14 => _14.trim, 'call', _15 => _15()])||_optionalChain([ch, 'access', _16 => _16.images, 'optionalAccess', _17 => _17.length])){
       doc.addPage();pageNum++;addHeader(ch.title);
