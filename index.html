@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.38 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.39 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -341,7 +341,9 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
   function addNum(){doc.setFont(pdfFont,"normal");doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`— ${pageNum} —`,mmW/2,mmH-10,{align:"center"});}
   function addHeader(chTitle){doc.setFont(pdfFont,"italic");doc.setFontSize(8);doc.setTextColor(130,130,130);doc.text(book.title||"",mIn,mTop-5);doc.text(chTitle,mmW-mOut,mTop-5,{align:"right"});}
   doc.setFont(pdfFont,"bold");doc.setFontSize(28);doc.setTextColor(30,30,30);
-  doc.text(needsUnicode?sanitizeForPDF(book.title||"Il Mio Libro"):(book.title||"Il Mio Libro"),mmW/2,mmH*0.38,{align:"center",maxWidth:textW});
+  const bookTitleText=needsUnicode?sanitizeForPDF(book.title||"Il Mio Libro"):(book.title||"Il Mio Libro");
+  const bookTitleLines=doc.splitTextToSize(bookTitleText,textW);
+  bookTitleLines.forEach((line,li)=>{doc.text(line,mmW/2,mmH*0.35+(li*12),{align:"center"});});
   doc.setFont(pdfFont,"normal");doc.setFontSize(14);doc.setTextColor(80,80,80);
   doc.text(book.author||"",mmW/2,mmH*0.55,{align:"center"});
   doc.setFontSize(10);doc.text(book.genre||"",mmW/2,mmH*0.62,{align:"center"});
@@ -349,7 +351,10 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
     const ch=book.chapters[ci];
     doc.addPage();pageNum++;
     doc.setFont(pdfFont,"bold");doc.setFontSize(20);doc.setTextColor(30,30,30);
-    doc.text(needsUnicode?sanitizeForPDF(ch.title||`Capitolo ${ci+1}`):(ch.title||`Capitolo ${ci+1}`),mmW/2,mmH*0.4,{align:"center"});
+    const chTitleText=needsUnicode?sanitizeForPDF(ch.title||`Capitolo ${ci+1}`):(ch.title||`Capitolo ${ci+1}`);
+    const chTitleLines=doc.splitTextToSize(chTitleText,textW);
+    let chTitleY=mmH*0.35;
+    chTitleLines.forEach((line,li)=>{doc.text(line,mmW/2,chTitleY+(li*(fontSize*0.8/2.83)),{align:"center"});});
     addNum();
     if(_optionalChain([ch, 'access', _13 => _13.content, 'optionalAccess', _14 => _14.trim, 'call', _15 => _15()])||_optionalChain([ch, 'access', _16 => _16.images, 'optionalAccess', _17 => _17.length])){
       doc.addPage();pageNum++;addHeader(ch.title);
@@ -1345,7 +1350,8 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
       setCurrentGen({chapter:i+1,status:`Scrittura "${cb.title}"...`});
       try{
         const r=await callClaude(buildChapterPrompt(i,cb,prevChapters),`Sei uno scrittore professionista italiano di ${book.genre||"narrativa"}.`);
-        results.push({title:cb.title,content:r.trim(),images:[]});
+        const cleanContent = r.trim().replace(/^(TITLE|TITOLO|Title|Titolo)\s*:\s*.+\n?/gm, "").replace(/^#+\s*.+\n?/gm, "").trim();
+        results.push({title:cb.title,content:cleanContent,images:[]});
         prevChapters.push(r.trim());
         setGeneratedChapters([...results]);
       }catch(e){setGenError(`Errore al capitolo ${i+1}: `+e.message);break;}
@@ -1363,7 +1369,8 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
     const prevChapters=book.chapters.slice(0,singleIdx).map(c=>c.content).filter(Boolean);
     try{
       const r=await callClaude(buildChapterPrompt(singleIdx,cb,prevChapters),`Sei uno scrittore professionista italiano di ${book.genre||"narrativa"}.`);
-      setSingleDraft(r.trim());
+      const cleanR = r.trim().replace(/^(TITLE|TITOLO|Title|Titolo)\s*:\s*.+\n?/gm, "").replace(/^#+\s*.+\n?/gm, "").trim();
+      setSingleDraft(cleanR);
     }catch(e){setSingleDraft("Errore: "+e.message);}
     setSingleGenerating(false);
   };
