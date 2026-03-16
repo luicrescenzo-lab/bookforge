@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.35 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.36 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -267,6 +267,43 @@ async function loadJsPDF(){
     document.head.appendChild(s);
   });
 }
+async function loadNotoFont(){
+  // Carica jsPDF con supporto font Unicode via plugin
+  return new Promise((resolve)=>{
+    if(window._notoFontLoaded){resolve();return;}
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload=()=>{window._notoFontLoaded=true;resolve();};
+    document.head.appendChild(s);
+    setTimeout(resolve,2000);
+  });
+}
+
+function hasNonLatinChars(text){
+  return /[^ -ɏḀ-ỿ]/.test(text);
+}
+
+function sanitizeForPDF(text){
+  // Sostituisce caratteri non supportati con equivalenti latini
+  return text
+    .replace(/ą/g,'a').replace(/Ą/g,'A')
+    .replace(/ć/g,'c').replace(/Ć/g,'C')
+    .replace(/ę/g,'e').replace(/Ę/g,'E')
+    .replace(/ł/g,'l').replace(/Ł/g,'L')
+    .replace(/ń/g,'n').replace(/Ń/g,'N')
+    .replace(/ó/g,'o').replace(/Ó/g,'O')
+    .replace(/ś/g,'s').replace(/Ś/g,'S')
+    .replace(/ź/g,'z').replace(/Ź/g,'Z')
+    .replace(/ż/g,'z').replace(/Ż/g,'Z')
+    // Caratteri russi/cirillici - traslitterazione base
+    .replace(/[а-яА-ЯёЁ]/g, c=>{
+      const map={'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'j','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+      const lower=c.toLowerCase();
+      const tr=map[lower]||c;
+      return c===lower?tr:tr.charAt(0).toUpperCase()+tr.slice(1);
+    });
+}
+
 async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
   const jsPDF=await loadJsPDF();
   const size=KDP_SIZES[sizeIdx];
@@ -276,11 +313,14 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
   const textW=mmW-mIn-mOut;
   const lineH=(fontSize/2.83)*lineSpacing;
   const pdfFont="times";
+  // Verifica se il libro contiene caratteri non latini e avvisa
+  const allText=(book.chapters||[]).map(c=>c.content||"").join("");
+  const needsUnicode=hasNonLatinChars(allText);
   let pageNum=1;
   function addNum(){doc.setFont(pdfFont,"normal");doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`— ${pageNum} —`,mmW/2,mmH-10,{align:"center"});}
   function addHeader(chTitle){doc.setFont(pdfFont,"italic");doc.setFontSize(8);doc.setTextColor(130,130,130);doc.text(book.title||"",mIn,mTop-5);doc.text(chTitle,mmW-mOut,mTop-5,{align:"right"});}
   doc.setFont(pdfFont,"bold");doc.setFontSize(28);doc.setTextColor(30,30,30);
-  doc.text(book.title||"Il Mio Libro",mmW/2,mmH*0.38,{align:"center",maxWidth:textW});
+  doc.text(needsUnicode?sanitizeForPDF(book.title||"Il Mio Libro"):(book.title||"Il Mio Libro"),mmW/2,mmH*0.38,{align:"center",maxWidth:textW});
   doc.setFont(pdfFont,"normal");doc.setFontSize(14);doc.setTextColor(80,80,80);
   doc.text(book.author||"",mmW/2,mmH*0.55,{align:"center"});
   doc.setFontSize(10);doc.text(book.genre||"",mmW/2,mmH*0.62,{align:"center"});
@@ -288,7 +328,7 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
     const ch=book.chapters[ci];
     doc.addPage();pageNum++;
     doc.setFont(pdfFont,"bold");doc.setFontSize(20);doc.setTextColor(30,30,30);
-    doc.text(ch.title||`Capitolo ${ci+1}`,mmW/2,mmH*0.4,{align:"center"});
+    doc.text(needsUnicode?sanitizeForPDF(ch.title||`Capitolo ${ci+1}`):(ch.title||`Capitolo ${ci+1}`),mmW/2,mmH*0.4,{align:"center"});
     addNum();
     if(_optionalChain([ch, 'access', _13 => _13.content, 'optionalAccess', _14 => _14.trim, 'call', _15 => _15()])||_optionalChain([ch, 'access', _16 => _16.images, 'optionalAccess', _17 => _17.length])){
       doc.addPage();pageNum++;addHeader(ch.title);
@@ -296,7 +336,7 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
       const paras=ch.content.split(/\n\n+/).filter(p=>p.trim());
       let y=mTop,first=true;
       for(const para of paras){
-        const lines=doc.splitTextToSize(para.trim(),textW);
+        const paraText=needsUnicode?sanitizeForPDF(para.trim()):para.trim();const lines=doc.splitTextToSize(paraText,textW);
         for(let li=0;li<lines.length;li++){
           if(y+lineH>mmH-mBot-10){addNum();doc.addPage();pageNum++;addHeader(ch.title);y=mTop;}
           const ind=(first&&li===0)?0:(li===0?6:0);
@@ -754,7 +794,7 @@ function CoverPanel({book}){
 function FormatPanel({book}){
   const [sizeIdx,setSizeIdx]=useState(1);const [margins,setMargins]=useState({top:1,bottom:1,inner:1.25,outer:0.75});const [font,setFont]=useState("Georgia");const [fontSize,setFontSize]=useState(11);const [lineSpacing,setLineSpacing]=useState(1.5);const [exporting,setExporting]=useState(false);
   const size=KDP_SIZES[sizeIdx];const preview=_optionalChain([book, 'access', _30 => _30.chapters, 'access', _31 => _31[0], 'optionalAccess', _32 => _32.content])||"Il tuo testo apparirà qui...";
-  return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {width:260,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "IMPAGINAZIONE KDP" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Formato pagina" ), KDP_SIZES.map((s,i)=>(React.createElement('button', { key: i, onClick: ()=>setSizeIdx(i), style: {display:"block",width:"100%",padding:"9px 12px",borderRadius:7,marginBottom:5,border:sizeIdx===i?"1px solid #f5c842":"1px solid #2e2d3e",background:sizeIdx===i?"#f5c84211":"transparent",color:sizeIdx===i?"#f5c842":"#7a7890",cursor:"pointer",fontSize:12,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, s.label))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Font"), React.createElement('select', { value: font, onChange: e=>setFont(e.target.value), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, FONTS.map(f=>React.createElement('option', { key: f, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, f))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Dimensione: " , fontSize, "pt"), React.createElement('input', { type: "range", min: 9, max: 14, step: 0.5, value: fontSize, onChange: e=>setFontSize(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Interlinea: " , lineSpacing, "x"), React.createElement('input', { type: "range", min: 1, max: 2.5, step: 0.1, value: lineSpacing, onChange: e=>setLineSpacing(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Margini (pollici)" ), ["top","bottom","inner","outer"].map(m=>(React.createElement('div', { key: m, style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {color:"#7a7890",fontSize:12,minWidth:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, m==="inner"?"interno":m==="outer"?"esterno":m==="top"?"alto":"basso"), React.createElement('input', { type: "number", min: 0.5, max: 2, step: 0.05, value: margins[m], onChange: e=>setMargins(mg=>({...mg,[m]:+e.target.value})), style: {width:65,...inp,padding:"5px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} )))), React.createElement('div', { style: {height:1,background:"#1a1929",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement('button', { onClick: async()=>{setExporting(true);try{await exportPDF(book,sizeIdx,margins,font,fontSize,lineSpacing);}catch(e){alert("Errore: "+e.message);}setExporting(false);}, disabled: exporting, style: {...goldBtn,width:"100%",marginBottom:8,opacity:exporting?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, exporting?"⏳ Generando...":"📥 Esporta PDF KDP"), React.createElement('button', { onClick: ()=>exportEPUB(book), style: {width:"100%",padding:"10px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "📱 Esporta EPUB (Kindle)"   )), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40,overflow:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {textAlign:"center",marginBottom:16,fontSize:12,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "ANTEPRIMA — "  , size.label), React.createElement('div', { style: {background:"#fff",width:`${Math.round(size.pts[0]*60)}px`,minHeight:`${Math.round(size.pts[1]*60)}px`,boxShadow:"0 20px 60px rgba(0,0,0,0.7)",padding:`${margins.top*25}px ${margins.outer*30}px ${margins.bottom*25}px ${margins.inner*30}px`,boxSizing:"border-box",position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, _optionalChain([book, 'access', _35 => _35.chapters, 'access', _36 => _36[0], 'optionalAccess', _37 => _37.title])&&React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize*1.3*0.55}pt`,fontWeight:"bold",textAlign:"center",marginBottom:"1em",color:"#111"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, book.chapters[0].title), React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize}pt`,lineHeight:lineSpacing,color:"#111",textAlign:"left",textIndent:"1.5em",wordBreak:"normal",overflowWrap:"break-word",whiteSpace:"pre-wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, preview), React.createElement('div', { style: {textAlign:"center",fontSize:"8pt",color:"#999",fontFamily:font,marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "— 1 —"  ))))));
+  return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {width:260,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "IMPAGINAZIONE KDP" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Formato pagina" ), KDP_SIZES.map((s,i)=>(React.createElement('button', { key: i, onClick: ()=>setSizeIdx(i), style: {display:"block",width:"100%",padding:"9px 12px",borderRadius:7,marginBottom:5,border:sizeIdx===i?"1px solid #f5c842":"1px solid #2e2d3e",background:sizeIdx===i?"#f5c84211":"transparent",color:sizeIdx===i?"#f5c842":"#7a7890",cursor:"pointer",fontSize:12,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, s.label))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Font"), React.createElement('select', { value: font, onChange: e=>setFont(e.target.value), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, FONTS.map(f=>React.createElement('option', { key: f, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, f))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Dimensione: " , fontSize, "pt"), React.createElement('input', { type: "range", min: 9, max: 14, step: 0.5, value: fontSize, onChange: e=>setFontSize(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Interlinea: " , lineSpacing, "x"), React.createElement('input', { type: "range", min: 1, max: 2.5, step: 0.1, value: lineSpacing, onChange: e=>setLineSpacing(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Margini (pollici)" ), ["top","bottom","inner","outer"].map(m=>(React.createElement('div', { key: m, style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {color:"#7a7890",fontSize:12,minWidth:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, m==="inner"?"interno":m==="outer"?"esterno":m==="top"?"alto":"basso"), React.createElement('input', { type: "number", min: 0.5, max: 2, step: 0.05, value: margins[m], onChange: e=>setMargins(mg=>({...mg,[m]:+e.target.value})), style: {width:65,...inp,padding:"5px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} )))), React.createElement('div', { style: {height:1,background:"#1a1929",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement('button', { onClick: async()=>{setExporting(true);try{await exportPDF(book,sizeIdx,margins,font,fontSize,lineSpacing);}catch(e){alert("Errore: "+e.message);}setExporting(false);}, disabled: exporting, style: {...goldBtn,width:"100%",marginBottom:8,opacity:exporting?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, exporting?"⏳ Generando...":"📥 Esporta PDF KDP"), React.createElement('button', { onClick: ()=>exportEPUB(book), style: {width:"100%",padding:"10px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "📱 Esporta EPUB (Kindle)"   ), React.createElement('div', { style: {fontSize:11,color:"#f5c84299",marginTop:10,lineHeight:1.5}}, "⚠️ Per libri in Russo, Cinese, Giapponese o Arabo usa EPUB — il PDF usa traslitterazione latina.")), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40,overflow:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {textAlign:"center",marginBottom:16,fontSize:12,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "ANTEPRIMA — "  , size.label), React.createElement('div', { style: {background:"#fff",width:`${Math.round(size.pts[0]*60)}px`,minHeight:`${Math.round(size.pts[1]*60)}px`,boxShadow:"0 20px 60px rgba(0,0,0,0.7)",padding:`${margins.top*25}px ${margins.outer*30}px ${margins.bottom*25}px ${margins.inner*30}px`,boxSizing:"border-box",position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, _optionalChain([book, 'access', _35 => _35.chapters, 'access', _36 => _36[0], 'optionalAccess', _37 => _37.title])&&React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize*1.3*0.55}pt`,fontWeight:"bold",textAlign:"center",marginBottom:"1em",color:"#111"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, book.chapters[0].title), React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize}pt`,lineHeight:lineSpacing,color:"#111",textAlign:"left",textIndent:"1.5em",wordBreak:"normal",overflowWrap:"break-word",whiteSpace:"pre-wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, preview), React.createElement('div', { style: {textAlign:"center",fontSize:"8pt",color:"#999",fontFamily:font,marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "— 1 —"  ))))));
 }
 
 /* ─────────────────────────────────────────────
