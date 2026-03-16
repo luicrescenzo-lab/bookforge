@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.40 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.41 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -137,6 +137,14 @@ function Badge({children,color="#f5c842"}){return React.createElement('span', { 
 ───────────────────────────────────────────── */
 // ⚠️ NOTA: In produzione usare un backend proxy per proteggere la API key
 // API chiamata tramite proxy backend sicuro
+
+function cleanAIText(text) {
+  return text
+    .replace(/^(TITLE|TITOLO|Title|Titolo|CHAPTER|CAPITOLO)\s*[:\-]?\s*.+\n?/gim, "")
+    .replace(/^#+\s*.+\n?/gm, "")
+    .replace(/^\*\*[^\*]+\*\*\s*\n/gm, "")
+    .trim();
+}
 
 async function callDeepL(text, targetLang) {
   // Mappa codici lingua BookForge -> codici DeepL
@@ -657,7 +665,7 @@ function WritePanel({book,setBook}){
       else if(action==="riassumi")p=`Riassumi questo capitolo in 3-4 frasi:\n\n${ch.content}`;
       else p=`${aiAssist}\n\nContesto: "${book.title}" - ${ch.title}\n...${tail}`;
       const r=await callClaude(p,"Sei un assistente di scrittura creativa in italiano.");
-      setAiSuggestion(r.trim());
+      setAiSuggestion(cleanAIText(r));
     }catch(e){setAiSuggestion("Errore: "+e.message);}
     setAiLoading(false);
   };
