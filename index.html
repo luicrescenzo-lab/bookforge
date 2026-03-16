@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.37 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.38 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -146,9 +146,9 @@ async function callDeepL(text, targetLang) {
     "zh": "ZH", "ja": "JA", "ar": "AR"
   };
   const deeplLang = langMap[targetLang] || targetLang.toUpperCase();
-  const response = await fetch("https://bookforge-api.luicrescenzo.workers.dev", {
+  const response = await fetch("/api/deepl", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Service": "deepl" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text: [text], target_lang: deeplLang })
   });
   if (!response.ok) throw new Error("Errore DeepL " + response.status);
