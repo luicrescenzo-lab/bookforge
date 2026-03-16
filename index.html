@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.34 BUILD 20260314 -->
+<!-- BOOKFORGE VERSION 3.35 BUILD 20260314 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -569,6 +569,8 @@ function WritePanel({book,setBook}){
   const [aiLoading,setAiLoading]=useState(false);
   const [aiSuggestion,setAiSuggestion]=useState("");
   const [showImages,setShowImages]=useState(false);
+  const [mobileView,setMobileView]=useState("list"); // "list" o "editor"
+  const isMobile=typeof window!=="undefined"&&window.innerWidth<=768;
 
   const ch=book.chapters[activeChapter]||{title:"",content:"",images:[]};
   const wc=ch.content.trim()?ch.content.trim().split(/\s+/).length:0;
@@ -592,6 +594,55 @@ function WritePanel({book,setBook}){
     }catch(e){setAiSuggestion("Errore: "+e.message);}
     setAiLoading(false);
   };
+
+    // Vista mobile: lista capitoli
+  if(isMobile && mobileView==="list"){
+    return React.createElement("div", { style: {flex:1, overflowY:"auto", background:"#0f0e17", paddingTop:60} },
+      React.createElement("div", { style: {padding:"16px 20px", borderBottom:"1px solid #1a1929"} },
+        React.createElement("div", { style: {fontSize:18, fontFamily:"'Playfair Display',serif", color:"#f5c842", marginBottom:4} }, book.title||"Senza titolo"),
+        React.createElement("div", { style: {fontSize:12, color:"#5a5870"} }, book.chapters.length+" capitoli")
+      ),
+      book.chapters.map((ch, i) =>
+        React.createElement("div", {
+          key: i,
+          onClick: () => { setActiveChapter(i); setMobileView("editor"); },
+          style: {padding:"16px 20px", borderBottom:"1px solid #1a1929", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center"}
+        },
+          React.createElement("div", null,
+            React.createElement("div", { style: {color: i===activeChapter?"#f5c842":"#e8e6f0", fontSize:15, marginBottom:4} }, ch.title||`Capitolo ${i+1}`),
+            React.createElement("div", { style: {fontSize:12, color:"#5a5870"} }, (ch.content.trim().split(/\s+/).filter(Boolean).length||0)+" parole")
+          ),
+          React.createElement("span", { style: {color:"#3a3850", fontSize:20} }, "›")
+        )
+      ),
+      React.createElement("button", {
+        onClick: () => { const n=book.chapters.length; setBook(b=>({...b,chapters:[...b.chapters,{title:`Capitolo ${n+1}`,content:"",images:[]}]})); setActiveChapter(n); setMobileView("editor"); },
+        style: {width:"100%", padding:"16px", border:"none", background:"transparent", color:"#5a5870", fontSize:14, cursor:"pointer", borderTop:"1px dashed #2e2d3e"}
+      }, "+ Aggiungi capitolo")
+    );
+  }
+
+  // Vista mobile: editor capitolo
+  if(isMobile && mobileView==="editor"){
+    const ch=book.chapters[activeChapter]||{title:"",content:"",images:[]};
+    const upd=(field,val)=>setBook(b=>{const c=[...b.chapters];c[activeChapter]={...c[activeChapter],[field]:val};return{...b,chapters:c};});
+    return React.createElement("div", { style: {flex:1, display:"flex", flexDirection:"column", background:"#0f0e17", paddingTop:60} },
+      // Header con tasto indietro
+      React.createElement("div", { style: {padding:"12px 16px", borderBottom:"1px solid #1a1929", display:"flex", alignItems:"center", gap:12, background:"#0c0b18"} },
+        React.createElement("button", { onClick: ()=>setMobileView("list"), style: {background:"none", border:"none", color:"#f5c842", fontSize:20, cursor:"pointer", padding:"0 4px"} }, "‹"),
+        React.createElement("div", { style: {flex:1, fontSize:14, color:"#e8e6f0", fontFamily:"'Playfair Display',serif", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"} }, ch.title||`Capitolo ${activeChapter+1}`)
+      ),
+      // Dettatura in primo piano
+      React.createElement(VoiceDictation, { onText: (t)=>upd("content",(ch.content||"")+(ch.content?" ":"")+t), style: {margin:"12px 16px", borderRadius:12} }),
+      // Editor testo
+      React.createElement("textarea", {
+        value: ch.content||"",
+        onChange: e=>upd("content",e.target.value),
+        placeholder: "Scrivi qui il tuo testo...",
+        style: {flex:1, background:"#12111e", border:"none", color:"#e8e6f0", fontSize:16, lineHeight:1.7, padding:"16px", resize:"none", outline:"none", fontFamily:"Georgia,serif"}
+      })
+    );
+  }
 
   return(
     React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 440}}
