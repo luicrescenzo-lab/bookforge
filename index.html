@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.46 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.47 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -399,13 +399,49 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
 }
 
 function exportEPUB(book){
-  const chapters=book.chapters.map((ch,i)=>({id:`ch${i}`,title:ch.title||`Capitolo ${i+1}`,content:cleanAIText(ch.content||"").split(/\n\n+/).map(p=>`<p>${p.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;")}</p>`).join("\n")}));
+  const chapters=book.chapters.map((ch,i)=>({
+    id:`ch${i}`,title:ch.title||`Capitolo ${i+1}`,
+    content:cleanAIText(ch.content||"").split(/\n\n+/).filter(p=>p.trim()).map(p=>`<p>${p.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</p>`).join("\n")
+  }));
   const uid=`book-${Date.now()}`;
-  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${book.title||"Il Mio Libro"}</dc:title><dc:creator>${book.author||""}</dc:creator><dc:language>it</dc:language><dc:identifier id="uid">${uid}</dc:identifier></metadata><manifest>${chapters.map(c=>`<item id="${c.id}" href="${c.id}.html" media-type="application/xhtml+xml"/>`).join("")}<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest><spine toc="ncx">${chapters.map(c=>`<itemref idref="${c.id}"/>`).join("")}</spine></package>`;
-  const txt=`EPUB Source — ${book.title||"Libro"}\n\n--- content.opf ---\n${opf}\n\n${chapters.map(c=>`--- ${c.id}.html ---\n<?xml version="1.0"?><html><head><title>${c.title}</title></head><body><h1>${c.title}</h1>${c.content}</body></html>`).join("\n\n")}`;
+  const css=`body{font-family:Georgia,"Times New Roman",serif;font-size:1em;line-height:1.8;margin:2em;color:#000;}h1{font-size:1.5em;font-weight:bold;text-align:center;margin:3em auto 4em;page-break-after:avoid;}p{font-size:1em;font-weight:normal;font-style:normal;margin:0 0 0.8em 0;text-indent:1.5em;}`;
+  function se(str){return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function strToBytes(str){return new TextEncoder().encode(str);}
+  function uint32LE(n){return new Uint8Array([n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255]);}
+  function uint16LE(n){return new Uint8Array([n&255,(n>>8)&255]);}
+  function crc32(data){let c=0xFFFFFFFF;for(let i=0;i<data.length;i++){c^=data[i];for(let j=0;j<8;j++)c=c&1?(c>>>1)^0xEDB88320:(c>>>1);}return(c^0xFFFFFFFF)>>>0;}
+  const container=`<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`;
+  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${se(book.title||"Il Mio Libro")}</dc:title><dc:creator>${se(book.author||"")}</dc:creator><dc:language>it</dc:language><dc:identifier id="uid">${uid}</dc:identifier></metadata><manifest><item id="css" href="style.css" media-type="text/css"/>${chapters.map(c=>`<item id="${c.id}" href="${c.id}.xhtml" media-type="application/xhtml+xml"/>`).join("")}<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest><spine toc="ncx">${chapters.map(c=>`<itemref idref="${c.id}"/>`).join("")}</spine></package>`;
+  const ncx=`<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="${uid}"/></head><docTitle><text>${se(book.title||"")}</text></docTitle><navMap>${chapters.map((c,i)=>`<navPoint id="nav${i}" playOrder="${i+1}"><navLabel><text>${se(c.title)}</text></navLabel><content src="${c.id}.xhtml"/></navPoint>`).join("")}</navMap></ncx>`;
+  const files=[
+    {name:"mimetype",data:strToBytes("application/epub+zip")},
+    {name:"META-INF/container.xml",data:strToBytes(container)},
+    {name:"OEBPS/content.opf",data:strToBytes(opf)},
+    {name:"OEBPS/style.css",data:strToBytes(css)},
+    {name:"OEBPS/toc.ncx",data:strToBytes(ncx)},
+    ...chapters.map(c=>({name:`OEBPS/${c.id}.xhtml`,data:strToBytes(`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>${se(c.title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head><body><h1>${se(c.title)}</h1>${c.content}</body></html>`)}))
+  ];
+  const centralDir=[];let offset=0;const parts=[];
+  for(const file of files){
+    const nb=strToBytes(file.name);const crc=crc32(file.data);
+    const lh=new Uint8Array([0x50,0x4B,0x03,0x04,20,0,0,0,0,0,0,0,0,0,...uint32LE(crc),...uint32LE(file.data.length),...uint32LE(file.data.length),...uint16LE(nb.length),...uint16LE(0)]);
+    centralDir.push({nb,crc,size:file.data.length,offset});
+    parts.push(lh,nb,file.data);
+    offset+=lh.length+nb.length+file.data.length;
+  }
+  const cdParts=[];let cdSize=0;
+  for(const cd of centralDir){
+    const e=new Uint8Array([0x50,0x4B,0x01,0x02,20,0,20,0,0,0,0,0,0,0,0,0,...uint32LE(cd.crc),...uint32LE(cd.size),...uint32LE(cd.size),...uint16LE(cd.nb.length),...uint16LE(0),...uint16LE(0),...uint16LE(0),...uint16LE(0),...uint32LE(0),...uint32LE(cd.offset)]);
+    cdParts.push(e,cd.nb);cdSize+=e.length+cd.nb.length;
+  }
+  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,0,0,0,0,...uint16LE(files.length),...uint16LE(files.length),...uint32LE(cdSize),...uint32LE(offset),...uint16LE(0)]);
+  const allParts=[...parts,...cdParts,eocd];
+  const totalLen=allParts.reduce((a,b)=>a+b.length,0);
+  const result=new Uint8Array(totalLen);let pos=0;
+  for(const p of allParts){result.set(p,pos);pos+=p.length;}
   const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));
-  a.download=`${(book.title||"libro").replace(/\s+/g,"_")}_epub.txt`;
+  a.href=URL.createObjectURL(new Blob([result],{type:"application/epub+zip"}));
+  a.download=`${(book.title||"libro").replace(/\s+/g,"_")}.epub`;
   a.click();
 }
 
