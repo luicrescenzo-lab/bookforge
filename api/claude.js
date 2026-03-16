@@ -1,51 +1,2429 @@
-export const config = { runtime: "edge", maxDuration: 60 };
-
-export default async function handler(req) {
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: "API key non configurata" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  try {
-    const body = await req.json();
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "x-api-key": apiKey,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const responseText = await response.text();
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch(e) {
-      return new Response(JSON.stringify({ error: "Anthropic error: " + responseText.slice(0, 200) }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+<!-- BOOKFORGE VERSION 3.37 BUILD 20260316 -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BookForge v3.6 — Scrivi e Pubblica con AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;}
+    body {background:#0f0e17;}
+    #root {height:100vh;}
+    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.5}}
+    .bf-sidebar { width:240px; flex-shrink:0; transition: transform 0.3s ease; }
+    .bf-hamburger { display:none; }
+    .bf-overlay { display:none; }
+    @media (max-width: 768px) {
+      /* Fix schermata Progetti */
+      .bf-projects-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+      }
+      .bf-projects-buttons {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        gap: 8px !important;
+      }
+      .bf-projects-buttons button {
+        flex: 1 !important;
+        white-space: nowrap !important;
+        padding: 12px 8px !important;
+        font-size: 13px !important;
+      }
+      .bf-sidebar {
+        position: fixed !important;
+        top: 0; left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+        width: 85vw !important;
+        max-width: 320px !important;
+        overflow-y: auto;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.8);
+      }
+      .bf-sidebar.open {
+        transform: translateX(0);
+      }
+      .bf-hamburger {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px; height: 44px;
+        background: #1a1829;
+        border: 1px solid #2e2d3e;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 20px;
+        position: fixed;
+        top: 12px; left: 12px;
+        z-index: 998;
+        color: #f5c842;
+      }
+      .bf-overlay {
+        display: block;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.7);
+        z-index: 999;
+      }
+      .bf-main-content {
+        padding-top: 60px !important;
+        width: 100vw !important;
+        overflow-x: hidden;
+      }
+      /* Fix testo spezzato su mobile */
+      div, p, span {
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+      }
     }
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+const {useState, useEffect, useRef, useCallback} = React;
+const _jsxFileName = ""; function _nullishCoalesce(lhs, rhsFn) { if (lhs != null) { return lhs; } else { return rhsFn(); } } function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }
+/* ─────────────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────────────── */
+const LANGUAGES = [
+  { code:"it",label:"Italiano",flag:"🇮🇹" },{ code:"en",label:"English",flag:"🇬🇧" },
+  { code:"es",label:"Español",flag:"🇪🇸" },{ code:"fr",label:"Français",flag:"🇫🇷" },
+  { code:"de",label:"Deutsch",flag:"🇩🇪" },{ code:"pt",label:"Português",flag:"🇵🇹" },
+  { code:"zh",label:"中文",flag:"🇨🇳" },{ code:"ja",label:"日本語",flag:"🇯🇵" },
+  { code:"ar",label:"العربية",flag:"🇸🇦" },{ code:"ru",label:"Русский",flag:"🇷🇺" },{ code:"pl",label:"Polski",flag:"🇵🇱" },
+];
+const GENRES = ["Romanzo","Saggio","Autobiografia","Fantasy","Thriller","Self-Help","Business","Poesia","Storico","Horror","Romance","Giallo","Manuale Pratico","Ricettario","Guida Tecnica","Libro di Cucina","Fai da Te","Salute e Benessere","Educazione","Spiritualita'"];
+const KDP_SIZES = [
+  { label:'Tascabile 5x8', pts:[5,8] },{ label:'Standard 6x9', pts:[6,9] },{ label:'Grande 8.5x11', pts:[8.5,11] },
+];
+const COVER_THEMES = [
+  { id:"dark",    label:"Drammatico", bg:"#0a0614", accent:"#c084fc", text:"#f8fafc" },
+  { id:"warm",    label:"Caldo",      bg:"#1c0a00", accent:"#f59e0b", text:"#fef3c7" },
+  { id:"ocean",   label:"Oceano",     bg:"#0c1445", accent:"#38bdf8", text:"#e0f2fe" },
+  { id:"forest",  label:"Natura",     bg:"#052e16", accent:"#4ade80", text:"#dcfce7" },
+  { id:"minimal", label:"Minimale",   bg:"#fafafa", accent:"#1e293b", text:"#0f172a" },
+  { id:"crimson", label:"Thriller",   bg:"#1a0000", accent:"#ef4444", text:"#fef2f2" },
+];
+const FONTS = ["Georgia","Palatino Linotype","Times New Roman","Garamond","Book Antiqua"];
+const TONES = ["Letterario","Semplice e diretto","Poetico","Drammatico","Ironico","Filosofico","Avventuroso","Romantico","Oscuro","Umoristico"];
+const POV = ["Prima persona (Io)","Terza persona (Lui/Lei)","Seconda persona (Tu)","Narratore onnisciente"];
+const CHAPTER_LENGTHS = ["Breve (300-500 parole)","Medio (500-1000 parole)","Lungo (1000-2000 parole)","Molto lungo (2000+ parole)"];
+const PROJECTS_INDEX_KEY = "bookforge_projects_index";
+const PROJECT_PREFIX     = "bookforge_proj_";
+const DEFAULT_BRIEF = { premise:"",protagonist:"",antagonist:"",setting:"",theme:"",tone:"Letterario",pov:"Terza persona (Lui/Lei)",chapterLength:"Medio (500-1000 parole)",numChapters:5,extraNotes:"" };
+const DEFAULT_BOOK = ()=>({ title:"",author:"",genre:"Romanzo",chapters:[{title:"Capitolo 1",content:"",images:[]}],brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:Date.now(),updatedAt:Date.now() });
+
+/* ─────────────────────────────────────────────
+   STYLE HELPERS
+───────────────────────────────────────────── */
+const inp = { background:"#1a1829",border:"1px solid #2e2d3e",borderRadius:8,padding:"10px 14px",color:"#e8e6f0",fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit" };
+const sel = { background:"#1a1829",border:"1px solid #2e2d3e",borderRadius:8,padding:"10px 14px",color:"#e8e6f0",fontSize:13,outline:"none" };
+const goldBtn = { padding:"12px 28px",borderRadius:8,border:"none",cursor:"pointer",background:"linear-gradient(135deg,#f5c842,#e8a020)",color:"#0f0e17",fontSize:14,fontWeight:700,fontFamily:"'Playfair Display',serif",boxShadow:"0 4px 20px rgba(245,200,66,0.3)" };
+const card = { background:"#12111e",borderRadius:14,border:"1px solid #1e1d2e",padding:"20px 24px" };
+function Lbl({children}){return React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:8,marginTop:16,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 41}}, children);}
+function Badge({children,color="#f5c842"}){return React.createElement('span', { style: {background:color+"22",color,fontSize:11,padding:"2px 8px",borderRadius:20,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 42}}, children);}
+
+/* ─────────────────────────────────────────────
+   CLAUDE API
+───────────────────────────────────────────── */
+// ⚠️ NOTA: In produzione usare un backend proxy per proteggere la API key
+// API chiamata tramite proxy backend sicuro
+
+async function callDeepL(text, targetLang) {
+  // Mappa codici lingua BookForge -> codici DeepL
+  const langMap = {
+    "en": "EN-GB", "es": "ES", "fr": "FR", "de": "DE",
+    "pt": "PT-PT", "it": "IT", "pl": "PL", "ru": "RU",
+    "zh": "ZH", "ja": "JA", "ar": "AR"
+  };
+  const deeplLang = langMap[targetLang] || targetLang.toUpperCase();
+  const response = await fetch("https://bookforge-api.luicrescenzo.workers.dev", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Service": "deepl" },
+    body: JSON.stringify({ text: [text], target_lang: deeplLang })
+  });
+  if (!response.ok) throw new Error("Errore DeepL " + response.status);
+  const data = await response.json();
+  if (data.translations && data.translations[0]) {
+    return data.translations[0].text;
+  }
+  throw new Error("Risposta DeepL non valida");
+}
+
+async function callClaude(prompt,system=""){
+  const body={model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]};
+  if(system)body.system=system;
+  try {
+    const res=await fetch("https://bookforge-api.luicrescenzo.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body)
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: "Errore proxy: " + error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    if(!res.ok){
+      const err=await res.json();
+      throw new Error((err&&err.error&&err.error.message)||"Errore API "+res.status);
+    }
+    const data=await res.json();
+    return (data&&data.content&&data.content.map(b=>b.text||"").filter(Boolean).join(""))||"";
+  } catch(e) {
+    console.error("API Error:", e);
+    throw e;
   }
 }
+
+/* ─────────────────────────────────────────────
+   STORAGE HELPERS
+───────────────────────────────────────────── */
+// ── Storage Firestore (cloud sync) con fallback localStorage ──
+let _firestoreDb = null;
+let _currentUserId = null;
+
+function setFirestoreUser(uid) { _currentUserId = uid; }
+
+async function getFirestoreDb() {
+  if (_firestoreDb) return _firestoreDb;
+  return new Promise((resolve) => {
+    if (window.firebase && window.firebase.firestore) {
+      _firestoreDb = window.firebase.firestore();
+      resolve(_firestoreDb);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js';
+    s.onload = () => {
+      _firestoreDb = window.firebase.firestore();
+      resolve(_firestoreDb);
+    };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadProjectsList() {
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      const snap = await db.collection('users').doc(_currentUserId).collection('projects').get();
+      const list = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        list.push({ id: doc.id, title: d.title||'', author: d.author||'', genre: d.genre||'Romanzo', chapters: d.chapters||[], brief: d.brief||{}, chapterBriefs: d.chapterBriefs||[], createdAt: d.createdAt||Date.now(), updatedAt: d.updatedAt||Date.now() });
+      });
+      return list;
+    }
+  } catch(e) { console.error('Firestore load error:', e); }
+  // fallback localStorage
+  try { const v = localStorage.getItem(PROJECTS_INDEX_KEY); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+
+async function saveProjectsList(list) {
+  // Salvato implicitamente da saveProject — non serve azione separata
+  try { localStorage.setItem(PROJECTS_INDEX_KEY, JSON.stringify(list)); } catch(e) {}
+}
+
+async function loadProject(id) {
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      const doc = await db.collection('users').doc(_currentUserId).collection('projects').doc(id).get();
+      if (doc.exists) return doc.data();
+    }
+  } catch(e) { console.error('Firestore loadProject error:', e); }
+  // fallback localStorage
+  try { const v = localStorage.getItem(PROJECT_PREFIX + id); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+
+async function saveProject(id, book) {
+  const updated = { ...book, updatedAt: Date.now() };
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      await db.collection('users').doc(_currentUserId).collection('projects').doc(id).set(updated);
+    }
+  } catch(e) { console.error('Firestore saveProject error:', e); }
+  // salva anche in localStorage come backup
+  try { localStorage.setItem(PROJECT_PREFIX + id, JSON.stringify(updated)); } catch(e) {}
+  return updated;
+}
+
+async function deleteProject(id) {
+  try {
+    if (_currentUserId) {
+      const db = await getFirestoreDb();
+      await db.collection('users').doc(_currentUserId).collection('projects').doc(id).delete();
+    }
+  } catch(e) { console.error('Firestore deleteProject error:', e); }
+  try { localStorage.removeItem(PROJECT_PREFIX + id); } catch(e) {}
+}
+
+/* ─────────────────────────────────────────────
+   IMAGE UTILS
+───────────────────────────────────────────── */
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   PDF EXPORT (con immagini)
+───────────────────────────────────────────── */
+async function loadJsPDF(){
+  if(window.jspdf)return window.jspdf.jsPDF;
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload=()=>resolve(window.jspdf.jsPDF);s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+async function loadNotoFont(){
+  // Carica jsPDF con supporto font Unicode via plugin
+  return new Promise((resolve)=>{
+    if(window._notoFontLoaded){resolve();return;}
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload=()=>{window._notoFontLoaded=true;resolve();};
+    document.head.appendChild(s);
+    setTimeout(resolve,2000);
+  });
+}
+
+function hasNonLatinChars(text){
+  return /[^ -ɏḀ-ỿ]/.test(text);
+}
+
+function sanitizeForPDF(text){
+  // Sostituisce caratteri non supportati con equivalenti latini
+  return text
+    .replace(/ą/g,'a').replace(/Ą/g,'A')
+    .replace(/ć/g,'c').replace(/Ć/g,'C')
+    .replace(/ę/g,'e').replace(/Ę/g,'E')
+    .replace(/ł/g,'l').replace(/Ł/g,'L')
+    .replace(/ń/g,'n').replace(/Ń/g,'N')
+    .replace(/ó/g,'o').replace(/Ó/g,'O')
+    .replace(/ś/g,'s').replace(/Ś/g,'S')
+    .replace(/ź/g,'z').replace(/Ź/g,'Z')
+    .replace(/ż/g,'z').replace(/Ż/g,'Z')
+    // Caratteri russi/cirillici - traslitterazione base
+    .replace(/[а-яА-ЯёЁ]/g, c=>{
+      const map={'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'j','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+      const lower=c.toLowerCase();
+      const tr=map[lower]||c;
+      return c===lower?tr:tr.charAt(0).toUpperCase()+tr.slice(1);
+    });
+}
+
+async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
+  const jsPDF=await loadJsPDF();
+  const size=KDP_SIZES[sizeIdx];
+  const mmW=size.pts[0]*25.4,mmH=size.pts[1]*25.4;
+  const doc=new jsPDF({unit:"mm",format:[mmW,mmH],orientation:"portrait"});
+  const mTop=margins.top*25.4,mBot=margins.bottom*25.4,mIn=margins.inner*25.4,mOut=margins.outer*25.4;
+  const textW=mmW-mIn-mOut;
+  const lineH=(fontSize/2.83)*lineSpacing;
+  const pdfFont="times";
+  // Verifica se il libro contiene caratteri non latini e avvisa
+  const allText=(book.chapters||[]).map(c=>c.content||"").join("");
+  const needsUnicode=hasNonLatinChars(allText);
+  let pageNum=1;
+  function addNum(){doc.setFont(pdfFont,"normal");doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`— ${pageNum} —`,mmW/2,mmH-10,{align:"center"});}
+  function addHeader(chTitle){doc.setFont(pdfFont,"italic");doc.setFontSize(8);doc.setTextColor(130,130,130);doc.text(book.title||"",mIn,mTop-5);doc.text(chTitle,mmW-mOut,mTop-5,{align:"right"});}
+  doc.setFont(pdfFont,"bold");doc.setFontSize(28);doc.setTextColor(30,30,30);
+  doc.text(needsUnicode?sanitizeForPDF(book.title||"Il Mio Libro"):(book.title||"Il Mio Libro"),mmW/2,mmH*0.38,{align:"center",maxWidth:textW});
+  doc.setFont(pdfFont,"normal");doc.setFontSize(14);doc.setTextColor(80,80,80);
+  doc.text(book.author||"",mmW/2,mmH*0.55,{align:"center"});
+  doc.setFontSize(10);doc.text(book.genre||"",mmW/2,mmH*0.62,{align:"center"});
+  for(let ci=0;ci<book.chapters.length;ci++){
+    const ch=book.chapters[ci];
+    doc.addPage();pageNum++;
+    doc.setFont(pdfFont,"bold");doc.setFontSize(20);doc.setTextColor(30,30,30);
+    doc.text(needsUnicode?sanitizeForPDF(ch.title||`Capitolo ${ci+1}`):(ch.title||`Capitolo ${ci+1}`),mmW/2,mmH*0.4,{align:"center"});
+    addNum();
+    if(_optionalChain([ch, 'access', _13 => _13.content, 'optionalAccess', _14 => _14.trim, 'call', _15 => _15()])||_optionalChain([ch, 'access', _16 => _16.images, 'optionalAccess', _17 => _17.length])){
+      doc.addPage();pageNum++;addHeader(ch.title);
+      doc.setFont(pdfFont,"normal");doc.setFontSize(fontSize);doc.setTextColor(20,20,20);
+      const paras=ch.content.split(/\n\n+/).filter(p=>p.trim());
+      let y=mTop,first=true;
+      for(const para of paras){
+        const paraText=needsUnicode?sanitizeForPDF(para.trim()):para.trim();const lines=doc.splitTextToSize(paraText,textW);
+        for(let li=0;li<lines.length;li++){
+          if(y+lineH>mmH-mBot-10){addNum();doc.addPage();pageNum++;addHeader(ch.title);y=mTop;}
+          const ind=(first&&li===0)?0:(li===0?6:0);
+          doc.text(lines[li],mIn+ind,y);y+=lineH;
+        }
+        y+=lineH*0.4;first=false;
+      }
+      // Insert images
+      if(_optionalChain([ch, 'access', _18 => _18.images, 'optionalAccess', _19 => _19.length])){
+        for(const img of ch.images){
+          if(!img.data)continue;
+          const imgH=60,imgW=textW;
+          if(y+imgH>mmH-mBot-10){addNum();doc.addPage();pageNum++;addHeader(ch.title);y=mTop;}
+          try{
+            doc.addImage(img.data,"JPEG",mIn,y,imgW,imgH);
+            y+=imgH+8;
+            if(img.caption){doc.setFontSize(9);doc.setTextColor(100,100,100);doc.setFont(pdfFont,"italic");doc.text(img.caption,mmW/2,y,{align:"center"});doc.setFontSize(fontSize);doc.setTextColor(20,20,20);doc.setFont(pdfFont,"normal");y+=8;}
+          }catch(e){}
+        }
+      }
+      addNum();
+    }
+  }
+  doc.save(`${(book.title||"libro").replace(/\s+/g,"_")}_KDP.pdf`);
+}
+
+function exportEPUB(book){
+  const chapters=book.chapters.map((ch,i)=>({id:`ch${i}`,title:ch.title||`Capitolo ${i+1}`,content:(ch.content||"").split(/\n\n+/).map(p=>`<p>${p.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;")}</p>`).join("\n")}));
+  const uid=`book-${Date.now()}`;
+  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${book.title||"Il Mio Libro"}</dc:title><dc:creator>${book.author||""}</dc:creator><dc:language>it</dc:language><dc:identifier id="uid">${uid}</dc:identifier></metadata><manifest>${chapters.map(c=>`<item id="${c.id}" href="${c.id}.html" media-type="application/xhtml+xml"/>`).join("")}<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/></manifest><spine toc="ncx">${chapters.map(c=>`<itemref idref="${c.id}"/>`).join("")}</spine></package>`;
+  const txt=`EPUB Source — ${book.title||"Libro"}\n\n--- content.opf ---\n${opf}\n\n${chapters.map(c=>`--- ${c.id}.html ---\n<?xml version="1.0"?><html><head><title>${c.title}</title></head><body><h1>${c.title}</h1>${c.content}</body></html>`).join("\n\n")}`;
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));
+  a.download=`${(book.title||"libro").replace(/\s+/g,"_")}_epub.txt`;
+  a.click();
+}
+
+/* ─────────────────────────────────────────────
+   PROJECTS PANEL
+───────────────────────────────────────────── */
+function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete,onMarketAnalyzer}){
+  const [confirmDelete,setConfirmDelete]=useState(null);
+  const GENRE_COLORS={"Fantasy":"#c084fc","Thriller":"#ef4444","Romanzo":"#f5c842","Horror":"#ef4444","Romance":"#f472b6","Storico":"#f59e0b","Giallo":"#fbbf24","Saggio":"#38bdf8","Autobiografia":"#4ade80","Self-Help":"#34d399","Business":"#60a5fa","Poesia":"#a78bfa"};
+  return(
+    React.createElement('div', { style: {flex:1,padding:40,overflowY:"auto",background:"#0f0e17"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 191}}
+      , React.createElement('div', { style: {maxWidth:900,margin:"0 auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 192}}
+        , React.createElement('div', { className:"bf-projects-header", style: {display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:36}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 193}}
+          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 194}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:32,color:"#f5c842",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 195}}, "📚 Progetti Letterari"  )
+            , React.createElement('div', { style: {fontSize:14,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 196}}, "Tutti i tuoi libri salvati — ogni parola al sicuro"         )
+          )
+          , React.createElement("div", { className:"bf-projects-buttons", style: {display:"flex",gap:8}},
+            React.createElement("button", { onClick: ()=>{ if(onMarketAnalyzer) onMarketAnalyzer(); }, style: {padding:"10px 20px",borderRadius:10,border:"1px solid #f5c84244",background:"transparent",color:"#f5c842",fontWeight:700,fontSize:14,cursor:"pointer"}}, "🔍 Market Analyzer"),
+            React.createElement('button', { onClick: onCreate, style: {...goldBtn,display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 198}}, "+"), " Nuovo Libro"  )
+          )
+        )
+        , projects.length===0?(
+          React.createElement('div', { style: {textAlign:"center",padding:"80px 40px",background:"#12111e",borderRadius:20,border:"1px dashed #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 201}}
+            , React.createElement('div', { style: {fontSize:64,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 202}}, "📖")
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:22,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 203}}, "La tua libreria è vuota"    )
+            , React.createElement('div', { style: {color:"#5a5870",fontSize:14,marginBottom:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 204}}, "Crea il tuo primo progetto letterario e inizia a scrivere"         )
+            , React.createElement('button', { onClick: onCreate, style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 205}}, "✍️ Crea il primo libro"    )
+          )
+        ):(
+          React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 208}}
+            , projects.map(proj=>{
+              const wordCount=(proj.chapters||[]).reduce((a,c)=>a+(_optionalChain([c, 'access', _20 => _20.content, 'optionalAccess', _21 => _21.trim, 'call', _22 => _22()])?c.content.trim().split(/\s+/).length:0),0);
+              const chCount=(proj.chapters||[]).length;
+              const hasBrief=_optionalChain([proj, 'access', _23 => _23.brief, 'optionalAccess', _24 => _24.premise]);
+              const hasOutline=(proj.chapterBriefs||[]).length>0;
+              const totalImgs=(proj.chapters||[]).reduce((a,c)=>a+(_optionalChain([c, 'access', _25 => _25.images, 'optionalAccess', _26 => _26.length])||0),0);
+              const accentColor=GENRE_COLORS[proj.genre]||"#f5c842";
+              const isActive=proj.id===currentId;
+              const updDate=proj.updatedAt?new Date(proj.updatedAt).toLocaleDateString("it-IT",{day:"2-digit",month:"short",year:"numeric"}):"—";
+              return(
+                React.createElement('div', { key: proj.id, style: {background:"#12111e",borderRadius:16,border:`1px solid ${isActive?"#f5c842":"#1e1d2e"}`,overflow:"hidden",cursor:"pointer",boxShadow:isActive?"0 0 0 2px #f5c84244":"none"}, onClick: ()=>onOpen(proj.id), __self: this, __source: {fileName: _jsxFileName, lineNumber: 219}}
+                  , React.createElement('div', { style: {height:4,background:`linear-gradient(90deg,${accentColor},${accentColor}66)`}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 220}} )
+                  , React.createElement('div', { style: {padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 221}}
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 222}}
+                      , React.createElement('span', { style: {fontSize:11,color:accentColor,background:accentColor+"22",padding:"3px 10px",borderRadius:20,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 223}}, proj.genre||"Romanzo")
+                      , isActive&&React.createElement('span', { style: {fontSize:10,color:"#f5c842",background:"#f5c84222",padding:"2px 8px",borderRadius:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 224}}, "✏️ aperto" )
+                    )
+                    , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:17,color:"#e8e6f0",marginBottom:4,lineHeight:1.3,minHeight:44}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 226}}, proj.title||React.createElement('span', { style: {color:"#3a3850",fontStyle:"italic"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 226}}, "Senza titolo" ))
+                    , React.createElement('div', { style: {fontSize:12,color:"#5a5870",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 227}}, proj.author||React.createElement('span', { style: {fontStyle:"italic"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 227}}, "Autore sconosciuto" ))
+                    , React.createElement('div', { style: {display:"flex",gap:12,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 228}}
+                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 229}}, React.createElement('div', { style: {fontSize:16,fontWeight:700,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 229}}, wordCount.toLocaleString()), React.createElement('div', { style: {fontSize:10,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 229}}, "parole"))
+                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 230}}, React.createElement('div', { style: {fontSize:16,fontWeight:700,color:"#c084fc",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 230}}, chCount), React.createElement('div', { style: {fontSize:10,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 230}}, "capitoli"))
+                      , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 231}}, React.createElement('div', { style: {fontSize:16,fontWeight:700,color:"#38bdf8",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 231}}, Math.ceil(wordCount/250)), React.createElement('div', { style: {fontSize:10,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 231}}, "pagine"))
+                    )
+                    , React.createElement('div', { style: {display:"flex",gap:5,flexWrap:"wrap",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 233}}
+                      , hasBrief&&React.createElement('span', { style: {fontSize:10,color:"#4ade80",background:"#4ade8022",padding:"2px 7px",borderRadius:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 234}}, "🤖 briefing" )
+                      , hasOutline&&React.createElement('span', { style: {fontSize:10,color:"#38bdf8",background:"#38bdf822",padding:"2px 7px",borderRadius:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 235}}, "📋 scaletta" )
+                      , totalImgs>0&&React.createElement('span', { style: {fontSize:10,color:"#f472b6",background:"#f472b622",padding:"2px 7px",borderRadius:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 236}}, "🖼 " , totalImgs, " foto" )
+                    )
+                    , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,borderTop:"1px solid #1e1d2e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 238}}
+                      , React.createElement('span', { style: {fontSize:10,color:"#3a3850"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 239}}, "✏️ " , updDate)
+                      , React.createElement('div', { style: {display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 240}}
+                        , confirmDelete===proj.id?(
+                          React.createElement(React.Fragment, null
+                            , React.createElement('button', { onClick: e=>{e.stopPropagation();onDelete(proj.id);setConfirmDelete(null);}, style: {padding:"4px 10px",borderRadius:6,border:"1px solid #ef4444",background:"#ef444422",color:"#ef4444",cursor:"pointer",fontSize:11}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 243}}, "Elimina")
+                            , React.createElement('button', { onClick: e=>{e.stopPropagation();setConfirmDelete(null);}, style: {padding:"4px 10px",borderRadius:6,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:11}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 244}}, "Annulla")
+                          )
+                        ):(
+                          React.createElement('button', { onClick: e=>{e.stopPropagation();setConfirmDelete(proj.id);}, style: {padding:"4px 10px",borderRadius:6,border:"1px solid #2e2d3e",background:"transparent",color:"#5a5870",cursor:"pointer",fontSize:11}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 247}}, "🗑")
+                        )
+                      )
+                    )
+                  )
+                )
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   SIDEBAR
+───────────────────────────────────────────── */
+function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sidebarOpen,setSidebarOpen}){
+  const totalW=book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0);
+  const nav=[
+    {id:"projects",icon:"📚",label:"Progetti"},
+    {id:"write",icon:"✍️",label:"Scrivi"},
+    {id:"aiwriter",icon:"🤖",label:"Scrivi con AI"},
+    {id:"chapters",icon:"📑",label:"Struttura"},
+    {id:"cover",icon:"🎨",label:"Copertina AI"},
+    {id:"format",icon:"📐",label:"Impaginazione"},
+    {id:"translate",icon:"🌍",label:"Traduci"},
+    {id:"publish",icon:"🚀",label:"Pubblica su KDP"},
+    {id:"marketanalyzer",icon:"🔍",label:"Market Analyzer"},
+    {id:"kdpanalyzer",icon:"📊",label:"KDP Analyzer"},
+  ];
+  return(
+    React.createElement('aside', { className: `bf-sidebar${sidebarOpen?' open':''}`, style: {width:240,background:"#0c0b18",borderRight:"1px solid #1a1929",display:"flex",flexDirection:"column",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}
+      , React.createElement('div', { style: {padding:"20px 20px 16px",borderBottom:"1px solid #1a1929"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 280}}
+        , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "📖 BookForge" )
+        , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginTop:3,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "Write · Format · Publish"    )
+        , React.createElement('div', { style: {marginTop:10,padding:"8px 10px",background:"#1a1829",borderRadius:8,border:"1px solid #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}
+          , React.createElement('div', { style: {fontSize:11,color:"#f5c842",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 284}}, user.displayName||user.email)
+          , React.createElement('button', { onClick: handleLogout, style: {background:"none",border:"none",color:"#5a5870",fontSize:10,cursor:"pointer",padding:0,marginTop:2,textDecoration:"underline"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 285}}, "Esci")
+        )
+      )
+      , React.createElement('div', { style: {padding:"12px 10px",flex:1,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 288}}
+        , nav.map(item=>(
+          React.createElement('button', { key: item.id, onClick: ()=>setActive(item.id), style: {display:"flex",alignItems:"center",gap:10,width:"100%",padding:"9px 12px",borderRadius:8,border:"none",cursor:"pointer",background:active===item.id?"#1a1829":"transparent",color:active===item.id?"#f5c842":"#6a6880",fontSize:13,textAlign:"left",marginBottom:2,borderLeft:active===item.id?"2px solid #f5c842":"2px solid transparent"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 290}}
+            , React.createElement('span', { style: {fontSize:15}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 291}}, item.icon)
+            , React.createElement('span', { style: {fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, item.label)
+          )
+        ))
+      )
+      , active!=="projects"&&(
+        React.createElement('div', { style: {padding:"14px 16px",borderTop:"1px solid #1a1929"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 297}}
+          , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 298}}, "PROGETTO APERTO" )
+          , React.createElement('input', { value: book.title, onChange: e=>setBook(b=>({...b,title:e.target.value})), placeholder: "Titolo del libro..."  , style: {...inp,fontSize:12,fontFamily:"'Playfair Display',serif",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 299}} )
+          , React.createElement('input', { value: book.author, onChange: e=>setBook(b=>({...b,author:e.target.value})), placeholder: "Autore...", style: {...inp,fontSize:12,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 300}} )
+          , React.createElement('select', { value: book.genre, onChange: e=>setBook(b=>({...b,genre:e.target.value})), style: {...sel,width:"100%",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, GENRES.map(g=>React.createElement('option', { key: g, __self: this, __source: {fileName: _jsxFileName, lineNumber: 301}}, g)))
+          , React.createElement('div', { style: {marginTop:12,display:"flex",justifyContent:"space-between"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 302}}
+            , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 303}}, React.createElement('div', { style: {fontSize:18,fontWeight:700,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 303}}, totalW.toLocaleString()), React.createElement('div', { style: {fontSize:10,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 303}}, "parole"))
+            , React.createElement('div', { style: {textAlign:"right"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 304}}, React.createElement('div', { style: {fontSize:18,fontWeight:700,color:"#c084fc",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 304}}, book.chapters.length), React.createElement('div', { style: {fontSize:10,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 304}}, "capitoli"))
+          )
+          , savedAt&&React.createElement('div', { style: {fontSize:10,color:"#3a3850",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 306}}, "💾 Salvato alle "   , savedAt)
+        )
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   IMAGE MANAGER — inserimento foto nel capitolo
+───────────────────────────────────────────── */
+function ImageManager({chapter,onUpdate}){
+  const fileInputRef=useRef(null);
+  const [editCaption,setEditCaption]=useState(null); // index
+  const images=chapter.images||[];
+
+  const handleFiles=async(files)=>{
+    const newImgs=[];
+    for(const f of files){
+      if(!f.type.startsWith("image/"))continue;
+      const data=await fileToBase64(f);
+      newImgs.push({id:`img_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,data,name:f.name,caption:"",align:"center"});
+    }
+    onUpdate({...chapter,images:[...images,...newImgs]});
+  };
+
+  const removeImg=(idx)=>{
+    const newImgs=images.filter((_,i)=>i!==idx);
+    onUpdate({...chapter,images:newImgs});
+  };
+  const updateImg=(idx,changes)=>{
+    const newImgs=images.map((img,i)=>i===idx?{...img,...changes}:img);
+    onUpdate({...chapter,images:newImgs});
+  };
+  const moveImg=(idx,dir)=>{
+    const newImgs=[...images];
+    const swap=idx+dir;
+    if(swap<0||swap>=newImgs.length)return;
+    [newImgs[idx],newImgs[swap]]=[newImgs[swap],newImgs[idx]];
+    onUpdate({...chapter,images:newImgs});
+  };
+
+  return(
+    React.createElement('div', { style: {padding:"0 24px 20px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 348}}
+      , React.createElement('div', { style: {fontSize:11,color:"#f472b6",marginBottom:12,display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 349}}
+        , React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 350}}, "🖼"), React.createElement('span', { style: {textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 350}}, "Immagini del capitolo"  )
+        , React.createElement('span', { style: {color:"#5a5870",fontWeight:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 351}}, "(", images.length, " foto)" )
+      )
+
+      /* Drop zone + upload button */
+      , React.createElement('div', {
+        onDragOver: e=>e.preventDefault(),
+        onDrop: e=>{e.preventDefault();handleFiles([...e.dataTransfer.files]);},
+        onClick: ()=>_optionalChain([fileInputRef, 'access', _27 => _27.current, 'optionalAccess', _28 => _28.click, 'call', _29 => _29()]),
+        style: {border:"2px dashed #2e2d3e",borderRadius:10,padding:"14px 20px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,marginBottom:images.length?14:0,background:"#0f0e1b",transition:"border-color 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 355}}
+
+        , React.createElement('span', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 361}}, "📷")
+        , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 362}}
+          , React.createElement('div', { style: {fontSize:13,color:"#c8c6d8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 363}}, "Aggiungi foto" )
+          , React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 364}}, "Clicca o trascina qui · JPG, PNG, GIF, WebP"        )
+        )
+        , React.createElement('input', { ref: fileInputRef, type: "file", accept: "image/*", multiple: true, style: {display:"none"}, onChange: e=>handleFiles([...e.target.files]), __self: this, __source: {fileName: _jsxFileName, lineNumber: 366}} )
+      )
+
+      /* Images grid */
+      , images.length>0&&(
+        React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 371}}
+          , images.map((img,idx)=>(
+            React.createElement('div', { key: img.id, style: {background:"#0f0e1b",borderRadius:10,border:"1px solid #2e2d3e",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 373}}
+              /* Thumb */
+              , React.createElement('div', { style: {position:"relative",height:110,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}}
+                , React.createElement('img', { src: img.data, alt: img.caption||img.name, style: {maxWidth:"100%",maxHeight:"100%",objectFit:"contain"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 376}} )
+                , React.createElement('div', { style: {position:"absolute",top:4,right:4,display:"flex",gap:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 377}}
+                  , React.createElement('button', { onClick: ()=>moveImg(idx,-1), disabled: idx===0, style: {width:22,height:22,borderRadius:4,border:"none",background:"#1a1829cc",color:"#c8c6d8",cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",opacity:idx===0?0.3:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 378}}, "↑")
+                  , React.createElement('button', { onClick: ()=>moveImg(idx,1), disabled: idx===images.length-1, style: {width:22,height:22,borderRadius:4,border:"none",background:"#1a1829cc",color:"#c8c6d8",cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",opacity:idx===images.length-1?0.3:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 379}}, "↓")
+                  , React.createElement('button', { onClick: ()=>removeImg(idx), style: {width:22,height:22,borderRadius:4,border:"none",background:"#ef444499",color:"#fff",cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 380}}, "×")
+                )
+              )
+              /* Caption & align */
+              , React.createElement('div', { style: {padding:"8px 10px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 384}}
+                , editCaption===idx?(
+                  React.createElement('input', { autoFocus: true, value: img.caption, onChange: e=>updateImg(idx,{caption:e.target.value}), onBlur: ()=>setEditCaption(null), onKeyDown: e=>e.key==="Enter"&&setEditCaption(null), placeholder: "Didascalia...", style: {...inp,fontSize:11,padding:"5px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 386}} )
+                ):(
+                  React.createElement('div', { onClick: ()=>setEditCaption(idx), style: {fontSize:11,color:img.caption?"#c8c6d8":"#3a3850",cursor:"pointer",fontStyle:img.caption?"normal":"italic",minHeight:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 388}}
+                    , img.caption||"Clicca per aggiungere didascalia..."
+                  )
+                )
+                , React.createElement('div', { style: {display:"flex",gap:4,marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 392}}
+                  , ["sinistra","centro","destra"].map(a=>(
+                    React.createElement('button', { key: a, onClick: ()=>updateImg(idx,{align:a}), style: {flex:1,padding:"3px 0",borderRadius:4,border:`1px solid ${img.align===a||(!img.align&&a==="centro")?"#f472b6":"#2e2d3e"}`,background:img.align===a||(!img.align&&a==="centro")?"#f472b622":"transparent",color:img.align===a||(!img.align&&a==="centro")?"#f472b6":"#5a5870",cursor:"pointer",fontSize:9}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 394}}, a==="sinistra"?"◀":a==="centro"?"■":"▶")
+                  ))
+                )
+              )
+            )
+          ))
+        )
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   WRITE PANEL — con gestione foto integrata
+───────────────────────────────────────────── */
+function WritePanel({book,setBook}){
+  const [activeChapter,setActiveChapter]=useState(0);
+  const [aiAssist,setAiAssist]=useState("");
+  const [aiLoading,setAiLoading]=useState(false);
+  const [aiSuggestion,setAiSuggestion]=useState("");
+  const [showImages,setShowImages]=useState(false);
+  const [mobileView,setMobileView]=useState("list"); // "list" o "editor"
+  const isMobile=typeof window!=="undefined"&&window.innerWidth<=768;
+
+  const ch=book.chapters[activeChapter]||{title:"",content:"",images:[]};
+  const wc=ch.content.trim()?ch.content.trim().split(/\s+/).length:0;
+  const imgCount=(ch.images||[]).length;
+
+  const upd=(field,val)=>setBook(b=>{const c=[...b.chapters];c[activeChapter]={...c[activeChapter],[field]:val};return{...b,chapters:c};});
+  const updChapter=(newCh)=>setBook(b=>{const c=[...b.chapters];c[activeChapter]=newCh;return{...b,chapters:c};});
+
+  const aiAction=async(action)=>{
+    setAiLoading(true);setAiSuggestion("");
+    try{
+      const tail=ch.content.slice(-600);
+      let p="";
+      if(action==="continua")p=`Continua questa storia naturalmente (2-3 paragrafi). Solo la continuazione:\n\n...${tail}`;
+      else if(action==="migliora")p=`Migliora questo testo letterariamente, mantieni il senso. Solo il testo migliorato:\n\n${tail}`;
+      else if(action==="dialogo")p=`Scrivi un dialogo rivelatore tra due personaggi (10 battute) partendo da:\n\n${tail}`;
+      else if(action==="riassumi")p=`Riassumi questo capitolo in 3-4 frasi:\n\n${ch.content}`;
+      else p=`${aiAssist}\n\nContesto: "${book.title}" - ${ch.title}\n...${tail}`;
+      const r=await callClaude(p,"Sei un assistente di scrittura creativa in italiano.");
+      setAiSuggestion(r.trim());
+    }catch(e){setAiSuggestion("Errore: "+e.message);}
+    setAiLoading(false);
+  };
+
+    // Vista mobile: lista capitoli
+  if(isMobile && mobileView==="list"){
+    return React.createElement("div", { style: {flex:1, overflowY:"auto", background:"#0f0e17", paddingTop:60} },
+      React.createElement("div", { style: {padding:"16px 20px", borderBottom:"1px solid #1a1929"} },
+        React.createElement("div", { style: {fontSize:18, fontFamily:"'Playfair Display',serif", color:"#f5c842", marginBottom:4} }, book.title||"Senza titolo"),
+        React.createElement("div", { style: {fontSize:12, color:"#5a5870"} }, book.chapters.length+" capitoli")
+      ),
+      book.chapters.map((ch, i) =>
+        React.createElement("div", {
+          key: i,
+          onClick: () => { setActiveChapter(i); setMobileView("editor"); },
+          style: {padding:"16px 20px", borderBottom:"1px solid #1a1929", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center"}
+        },
+          React.createElement("div", null,
+            React.createElement("div", { style: {color: i===activeChapter?"#f5c842":"#e8e6f0", fontSize:15, marginBottom:4} }, ch.title||`Capitolo ${i+1}`),
+            React.createElement("div", { style: {fontSize:12, color:"#5a5870"} }, (ch.content.trim().split(/\s+/).filter(Boolean).length||0)+" parole")
+          ),
+          React.createElement("span", { style: {color:"#3a3850", fontSize:20} }, "›")
+        )
+      ),
+      React.createElement("button", {
+        onClick: () => { const n=book.chapters.length; setBook(b=>({...b,chapters:[...b.chapters,{title:`Capitolo ${n+1}`,content:"",images:[]}]})); setActiveChapter(n); setMobileView("editor"); },
+        style: {width:"100%", padding:"16px", border:"none", background:"transparent", color:"#5a5870", fontSize:14, cursor:"pointer", borderTop:"1px dashed #2e2d3e"}
+      }, "+ Aggiungi capitolo")
+    );
+  }
+
+  // Vista mobile: editor capitolo
+  if(isMobile && mobileView==="editor"){
+    const ch=book.chapters[activeChapter]||{title:"",content:"",images:[]};
+    const upd=(field,val)=>setBook(b=>{const c=[...b.chapters];c[activeChapter]={...c[activeChapter],[field]:val};return{...b,chapters:c};});
+    return React.createElement("div", { style: {flex:1, display:"flex", flexDirection:"column", background:"#0f0e17", paddingTop:60} },
+      // Header con tasto indietro
+      React.createElement("div", { style: {padding:"12px 16px", borderBottom:"1px solid #1a1929", display:"flex", alignItems:"center", gap:12, background:"#0c0b18"} },
+        React.createElement("button", { onClick: ()=>setMobileView("list"), style: {background:"none", border:"none", color:"#f5c842", fontSize:20, cursor:"pointer", padding:"0 4px"} }, "‹"),
+        React.createElement("div", { style: {flex:1, fontSize:14, color:"#e8e6f0", fontFamily:"'Playfair Display',serif", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"} }, ch.title||`Capitolo ${activeChapter+1}`)
+      ),
+      // Dettatura in primo piano
+      React.createElement(VoiceDictation, { onText: (t)=>upd("content",(ch.content||"")+(ch.content?" ":"")+t), style: {margin:"12px 16px", borderRadius:12} }),
+      // Editor testo
+      React.createElement("textarea", {
+        value: ch.content||"",
+        onChange: e=>upd("content",e.target.value),
+        placeholder: "Scrivi qui il tuo testo...",
+        style: {flex:1, background:"#12111e", border:"none", color:"#e8e6f0", fontSize:16, lineHeight:1.7, padding:"16px", resize:"none", outline:"none", fontFamily:"Georgia,serif"}
+      })
+    );
+  }
+
+  return(
+    React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 440}}
+      /* Chapter list */
+      , React.createElement('div', { style: {width:180,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 442}}
+        , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginBottom:8,padding:"0 4px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 443}}, "CAPITOLI")
+        , book.chapters.map((c,i)=>(
+          React.createElement('div', { key: i, onClick: ()=>{setActiveChapter(i);setShowImages(false);}, style: {padding:"8px 10px",borderRadius:6,cursor:"pointer",marginBottom:3,background:i===activeChapter?"#1a1829":"transparent",color:i===activeChapter?"#f5c842":"#6a6880",fontSize:12,borderLeft:i===activeChapter?"2px solid #f5c842":"2px solid transparent"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 445}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 446}}, c.title||`Cap. ${i+1}`)
+            , React.createElement('div', { style: {fontSize:10,color:"#3a3850",marginTop:2,display:"flex",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 447}}
+              , React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 448}}, c.content.trim()?c.content.trim().split(/\s+/).length:0, "w")
+              , (c.images||[]).length>0&&React.createElement('span', { style: {color:"#f472b644"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 449}}, "🖼", c.images.length)
+            )
+          )
+        ))
+        , React.createElement('button', { onClick: ()=>{const n=book.chapters.length;setBook(b=>({...b,chapters:[...b.chapters,{title:`Capitolo ${n+1}`,content:"",images:[]}]}));setActiveChapter(n);}, style: {width:"100%",padding:"7px",borderRadius:6,border:"1px dashed #2e2d3e",background:"transparent",color:"#5a5870",cursor:"pointer",fontSize:11,marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 453}}, "+ Capitolo"
+
+        )
+      )
+
+      /* Editor */
+      , React.createElement('div', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 459}}
+        /* Title bar */
+        , React.createElement('div', { style: {padding:"12px 24px",borderBottom:"1px solid #1a1929",display:"flex",alignItems:"center",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 461}}
+          , React.createElement('input', { value: ch.title, onChange: e=>upd("title",e.target.value), style: {flex:1,background:"transparent",border:"none",color:"#e8e6f0",fontSize:20,fontFamily:"'Playfair Display',serif",outline:"none"}, placeholder: "Titolo capitolo..." , __self: this, __source: {fileName: _jsxFileName, lineNumber: 462}} )
+          , React.createElement(Badge, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 463}}, wc, " parole" )
+          /* Toggle foto */
+          , React.createElement('button', { onClick: ()=>setShowImages(v=>!v), style: {padding:"6px 12px",borderRadius:8,border:`1px solid ${showImages?"#f472b6":"#2e2d3e"}`,background:showImages?"#f472b622":"transparent",color:showImages?"#f472b6":"#5a5870",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 465}}, "🖼 Foto "
+              , imgCount>0&&React.createElement('span', { style: {background:"#f472b6",color:"#fff",borderRadius:10,fontSize:10,padding:"0 5px",minWidth:16,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 466}}, imgCount)
+          )
+        )
+
+        /* Image panel (expandable) */
+        , showImages&&(
+          React.createElement('div', { style: {borderBottom:"1px solid #1a1929",background:"#0c0b18",maxHeight:340,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 472}}
+            , React.createElement(ImageManager, { chapter: ch, onUpdate: updChapter, __self: this, __source: {fileName: _jsxFileName, lineNumber: 473}} )
+          )
+        )
+
+        /* Inline image preview strip (always visible if images exist) */
+        , !showImages&&imgCount>0&&(
+          React.createElement('div', { style: {padding:"8px 24px",borderBottom:"1px solid #1a1929",background:"#0c0b18",display:"flex",gap:8,overflowX:"auto",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 479}}
+            , React.createElement('span', { style: {fontSize:11,color:"#f472b688",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 480}}, "🖼 " , imgCount, " foto nel capitolo"   )
+            , (ch.images||[]).slice(0,5).map(img=>(
+              React.createElement('img', { key: img.id, src: img.data, alt: "", style: {height:36,width:52,objectFit:"cover",borderRadius:4,border:"1px solid #2e2d3e",cursor:"pointer",flexShrink:0}, onClick: ()=>setShowImages(true), __self: this, __source: {fileName: _jsxFileName, lineNumber: 482}} )
+            ))
+            , imgCount>5&&React.createElement('span', { style: {fontSize:11,color:"#5a5870",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 484}}, "+", imgCount-5, " altre" )
+          )
+        )
+
+        /* Text area */
+        , React.createElement(VoiceDictation, { onText: (t)=>upd("content",(ch.content||"")+(ch.content?" ":"")+t), style: {marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 489}})
+        , React.createElement('textarea', { value: ch.content, onChange: e=>upd("content",e.target.value),
+          placeholder: "Inizia a scrivere qui il tuo capitolo...\n\nUsa Enter due volte per nuovo paragrafo.",
+          style: {flex:1,background:"transparent",border:"none",color:"#c8c6d8",fontSize:16,lineHeight:1.85,padding:"24px 64px",outline:"none",resize:"none",fontFamily:"Georgia,serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 490}} )
+
+        /* AI Suggestion */
+        , aiSuggestion&&(
+          React.createElement('div', { style: {margin:"0 24px 12px",background:"#0d1a2e",border:"1px solid #1e3a5e",borderRadius:10,padding:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 496}}
+            , React.createElement('div', { style: {fontSize:11,color:"#38bdf8",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 497}}, "✨ SUGGERIMENTO AI"  )
+            , React.createElement('div', { style: {color:"#c8daf0",fontSize:14,lineHeight:1.7,maxHeight:120,overflow:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 498}}, aiSuggestion)
+            , React.createElement('div', { style: {display:"flex",gap:8,marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 499}}
+              , React.createElement('button', { onClick: ()=>{upd("content",ch.content+(ch.content?"\n\n":"")+aiSuggestion);setAiSuggestion("");}, style: {...goldBtn,padding:"7px 14px",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 500}}, "✅ Inserisci" )
+              , React.createElement('button', { onClick: ()=>setAiSuggestion(""), style: {padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 501}}, "✕ Scarta" )
+            )
+          )
+        )
+
+        /* AI toolbar */
+        , React.createElement('div', { style: {padding:"10px 24px",borderTop:"1px solid #1a1929",background:"#0c0b18",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 507}}
+          , React.createElement('span', { style: {fontSize:11,color:"#5a5870",marginRight:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 508}}, "AI →" )
+          , [{id:"continua",l:"✍️ Continua"},{id:"migliora",l:"✨ Migliora"},{id:"dialogo",l:"💬 Dialogo"},{id:"riassumi",l:"📝 Riassumi"}].map(a=>(
+            React.createElement('button', { key: a.id, onClick: ()=>aiAction(a.id), disabled: aiLoading, style: {padding:"6px 12px",borderRadius:20,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:12,opacity:aiLoading?0.5:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 510}}, a.l)
+          ))
+          , React.createElement('div', { style: {flex:1,display:"flex",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 512}}
+            , React.createElement('input', { value: aiAssist, onChange: e=>setAiAssist(e.target.value), onKeyDown: e=>e.key==="Enter"&&aiAction("custom"), placeholder: "Chiedi qualcosa all'AI..."  , style: {...inp,padding:"6px 12px",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 513}} )
+            , React.createElement('button', { onClick: ()=>aiAction("custom"), disabled: aiLoading||!aiAssist, style: {...goldBtn,padding:"6px 14px",fontSize:12,opacity:(!aiAssist||aiLoading)?0.5:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 514}}, "→")
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   COVER PANEL
+───────────────────────────────────────────── */
+function CoverPanel({book}){
+  const [theme,setTheme]=useState(0);const [subtitle,setSubtitle]=useState("");const [aiTagline,setAiTagline]=useState("");const [aiLoading,setAiLoading]=useState(false);const [bgImage,setBgImage]=useState(null);const canvasRef=useRef(null);
+  const t=COVER_THEMES[theme];const title=book.title||"Il Mio Libro";const author=book.author||"Autore";
+  const fileInputRef=useRef(null);
+  const handleBgUpload=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{const img=new Image();img.onload=()=>{setBgImage(img);};img.src=ev.target.result;};reader.readAsDataURL(file);};
+  useEffect(()=>{drawCover();},[theme,book.title,book.author,subtitle,aiTagline,bgImage]);
+  function wrapText(ctx,text,x,y,maxW,lineH){const words=text.split(" ");let line="",lines=[];for(const w of words){const test=line+w+" ";if(ctx.measureText(test).width>maxW&&line){lines.push(line.trim());line=w+" ";}else line=test;}lines.push(line.trim());lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineH));return lines.length;}
+  function drawCover(){const canvas=canvasRef.current;if(!canvas)return;const ctx=canvas.getContext("2d"),W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);if(bgImage){
+      const imgR=bgImage.width/bgImage.height,canR=W/H;
+      let sx=0,sy=0,sw=bgImage.width,sh=bgImage.height;
+      if(imgR>canR){sw=bgImage.height*canR;sx=(bgImage.width-sw)/2;}
+      else{sh=bgImage.width/canR;sy=(bgImage.height-sh)/2;}
+      ctx.drawImage(bgImage,sx,sy,sw,sh,0,0,W,H);ctx.fillStyle="rgba(0,0,0,0.55)";ctx.fillRect(0,0,W,H);}else{const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,t.bg);grad.addColorStop(1,t.accent+"44");ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);ctx.strokeStyle=t.accent+"33";ctx.lineWidth=1;for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(W*0.72,H*0.28,40+i*30,0,Math.PI*2);ctx.stroke();}}ctx.fillStyle=t.accent;ctx.fillRect(40,60,W-80,2);ctx.font="bold 16px monospace";ctx.fillStyle=t.accent;ctx.fillText((book.genre||"").toUpperCase(),44,45);const fs=title.length>15?44:56;ctx.font=`bold ${fs}px serif`;ctx.fillStyle=t.text;ctx.shadowColor=t.accent;ctx.shadowBlur=20;const titleLines=wrapText(ctx,title,44,H*0.38,W-88,65);ctx.shadowBlur=0;if(subtitle){ctx.font="italic 18px serif";ctx.fillStyle=t.accent;wrapText(ctx,subtitle,44,H*0.38+titleLines*65+20,W-88,26);}if(aiTagline){ctx.font="16px Georgia";ctx.fillStyle=t.text+"bb";wrapText(ctx,`"${aiTagline}"`,44,H*0.72,W-88,22);}ctx.fillStyle=t.accent;ctx.fillRect(40,H-80,W-80,1);ctx.font="bold 22px serif";ctx.fillStyle=t.text;ctx.fillText(author.toUpperCase(),44,H-50);ctx.font="10px monospace";ctx.fillStyle=t.text+"44";ctx.fillText("BookForge Edition",44,H-30);}
+  const genTagline=async()=>{setAiLoading(true);const r=await callClaude(`Genera UNA sola frase tagline (max 10 parole) per il libro "${title}" genere "${book.genre||"narrativa"}". Solo la frase, niente altro.`);setAiTagline(r.trim().replace(/^["']|["']$/g,""));setAiLoading(false);};
+  const download=()=>{const a=document.createElement("a");a.href=canvasRef.current.toDataURL("image/png");a.download=`copertina_${title.replace(/\s+/g,"_")}.png`;a.click();};
+  return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('div', { style: {width:280,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",marginBottom:4,fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "COPERTINA AI" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "Tema visivo" ), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, COVER_THEMES.map((ct,i)=>(React.createElement('button', { key: i, onClick: ()=>setTheme(i), style: {padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:12,border:theme===i?`1px solid ${ct.accent}`:"1px solid #2e2d3e",background:theme===i?ct.accent+"22":"transparent",color:theme===i?ct.accent:"#7a7890"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, ct.label)))), React.createElement('input', { type:"file", accept:"image/*", ref:fileInputRef, onChange:handleBgUpload, style:{display:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}), React.createElement('button', { onClick:()=>fileInputRef.current.click(), style:{width:"100%",padding:"9px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:12,marginBottom:8,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, bgImage?"✅ Foto caricata — clicca per cambiare":"📷 Carica foto di sfondo"), bgImage&&React.createElement('button', { onClick:()=>setBgImage(null), style:{width:"100%",padding:"6px",borderRadius:8,border:"1px solid #5e2a2a",background:"transparent",color:"#ff6b6b",cursor:"pointer",fontSize:11,marginBottom:8}}, "✕ Rimuovi foto"), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "Sottotitolo"), React.createElement('input', { value: subtitle, onChange: e=>setSubtitle(e.target.value), placeholder: "es. Un racconto di..."   , style: inp, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}} ), React.createElement('button', { onClick: genTagline, disabled: aiLoading, style: {...goldBtn,width:"100%",marginTop:16,fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, aiLoading?"⏳ Generando...":"✨ Genera tagline AI"), aiTagline&&React.createElement('div', { style: {background:"#1a1829",borderRadius:8,padding:10,marginTop:8,fontSize:12,color:"#f5c842",fontStyle:"italic",border:"1px solid #f5c84244"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "\"", aiTagline, "\""), React.createElement('div', { style: {height:1,background:"#1e1d2e",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}} ), React.createElement('button', { onClick: download, style: {...goldBtn,width:"100%",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "📥 Scarica PNG"  ), React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "Dimensioni: 400×600px" , React.createElement('br', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}), "KDP richiede min 1000px"   )), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('div', { style: {boxShadow:"0 30px 80px rgba(0,0,0,0.8)",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('canvas', { ref: canvasRef, width: 400, height: 600, style: {display:"block",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}} )))));
+}
+
+/* ─────────────────────────────────────────────
+   FORMAT PANEL
+───────────────────────────────────────────── */
+function FormatPanel({book}){
+  const [sizeIdx,setSizeIdx]=useState(1);const [margins,setMargins]=useState({top:1,bottom:1,inner:1.25,outer:0.75});const [font,setFont]=useState("Georgia");const [fontSize,setFontSize]=useState(11);const [lineSpacing,setLineSpacing]=useState(1.5);const [exporting,setExporting]=useState(false);
+  const size=KDP_SIZES[sizeIdx];const preview=_optionalChain([book, 'access', _30 => _30.chapters, 'access', _31 => _31[0], 'optionalAccess', _32 => _32.content])||"Il tuo testo apparirà qui...";
+  return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {width:260,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "IMPAGINAZIONE KDP" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Formato pagina" ), KDP_SIZES.map((s,i)=>(React.createElement('button', { key: i, onClick: ()=>setSizeIdx(i), style: {display:"block",width:"100%",padding:"9px 12px",borderRadius:7,marginBottom:5,border:sizeIdx===i?"1px solid #f5c842":"1px solid #2e2d3e",background:sizeIdx===i?"#f5c84211":"transparent",color:sizeIdx===i?"#f5c842":"#7a7890",cursor:"pointer",fontSize:12,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, s.label))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Font"), React.createElement('select', { value: font, onChange: e=>setFont(e.target.value), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, FONTS.map(f=>React.createElement('option', { key: f, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, f))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Dimensione: " , fontSize, "pt"), React.createElement('input', { type: "range", min: 9, max: 14, step: 0.5, value: fontSize, onChange: e=>setFontSize(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Interlinea: " , lineSpacing, "x"), React.createElement('input', { type: "range", min: 1, max: 2.5, step: 0.1, value: lineSpacing, onChange: e=>setLineSpacing(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Margini (pollici)" ), ["top","bottom","inner","outer"].map(m=>(React.createElement('div', { key: m, style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {color:"#7a7890",fontSize:12,minWidth:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, m==="inner"?"interno":m==="outer"?"esterno":m==="top"?"alto":"basso"), React.createElement('input', { type: "number", min: 0.5, max: 2, step: 0.05, value: margins[m], onChange: e=>setMargins(mg=>({...mg,[m]:+e.target.value})), style: {width:65,...inp,padding:"5px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} )))), React.createElement('div', { style: {height:1,background:"#1a1929",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement('button', { onClick: async()=>{setExporting(true);try{await exportPDF(book,sizeIdx,margins,font,fontSize,lineSpacing);}catch(e){alert("Errore: "+e.message);}setExporting(false);}, disabled: exporting, style: {...goldBtn,width:"100%",marginBottom:8,opacity:exporting?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, exporting?"⏳ Generando...":"📥 Esporta PDF KDP"), React.createElement('button', { onClick: ()=>exportEPUB(book), style: {width:"100%",padding:"10px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "📱 Esporta EPUB (Kindle)"   ), React.createElement('div', { style: {fontSize:11,color:"#f5c84299",marginTop:10,lineHeight:1.5}}, "⚠️ Per libri in Russo, Cinese, Giapponese o Arabo usa EPUB — il PDF usa traslitterazione latina.")), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40,overflow:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {textAlign:"center",marginBottom:16,fontSize:12,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "ANTEPRIMA — "  , size.label), React.createElement('div', { style: {background:"#fff",width:`${Math.round(size.pts[0]*60)}px`,minHeight:`${Math.round(size.pts[1]*60)}px`,boxShadow:"0 20px 60px rgba(0,0,0,0.7)",padding:`${margins.top*25}px ${margins.outer*30}px ${margins.bottom*25}px ${margins.inner*30}px`,boxSizing:"border-box",position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, _optionalChain([book, 'access', _35 => _35.chapters, 'access', _36 => _36[0], 'optionalAccess', _37 => _37.title])&&React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize*1.3*0.55}pt`,fontWeight:"bold",textAlign:"center",marginBottom:"1em",color:"#111"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, book.chapters[0].title), React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize}pt`,lineHeight:lineSpacing,color:"#111",textAlign:"left",textIndent:"1.5em",wordBreak:"normal",overflowWrap:"break-word",whiteSpace:"pre-wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, preview), React.createElement('div', { style: {textAlign:"center",fontSize:"8pt",color:"#999",fontFamily:font,marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "— 1 —"  ))))));
+}
+
+/* ─────────────────────────────────────────────
+   TRANSLATE PANEL
+───────────────────────────────────────────── */
+function TranslatePanel({book,setBook}){
+  const [targetLang,setTargetLang]=useState("en");const [loading,setLoading]=useState(false);const [progress,setProgress]=useState({current:0,total:0,name:""});const [translated,setTranslated]=useState(null);const [error,setError]=useState("");
+  const translate=async()=>{setLoading(true);setError("");setTranslated(null);const langLabel=_optionalChain([LANGUAGES, 'access', _38 => _38.find, 'call', _39 => _39(l=>l.code===targetLang), 'optionalAccess', _40 => _40.label])||targetLang;const total=book.chapters.length;const result=[];try{for(let i=0;i<total;i++){const ch=book.chapters[i];setProgress({current:i+1,total,name:ch.title||`Capitolo ${i+1}`});let r;
+      try {
+        const [translatedTitle, translatedContent] = await Promise.all([
+          callDeepL(ch.title||"", targetLang),
+          ch.content ? callDeepL(ch.content, targetLang) : Promise.resolve("")
+        ]);
+        r = "TITOLO: " + translatedTitle + "\n" + translatedContent;
+      } catch(deeplErr) {
+        console.warn("DeepL fallback a Claude:", deeplErr);
+        r = await callClaude(`Traduci in ${langLabel}: TITOLO: ${ch.title}\n\n${ch.content||""}`, `Traduttore ${langLabel}. Rispondi: TITOLO: [titolo]\n[testo]`);
+      }const titleMatch=r.match(/^TITOLO:\s*(.+)\n/);const translatedTitle=titleMatch?titleMatch[1].trim():ch.title;const bodyText=r.replace(/^TITOLO:.+\n/,"").trim();result.push({title:translatedTitle,content:bodyText,images:ch.images||[]});}setTranslated({lang:langLabel,chapters:result});}catch(e){setError("Errore: "+e.message);}setLoading(false);};
+  const pct=progress.total?Math.round((progress.current/progress.total)*100):0;
+  return(React.createElement('div', { style: {flex:1,padding:36,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('h2', { style: {fontFamily:"'Playfair Display',serif",color:"#f5c842",fontSize:26,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Traduzione Automatica" ), React.createElement('p', { style: {color:"#7a7890",marginBottom:28,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Traduci l'intero libro preservando lo stile letterario."      ), React.createElement('div', { style: {maxWidth:640}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Lingua di destinazione"  ), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:7,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, LANGUAGES.filter(l=>l.code!=="it").map(l=>(React.createElement('button', { key: l.code, onClick: ()=>setTargetLang(l.code), style: {padding:"8px 14px",borderRadius:20,cursor:"pointer",fontSize:13,border:targetLang===l.code?"1px solid #f5c842":"1px solid #2e2d3e",background:targetLang===l.code?"#f5c84222":"transparent",color:targetLang===l.code?"#f5c842":"#7a7890",fontWeight:targetLang===l.code?700:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, l.flag, " " , l.label)))), React.createElement('div', { style: {...card,marginBottom:20,display:"flex",gap:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22,fontWeight:700,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, book.chapters.length), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "capitoli")), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22,fontWeight:700,color:"#c084fc",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0).toLocaleString()), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "parole")), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([LANGUAGES, 'access', _41 => _41.find, 'call', _42 => _42(l=>l.code===targetLang), 'optionalAccess', _43 => _43.flag])), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([LANGUAGES, 'access', _44 => _44.find, 'call', _45 => _45(l=>l.code===targetLang), 'optionalAccess', _46 => _46.label])))), loading&&(React.createElement('div', { style: {marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12,color:"#7a7890"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Capitolo: " , React.createElement('span', { style: {color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, progress.name)), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, pct, "%")), React.createElement('div', { style: {background:"#1a1829",borderRadius:4,height:8,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {width:`${pct}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:4,transition:"width 0.5s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}} )))), error&&React.createElement('div', { style: {background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, error), translated&&(React.createElement('div', { style: {background:"#0d1f0d",border:"1px solid #1a4a1a",borderRadius:12,padding:20,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {color:"#4ade80",fontSize:14,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "✅ Traduzione completata in "    , translated.lang, "!"), React.createElement('div', { style: {color:"#a8d8a8",fontSize:13,lineHeight:1.65,maxHeight:100,overflow:"hidden",fontStyle:"italic"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([translated, 'access', _47 => _47.chapters, 'access', _48 => _48[0], 'optionalAccess', _49 => _49.content, 'optionalAccess', _50 => _50.slice, 'call', _51 => _51(0,280)]), "..."), React.createElement('div', { style: {display:"flex",gap:8,marginTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('button', { onClick: ()=>{setBook(b=>({...b,title:b.title+` [${translated.lang}]`,chapters:translated.chapters}));setTranslated(null);}, style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Applica al progetto"  ), React.createElement('button', { onClick: ()=>setTranslated(null), style: {padding:"10px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Scarta")))), React.createElement('button', { onClick: translate, disabled: loading, style: {...goldBtn,opacity:loading?0.6:1,cursor:loading?"not-allowed":"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, loading?`⏳ Capitolo ${progress.current}/${progress.total}...`:`🌍 Traduci in ${_optionalChain([LANGUAGES, 'access', _52 => _52.find, 'call', _53 => _53(l=>l.code===targetLang), 'optionalAccess', _54 => _54.label])}`))));
+}
+
+/* ─────────────────────────────────────────────
+   CHAPTERS PANEL
+───────────────────────────────────────────── */
+function ChaptersPanel({book,setBook}){
+  const [aiLoading,setAiLoading]=useState(false);const [aiAnalysis,setAiAnalysis]=useState("");
+  const totalW=book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0);
+  const analyze=async()=>{setAiLoading(true);setAiAnalysis("");const existing=book.chapters.map((c,i)=>`${i+1}. ${c.title}: ${c.content.slice(0,100)}`).join("\n");const r=await callClaude(`Analizza la struttura del libro "${book.title||"senza titolo"}" genere "${book.genre}":\n\n${existing}\n\nDai: 1) Analisi breve 2) Suggerimenti narrativi 3) Capitoli mancanti`,"Editor letterario. Rispondi in italiano, conciso.");setAiAnalysis(r);setAiLoading(false);};
+  return(React.createElement('div', { style: {flex:1,padding:36,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('h2', { style: {fontFamily:"'Playfair Display',serif",color:"#f5c842",fontSize:26,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "Struttura del Libro"  ), React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement(Badge, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, totalW.toLocaleString(), " parole" ), React.createElement(Badge, { color: "#c084fc", __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "~", Math.ceil(totalW/250), " pagine" ), React.createElement(Badge, { color: "#38bdf8", __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, book.chapters.length, " capitoli" ))), React.createElement('button', { onClick: analyze, disabled: aiLoading, style: {...goldBtn,fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, aiLoading?"⏳ Analisi...":"🤖 Analizza con AI")), React.createElement('div', { style: {display:"flex",gap:24,maxWidth:900}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, book.chapters.map((ch,i)=>(React.createElement('div', { key: i, style: {...card,marginBottom:10,display:"flex",gap:14,alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('span', { style: {color:"#5a5870",fontSize:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "⠿"), React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('input', { value: ch.title, onChange: e=>setBook(b=>{const c=[...b.chapters];c[i]={...c[i],title:e.target.value};return{...b,chapters:c};}), style: {...inp,fontFamily:"'Playfair Display',serif",fontSize:14,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}} ), React.createElement('div', { style: {fontSize:11,color:"#5a5870",display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, ch.content.trim()?ch.content.trim().split(/\s+/).length:0, " parole" ), (ch.images||[]).length>0&&React.createElement('span', { style: {color:"#f472b6"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "🖼 " , ch.images.length, " foto" ))), React.createElement('div', { style: {width:80}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('div', { style: {background:"#1a1829",borderRadius:4,height:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('div', { style: {width:`${Math.min(100,((ch.content.trim().split(/\s+/).length||0)/3000)*100)}%`,height:"100%",background:"#f5c842",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}} ))), React.createElement('button', { onClick: ()=>setBook(b=>({...b,chapters:b.chapters.filter((_,idx)=>idx!==i)})), style: {background:"transparent",border:"none",color:"#5a5870",cursor:"pointer",fontSize:20,padding:"0 4px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "×")))), React.createElement('button', { onClick: ()=>setBook(b=>({...b,chapters:[...b.chapters,{title:`Capitolo ${b.chapters.length+1}`,content:"",images:[]}]})), style: {width:"100%",padding:"12px",borderRadius:10,border:"2px dashed #2e2d3e",background:"transparent",color:"#5a5870",cursor:"pointer",fontSize:13,marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "+ Aggiungi capitolo"  )), aiAnalysis&&(React.createElement('div', { style: {...card,width:280,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",marginBottom:10,fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, "🤖 ANALISI AI"  ), React.createElement('div', { style: {color:"#c8c6d8",fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}, aiAnalysis))))));
+}
+
+/* ─────────────────────────────────────────────
+   PUBLISH WIZARD — Wizard automatica completa
+   Step 0: Revisione stats
+   Step 1: Traduzione (opzionale, multi-lingua)
+   Step 2: Impaginazione & metadati KDP
+   Step 3: Esportazione (PDF + EPUB per ogni lingua)
+   Step 4: Istruzioni upload su Amazon
+───────────────────────────────────────────── */
+function PublishPanel({book,setBook}){
+  const [wStep,setWStep]=useState(0);
+
+  /* ── STEP 1: Traduzione ── */
+  const [transLangs,setTransLangs]=useState([]); // lingue selezionate
+  const [transStatus,setTransStatus]=useState({}); // { "en": "idle"|"loading"|"done"|"error" }
+  const [translatedBooks,setTranslatedBooks]=useState({}); // { "en": bookObj }
+  const [transError,setTransError]=useState("");
+
+  /* ── STEP 2: Impaginazione ── */
+  const [sizeIdx,setSizeIdx]=useState(1);
+  const [margins,setMargins]=useState({top:1,bottom:1,inner:1.25,outer:0.75});
+  const [fontName,setFontName]=useState("Georgia");
+  const [fontSize,setFontSize]=useState(11);
+  const [lineSpacing,setLineSpacing]=useState(1.5);
+  const [desc,setDesc]=useState("");
+  const [kw,setKw]=useState("");
+  const [aiMetaLoading,setAiMetaLoading]=useState(false);
+
+  /* ── STEP 3: Export ── */
+  const [exporting,setExporting]=useState({});
+  const [exported,setExported]=useState({});
+
+  const totalW=book.chapters.reduce((a,c)=>a+(_optionalChain([c, 'access', _55 => _55.content, 'optionalAccess', _56 => _56.trim, 'call', _57 => _57()])?c.content.trim().split(/\s+/).length:0),0);
+  const totalPages=Math.ceil(totalW/250);
+  const totalImgs=book.chapters.reduce((a,c)=>a+(_optionalChain([c, 'access', _58 => _58.images, 'optionalAccess', _59 => _59.length])||0),0);
+  const allLangs=[{code:"orig",label:book.title||"Originale",flag:"📖"},...LANGUAGES.filter(l=>transLangs.includes(l.code))];
+
+  /* Traduzione di una singola lingua */
+  const translateLang=async(langCode)=>{
+    const langLabel=_optionalChain([LANGUAGES, 'access', _60 => _60.find, 'call', _61 => _61(l=>l.code===langCode), 'optionalAccess', _62 => _62.label])||langCode;
+    setTransStatus(s=>({...s,[langCode]:"loading"}));
+    setTransError("");
+    try{
+      const chapters=[];
+      for(let i=0;i<book.chapters.length;i++){
+        const ch=book.chapters[i];
+        let r;
+        try {
+          const [translatedTitle, translatedContent] = await Promise.all([
+            callDeepL(ch.title||"", lc),
+            ch.content ? callDeepL(ch.content, lc) : Promise.resolve("")
+          ]);
+          r = "TITOLO: " + translatedTitle + "\n" + translatedContent;
+        } catch(deeplErr) {
+          console.warn("DeepL fallback:", deeplErr);
+          r = await callClaude(`Traduci in ${langLabel}: TITOLO: ${ch.title}\n\n${ch.content||""}`, `Traduttore ${langLabel}.`);
+        }
+        const tm=r.match(/^TITOLO:\s*(.+)\n/);const tt=tm?tm[1].trim():ch.title;const bt=r.replace(/^TITOLO:.+\n/,"").trim();chapters.push({...ch,title:tt,content:bt});
+      }
+      const translated={...book,title:book.title,author:book.author,chapters,_lang:langCode,_langLabel:langLabel};
+      setTranslatedBooks(prev=>({...prev,[langCode]:translated}));
+      setTransStatus(s=>({...s,[langCode]:"done"}));
+    }catch(e){
+      setTransStatus(s=>({...s,[langCode]:"error"}));
+      setTransError(`Errore ${langLabel}: ${e.message}`);
+    }
+  };
+
+  const translateAll=async()=>{
+    for(const lc of transLangs){
+      if(transStatus[lc]==="done")continue;
+      await translateLang(lc);
+    }
+  };
+
+  /* Genera metadati KDP con AI */
+  const genMeta=async()=>{
+    setAiMetaLoading(true);
+    const syn=book.chapters.slice(0,2).map(c=>c.content.slice(0,300)).join(" ");
+    const [d,k]=await Promise.all([
+      callClaude(`Scrivi descrizione marketing 150-200 parole per Amazon KDP:\nTitolo: "${book.title}"\nAutore: "${book.author}"\nGenere: "${book.genre}"\nTesto: "${syn}"\nUsa HTML base (b,em). Hook iniziale, call-to-action finale.`,"Copywriter KDP esperto. Solo la descrizione."),
+      callClaude(`7 keywords SEO Amazon KDP per: "${book.title}" - ${book.genre}. Solo 7 parole chiave separate da virgola, max 50 chars ciascuna.`)
+    ]);
+    setDesc(d.trim()); setKw(k.trim());
+    setAiMetaLoading(false);
+  };
+
+  /* Esporta PDF/EPUB per una versione */
+  const doExport=async(langCode,format)=>{
+    const key=`${langCode}_${format}`;
+    setExporting(e=>({...e,[key]:true}));
+    try{
+      const targetBook=langCode==="orig"?book:translatedBooks[langCode];
+      if(!targetBook)throw new Error("Libro non disponibile");
+      if(format==="pdf"){
+        await exportPDF(targetBook,sizeIdx,margins,fontName,fontSize,lineSpacing);
+      }else{
+        exportEPUB(targetBook);
+      }
+      setExported(e=>({...e,[key]:true}));
+    }catch(err){alert("Errore esportazione: "+err.message);}
+    setExporting(e=>({...e,[key]:false}));
+  };
+
+  /* Esporta tutto in un colpo solo */
+  const exportAll=async()=>{
+    for(const lang of allLangs){
+      for(const fmt of["pdf","epub"]){
+        if(lang.code!=="orig"&&!translatedBooks[lang.code])continue;
+        await doExport(lang.code,fmt);
+      }
+    }
+  };
+
+  const STEPS=["📊 Revisione","🌍 Traduzione","📐 Impaginazione","📦 Esporta","🚀 Amazon"];
+
+  return(
+    React.createElement('div', { style: {flex:1,overflowY:"auto",background:"#0f0e17"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 673}}
+      /* Header fisso */
+      , React.createElement('div', { style: {padding:"28px 40px 0",background:"#0f0e17",position:"sticky",top:0,zIndex:10,borderBottom:"1px solid #1a1929"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 675}}
+        , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 676}}
+          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 677}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:26,color:"#f5c842",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 678}}, "🚀 Pubblica su Amazon KDP"    )
+            , React.createElement('div', { style: {fontSize:13,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 679}}, "Wizard automatica — dalla scrittura alla pubblicazione"      )
+          )
+        )
+        /* Step bar */
+        , React.createElement('div', { style: {display:"flex",gap:0,marginBottom:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 683}}
+          , STEPS.map((s,i)=>(
+            React.createElement('div', { key: i, onClick: ()=>setWStep(i), style: {flex:1,padding:"10px 8px",textAlign:"center",cursor:"pointer",borderBottom:`3px solid ${wStep===i?"#f5c842":"transparent"}`,background:wStep===i?"#1a1829":"transparent",transition:"all 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 685}}
+              , React.createElement('div', { style: {fontSize:12,color:wStep===i?"#f5c842":i<wStep?"#4ade80":"#5a5870",fontFamily:wStep===i?"'Playfair Display',serif":"inherit",fontWeight:wStep===i?700:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 686}}, s)
+            )
+          ))
+        )
+      )
+
+      , React.createElement('div', { style: {padding:"32px 40px",maxWidth:900,margin:"0 auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 692}}
+
+        /* ══════ STEP 0: REVISIONE ══════ */
+        , wStep===0&&(
+          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 696}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842",marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 697}}, "Riepilogo del libro"  )
+            /* Stats cards */
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:14,marginBottom:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 699}}
+              , [
+                {icon:"📝",label:"Parole",val:totalW.toLocaleString(),color:"#f5c842"},
+                {icon:"📄",label:"Pagine stimate",val:totalPages,color:"#c084fc"},
+                {icon:"📑",label:"Capitoli",val:book.chapters.length,color:"#38bdf8"},
+                {icon:"🖼",label:"Immagini",val:totalImgs,color:"#f472b6"},
+                {icon:"⏱",label:"Lettura min",val:`~${Math.round(totalW/200)} min`,color:"#4ade80"},
+                {icon:"📚",label:"Genere",val:book.genre,color:"#fbbf24"},
+              ].map(({icon,label,val,color})=>(
+                React.createElement('div', { key: label, style: {...card,textAlign:"center",padding:"16px 12px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 708}}
+                  , React.createElement('div', { style: {fontSize:24,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 709}}, icon)
+                  , React.createElement('div', { style: {fontSize:20,fontWeight:700,color,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 710}}, val)
+                  , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 711}}, label)
+                )
+              ))
+            )
+
+            /* Capitoli */
+            , React.createElement('div', { style: {...card,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 717}}
+              , React.createElement('div', { style: {fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 718}}, "📋 Struttura capitoli"  )
+              , book.chapters.map((ch,i)=>{
+                const wc=_optionalChain([ch, 'access', _63 => _63.content, 'optionalAccess', _64 => _64.trim, 'call', _65 => _65()])?ch.content.trim().split(/\s+/).length:0;
+                const pct=Math.min(100,(wc/2000)*100);
+                return(
+                  React.createElement('div', { key: i, style: {display:"flex",alignItems:"center",gap:12,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 723}}
+                    , React.createElement('div', { style: {width:24,height:24,borderRadius:"50%",background:"#f5c84222",border:"1px solid #f5c842",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#f5c842",fontWeight:700,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 724}}, i+1)
+                    , React.createElement('div', { style: {flex:1,minWidth:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 725}}
+                      , React.createElement('div', { style: {fontSize:13,color:"#c8c6d8",fontFamily:"'Playfair Display',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 726}}, ch.title||`Capitolo ${i+1}`)
+                      , React.createElement('div', { style: {background:"#1a1829",borderRadius:4,height:4,marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}}, React.createElement('div', { style: {width:`${pct}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 727}} ))
+                    )
+                    , React.createElement('div', { style: {fontSize:11,color:"#5a5870",fontFamily:"monospace",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 729}}, wc.toLocaleString(), "w")
+                    , (ch.images||[]).length>0&&React.createElement('span', { style: {fontSize:10,color:"#f472b6"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 730}}, "🖼", ch.images.length)
+                    , React.createElement('span', { style: {fontSize:10,color:wc>0?"#4ade80":"#ef4444"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 731}}, wc>0?"✓":"vuoto")
+                  )
+                );
+              })
+            )
+
+            , totalW<3000&&(
+              React.createElement('div', { style: {background:"#1c1200",border:"1px solid #f59e0b44",borderRadius:10,padding:14,marginBottom:20,fontSize:13,color:"#f59e0b"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 738}}, "⚠️ Il libro ha solo "
+                     , totalW.toLocaleString(), " parole. Amazon KDP raccomanda almeno 10.000 parole per un ebook e 24.000 per un cartaceo."
+              )
+            )
+            , React.createElement('button', { onClick: ()=>setWStep(1), style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 742}}, "Avanti: Traduzione →"  )
+          )
+        )
+
+        /* ══════ STEP 1: TRADUZIONE ══════ */
+        , wStep===1&&(
+          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 748}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 749}}, "Traduzione automatica" )
+            , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 750}}, "Seleziona le lingue in cui vuoi pubblicare il libro. L'AI tradurrà ogni capitolo mantenendo stile e tono. Puoi saltare questo step se vuoi pubblicare solo nella lingua originale."                           )
+
+            /* Griglia lingue */
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 753}}
+              , LANGUAGES.filter(l=>l.code!=="it").map(l=>{
+                const sel=transLangs.includes(l.code);
+                const st=transStatus[l.code]||"idle";
+                const isDone=st==="done";
+                const isLoading=st==="loading";
+                return(
+                  React.createElement('div', { key: l.code, onClick: ()=>{if(isDone||isLoading)return;setTransLangs(prev=>sel?prev.filter(c=>c!==l.code):[...prev,l.code]);}, style: {borderRadius:10,border:`2px solid ${isDone?"#4ade80":isLoading?"#f5c842":sel?"#38bdf8":"#2e2d3e"}`,background:isDone?"#4ade8011":isLoading?"#f5c84211":sel?"#38bdf811":"#12111e",padding:"12px 10px",cursor:isDone||isLoading?"default":"pointer",textAlign:"center",transition:"all 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 760}}
+                    , React.createElement('div', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 761}}, l.flag)
+                    , React.createElement('div', { style: {fontSize:12,color:"#e8e6f0",marginTop:4,fontWeight:sel?700:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 762}}, l.label)
+                    , React.createElement('div', { style: {fontSize:10,marginTop:3,color:isDone?"#4ade80":isLoading?"#f5c842":sel?"#38bdf8":"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 763}}
+                      , isDone?"✓ tradotto":isLoading?"⏳ in corso...":sel?"selezionato":"clicca per selezionare"
+                    )
+                  )
+                );
+              })
+            )
+
+            , transError&&React.createElement('div', { style: {background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 771}}, transError)
+
+            , transLangs.length>0&&(
+              React.createElement('div', { style: {...card,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 774}}
+                , React.createElement('div', { style: {fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 775}}, "Lingue selezionate: "  , transLangs.map(c=>_optionalChain([LANGUAGES, 'access', _66 => _66.find, 'call', _67 => _67(l=>l.code===c), 'optionalAccess', _68 => _68.flag])).join(" "))
+                , React.createElement('div', { style: {fontSize:12,color:"#7a7890",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 776}}, "La traduzione di "   , book.chapters.length, " capitoli richiederà circa "    , transLangs.length*book.chapters.length*5, " secondi. Puoi tradurre una lingua alla volta o tutte insieme."          )
+                , React.createElement('div', { style: {display:"flex",gap:10,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 777}}
+                  , React.createElement('button', { onClick: translateAll, disabled: Object.values(transStatus).some(s=>s==="loading"), style: {...goldBtn,fontSize:13,padding:"10px 22px",opacity:Object.values(transStatus).some(s=>s==="loading")?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 778}}
+                    , Object.values(transStatus).some(s=>s==="loading")?"⏳ Traduzione in corso...":"🌍 Traduci tutte le lingue"
+                  )
+                  , transLangs.map(lc=>{
+                    const l=LANGUAGES.find(x=>x.code===lc);
+                    const st=transStatus[lc]||"idle";
+                    return(
+                      React.createElement('button', { key: lc, onClick: ()=>translateLang(lc), disabled: st==="loading"||st==="done", style: {padding:"10px 18px",borderRadius:8,border:`1px solid ${st==="done"?"#4ade80":st==="loading"?"#f5c842":"#2e2d3e"}`,background:"transparent",color:st==="done"?"#4ade80":st==="loading"?"#f5c842":"#7a7890",cursor:st==="loading"||st==="done"?"default":"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 785}}
+                        , _optionalChain([l, 'optionalAccess', _69 => _69.flag]), " " , st==="done"?"✓":st==="loading"?"⏳":"", " " , _optionalChain([l, 'optionalAccess', _70 => _70.label])
+                      )
+                    );
+                  })
+                )
+              )
+            )
+
+            , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 794}}
+              , React.createElement('button', { onClick: ()=>setWStep(0), style: {padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 795}}, "← Indietro" )
+              , React.createElement('button', { onClick: ()=>setWStep(2), style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 796}}
+                , transLangs.length===0?"Salta traduzione →":"Avanti: Impaginazione →"
+              )
+            )
+          )
+        )
+
+        /* ══════ STEP 2: IMPAGINAZIONE ══════ */
+        , wStep===2&&(
+          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 805}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 806}}, "Impaginazione automatica KDP"  )
+            , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 807}}, "Imposta il formato una volta sola — verrà applicato a tutte le versioni linguistiche al momento dell'esportazione."                )
+
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 809}}
+              /* Colonna sinistra: impostazioni */
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 811}}
+                , React.createElement('div', { style: {...card,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 812}}
+                  , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 813}}, "📐 FORMATO PAGINA"  )
+                  , KDP_SIZES.map((s,i)=>(
+                    React.createElement('div', { key: i, onClick: ()=>setSizeIdx(i), style: {display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,border:`1px solid ${sizeIdx===i?"#f5c842":"#2e2d3e"}`,background:sizeIdx===i?"#f5c84211":"transparent",cursor:"pointer",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 815}}
+                      , React.createElement('div', { style: {width:18,height:18,borderRadius:"50%",border:`2px solid ${sizeIdx===i?"#f5c842":"#2e2d3e"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 816}}, sizeIdx===i&&React.createElement('div', { style: {width:8,height:8,borderRadius:"50%",background:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 816}} ))
+                      , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 817}}
+                        , React.createElement('div', { style: {fontSize:13,color:"#e8e6f0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 818}}, s.label)
+                        , React.createElement('div', { style: {fontSize:10,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 819}}, sizeIdx===0?"Economico · Ideale per fiction":sizeIdx===1?"Il più comune su KDP":"Saggistica · Libri illustrati")
+                      )
+                    )
+                  ))
+                )
+                , React.createElement('div', { style: {...card,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 824}}
+                  , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 825}}, "✍️ TIPOGRAFIA" )
+                  , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 826}}, "Font")
+                  , React.createElement('select', { value: fontName, onChange: e=>setFontName(e.target.value), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 827}}, FONTS.map(f=>React.createElement('option', { key: f, __self: this, __source: {fileName: _jsxFileName, lineNumber: 827}}, f)))
+                  , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 828}}, "Dimensione: " , fontSize, "pt")
+                  , React.createElement('input', { type: "range", min: 9, max: 14, step: 0.5, value: fontSize, onChange: e=>setFontSize(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 829}} )
+                  , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 830}}, "Interlinea: " , lineSpacing, "x")
+                  , React.createElement('input', { type: "range", min: 1, max: 2.5, step: 0.1, value: lineSpacing, onChange: e=>setLineSpacing(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 831}} )
+                )
+                , React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 833}}
+                  , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 834}}, "📏 MARGINI (pollici)"  )
+                  , [["top","Alto"],["bottom","Basso"],["inner","Interno (rilegatura)"],["outer","Esterno"]].map(([k,label])=>(
+                    React.createElement('div', { key: k, style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 836}}
+                      , React.createElement('span', { style: {color:"#7a7890",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 837}}, label)
+                      , React.createElement('input', { type: "number", min: 0.5, max: 2, step: 0.05, value: margins[k], onChange: e=>setMargins(m=>({...m,[k]:+e.target.value})), style: {width:70,...inp,padding:"5px 8px",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 838}} )
+                    )
+                  ))
+                )
+              )
+
+              /* Colonna destra: metadati KDP */
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 845}}
+                , React.createElement('div', { style: {...card,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 846}}
+                  , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 847}}, "✨ METADATI AMAZON KDP"   )
+                  , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 848}}, "Ottimizzati con AI per massimizzare la visibilità su Amazon."        )
+                  , React.createElement('button', { onClick: genMeta, disabled: aiMetaLoading, style: {...goldBtn,width:"100%",fontSize:13,marginBottom:12,opacity:aiMetaLoading?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 849}}
+                    , aiMetaLoading?"⏳ Generando con AI...":"🤖 Genera descrizione + keywords"
+                  )
+                  , desc&&(
+                    React.createElement(React.Fragment, null
+                      , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 854}}, "Descrizione")
+                      , React.createElement('textarea', { value: desc, onChange: e=>setDesc(e.target.value), rows: 6, style: {...inp,fontSize:12,lineHeight:1.6,resize:"vertical",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 855}} )
+                      , React.createElement('button', { onClick: ()=>navigator.clipboard.writeText(desc), style: {width:"100%",padding:"7px",borderRadius:7,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:11,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 856}}, "📋 Copia descrizione"  )
+                    )
+                  )
+                  , kw&&(
+                    React.createElement(React.Fragment, null
+                      , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 861}}, "Keywords SEO" )
+                      , React.createElement('div', { style: {background:"#0f0e17",borderRadius:8,padding:10,fontSize:12,color:"#c084fc",lineHeight:1.8,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 862}}, kw)
+                      , React.createElement('button', { onClick: ()=>navigator.clipboard.writeText(kw), style: {width:"100%",padding:"7px",borderRadius:7,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:11}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 863}}, "📋 Copia keywords"  )
+                    )
+                  )
+                )
+
+                /* Anteprima pagina */
+                , React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 869}}
+                  , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 870}}, "👁 ANTEPRIMA PAGINA"  )
+                  , React.createElement('div', { style: {background:"#fff",borderRadius:4,padding:`${margins.top*22}px ${margins.outer*26}px ${margins.bottom*22}px ${margins.inner*26}px`,boxShadow:"0 4px 20px rgba(0,0,0,0.5)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 871}}
+                    , _optionalChain([book, 'access', _71 => _71.chapters, 'access', _72 => _72[0], 'optionalAccess', _73 => _73.title])&&React.createElement('div', { style: {fontFamily:fontName,fontSize:`${fontSize*0.6}pt`,fontWeight:"bold",textAlign:"center",marginBottom:"0.8em",color:"#111"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 872}}, book.chapters[0].title)
+                    , React.createElement('div', { style: {fontFamily:fontName,fontSize:`${fontSize*0.55}pt`,lineHeight:lineSpacing,color:"#111",textAlign:"justify"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 873}}, (_optionalChain([book, 'access', _74 => _74.chapters, 'access', _75 => _75[0], 'optionalAccess', _76 => _76.content])||"Il tuo testo apparirà qui con l'impaginazione impostata.").slice(0,280))
+                    , React.createElement('div', { style: {textAlign:"center",fontSize:"7pt",color:"#999",fontFamily:fontName,marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 874}}, "— 1 —"  )
+                  )
+                )
+              )
+            )
+
+            , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 880}}
+              , React.createElement('button', { onClick: ()=>setWStep(1), style: {padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 881}}, "← Indietro" )
+              , React.createElement('button', { onClick: ()=>setWStep(3), style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 882}}, "Avanti: Esporta →"  )
+            )
+          )
+        )
+
+        /* ══════ STEP 3: ESPORTAZIONE ══════ */
+        , wStep===3&&(
+          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 889}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 890}}, "Esportazione file" )
+            , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 891}}, "Esporta PDF (per cartaceo KDP) ed EPUB (per Kindle) in tutte le lingue disponibili. I file verranno scaricati direttamente."                  )
+
+            /* Esporta tutto */
+            , React.createElement('div', { style: {...card,marginBottom:20,textAlign:"center",padding:28,background:"#0c0b18",border:"1px solid #f5c84233"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 894}}
+              , React.createElement('div', { style: {fontSize:36,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 895}}, "📦")
+              , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:17,color:"#f5c842",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 896}}, "Esporta tutto in un click"    )
+              , React.createElement('div', { style: {color:"#7a7890",fontSize:12,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 897}}, allLangs.length, " versione" , allLangs.length>1?"i":"", " × 2 formati = "     , allLangs.length*2, " file" )
+              , React.createElement('button', { onClick: exportAll, style: {...goldBtn,fontSize:15,padding:"14px 36px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 898}}, "📦 Scarica tutto ("   , allLangs.length*2, " file)" )
+            )
+
+            /* Tabella per lingua */
+            , React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 902}}
+              , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 903}}, "ESPORTA PER LINGUA"  )
+              , allLangs.map(lang=>{
+                const isOrig=lang.code==="orig";
+                const availBook=isOrig?book:translatedBooks[lang.code];
+                const notAvail=!isOrig&&!availBook;
+                return(
+                  React.createElement('div', { key: lang.code, style: {display:"flex",alignItems:"center",gap:14,padding:"12px 0",borderBottom:"1px solid #1e1d2e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 909}}
+                    , React.createElement('div', { style: {fontSize:20,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 910}}, lang.flag)
+                    , React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 911}}
+                      , React.createElement('div', { style: {fontSize:13,color:"#e8e6f0",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 912}}, isOrig?(book.title||"Originale"):lang.label)
+                      , React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 913}}, isOrig?"Lingua originale":notAvail?"Non ancora tradotto — torna allo step Traduzione":"Traduzione disponibile")
+                    )
+                    , notAvail?(
+                      React.createElement('div', { style: {fontSize:11,color:"#5a5870",fontStyle:"italic"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 916}}, "—")
+                    ):(
+                      React.createElement('div', { style: {display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 918}}
+                        , [["pdf","📄 PDF","cartaceo KDP"],["epub","📱 EPUB","Kindle"]].map(([fmt,label,hint])=>{
+                          const key=`${lang.code}_${fmt}`;
+                          const isDone=exported[key];
+                          const isExp=exporting[key];
+                          return(
+                            React.createElement('button', { key: fmt, onClick: ()=>doExport(lang.code,fmt), disabled: isExp, style: {padding:"8px 14px",borderRadius:8,border:`1px solid ${isDone?"#4ade80":"#2e2d3e"}`,background:isDone?"#4ade8011":"transparent",color:isDone?"#4ade80":isExp?"#f5c842":"#c8c6d8",cursor:isExp?"not-allowed":"pointer",fontSize:12,display:"flex",flexDirection:"column",alignItems:"center",gap:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 924}}
+                              , React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 925}}, isExp?"⏳":isDone?"✓":label)
+                              , React.createElement('span', { style: {fontSize:9,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 926}}, hint)
+                            )
+                          );
+                        })
+                      )
+                    )
+                  )
+                );
+              })
+            )
+
+            , React.createElement('div', { style: {display:"flex",gap:10,marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 937}}
+              , React.createElement('button', { onClick: ()=>setWStep(2), style: {padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 938}}, "← Indietro" )
+              , React.createElement('button', { onClick: ()=>setWStep(4), style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 939}}, "Avanti: Carica su Amazon →"    )
+            )
+          )
+        )
+
+        /* ══════ STEP 4: AMAZON ══════ */
+        , wStep===4&&(
+          React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 946}}
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 947}}, "Pubblica su Amazon KDP"   )
+            , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 948}}, "Hai i file pronti. Ora caricali su Amazon Kindle Direct Publishing seguendo questi passi."             )
+
+            , [
+              {step:1,icon:"🔐",title:"Accedi a KDP",body:"Vai su kdp.amazon.com con il tuo account Amazon. Se è la prima volta, completa il profilo autore con nome, bio e informazioni fiscali (necessarie per ricevere le royalty)."},
+              {step:2,icon:"➕",title:"Crea un nuovo titolo",body:"Clicca '+ Crea' nel pannello KDP. Scegli Ebook Kindle per la versione digitale (Kindle) o Libro cartaceo per la versione stampata (print-on-demand). Puoi pubblicare entrambe le versioni dello stesso libro."},
+              {step:3,icon:"📝",title:"Inserisci i metadati",body:"Copia titolo, autore, descrizione e keywords che hai generato nel passaggio precedente. Seleziona 2 categorie Amazon appropriate per il tuo genere."},
+              {step:4,icon:"⬆️",title:"Carica i file",body:"Per Kindle: carica il file EPUB. Per cartaceo: carica il file PDF. Carica anche la copertina (vai su 'Copertina AI' in BookForge per crearla, poi ridimensionala a 2560×1600px con Canva o simili)."},
+              {step:5,icon:"👁",title:"Anteprima e verifica",body:"Usa lo strumento anteprima di KDP per controllare ogni pagina: margini, font, impaginazione delle immagini. Se hai pubblicato in più lingue, verifica ogni versione separatamente."},
+              {step:6,icon:"💰",title:"Imposta il prezzo",body:"Ebook: royalty 70% se il prezzo è tra €2,99 e €9,99 — fuori da questa fascia è 35%. Cartaceo: KDP calcola il costo di stampa e tu imposti il prezzo finale di vendita."},
+              {step:7,icon:"🚀",title:"Pubblica!",body:"Clicca 'Pubblica' per ogni versione linguistica che hai caricato. Il libro sarà disponibile su Amazon globale entro 24-72 ore dalla revisione."},
+            ].map(({step,icon,title,body})=>(
+              React.createElement('div', { key: step, style: {display:"flex",gap:16,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 959}}
+                , React.createElement('div', { style: {width:36,height:36,borderRadius:"50%",background:"#f5c84222",border:"2px solid #f5c842",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14,color:"#f5c842",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 960}}, step)
+                , React.createElement('div', { style: {...card,flex:1,padding:"14px 18px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 961}}
+                  , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 962}}
+                    , React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 963}}, icon)
+                    , React.createElement('span', { style: {fontFamily:"'Playfair Display',serif",fontSize:15,color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 964}}, title)
+                  )
+                  , React.createElement('div', { style: {fontSize:13,color:"#c8c6d8",lineHeight:1.65}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 966}}, body)
+                )
+              )
+            ))
+
+            , React.createElement('div', { style: {...card,marginTop:8,background:"#0c1a0c",border:"1px solid #4ade8033",textAlign:"center",padding:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 971}}
+              , React.createElement('div', { style: {fontSize:40,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 972}}, "🎉")
+              , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#4ade80",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 973}}, "Sei pronto a pubblicare!"   )
+              , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 974}}, "Hai completato tutti i passaggi di BookForge. In bocca al lupo con la pubblicazione!"             )
+              , React.createElement('a', { href: "https://kdp.amazon.com", target: "_blank", rel: "noopener noreferrer" , style: {...goldBtn,textDecoration:"none",display:"inline-block"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 975}}, "🚀 Vai su Amazon KDP"    )
+            )
+
+            , React.createElement('div', { style: {marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 978}}
+              , React.createElement('button', { onClick: ()=>setWStep(3), style: {padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 979}}, "← Torna all'esportazione"  )
+            )
+          )
+        )
+
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   AI WRITER PANEL — modalità INTERO / CAPITOLO x CAPITOLO
+───────────────────────────────────────────── */
+function AIWriterPanel({book,setBook,setActive}){
+  const [step,setStep]=useState(()=>(book.chapterBriefs||[]).length>0?1:0);
+  const [brief,setBrief]=useState(book.brief||DEFAULT_BRIEF);
+  const [chapterBriefs,setChapterBriefs]=useState(book.chapterBriefs||[]);
+  const [mode,setMode]=useState("intero"); // "intero" | "singolo"
+  const [generating,setGenerating]=useState(false);
+  const [currentGen,setCurrentGen]=useState({chapter:0,status:""});
+  const [generatedChapters,setGeneratedChapters]=useState([]);
+  const [genError,setGenError]=useState("");
+  const [previewIdx,setPreviewIdx]=useState(0);
+  // Modalità singolo capitolo
+  const [singleIdx,setSingleIdx]=useState(0);
+  const [singleDraft,setSingleDraft]=useState(""); // testo generato da revisionare
+  const [singleGenerating,setSingleGenerating]=useState(false);
+
+  useEffect(()=>{setBook(b=>({...b,brief}));},[brief]);
+  useEffect(()=>{setBook(b=>({...b,chapterBriefs}));},[chapterBriefs]);
+
+  /* Genera scaletta */
+  const generateOutlines=async()=>{
+    setGenerating(true);setGenError("");
+    try{
+      const outlines=[];
+      for(let i=0;i<brief.numChapters;i++){
+        setGenError(`Generando scaletta capitolo ${i+1} di ${brief.numChapters}...`);
+        const res=await fetch("https://bookforge-api.luicrescenzo.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,system:"Rispondi SOLO con un oggetto JSON su una riga. Niente altro.",messages:[{role:"user",content:`Crea la scheda del CAPITOLO ${i+1} di ${brief.numChapters}:\nTITOLO: "${book.title||"Senza titolo"}" | GENERE: ${book.genre} | TRAMA: ${brief.premise} | PROTAGONISTA: ${brief.protagonist||"n/d"} | ANTAGONISTA: ${brief.antagonist||"n/d"} | AMBIENTAZIONE: ${brief.setting||"n/d"} | TONO: ${brief.tone}\n${outlines.length>0?`PRECEDENTI: ${outlines.map((o,j)=>`Cap.${j+1}: ${o.title}`).join(", ")}`:""}
+Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 chars","keyScene":"scena principale 60 chars","emotionalArc":"arco emotivo 50 chars"}`}]})});
+        const data=await res.json();
+        const r=_optionalChain([data, 'access', _77 => _77.content, 'optionalAccess', _78 => _78.map, 'call', _79 => _79(b=>b.text||""), 'access', _80 => _80.join, 'call', _81 => _81(""), 'access', _82 => _82.trim, 'call', _83 => _83()])||"";
+        const start=r.indexOf("{"),end=r.lastIndexOf("}");
+        if(start===-1||end===-1)outlines.push({title:`Capitolo ${i+1}`,summary:"Da definire",keyScene:"Da definire",emotionalArc:"Da definire"});
+        else{try{outlines.push(JSON.parse(r.slice(start,end+1)));}catch (e10){outlines.push({title:`Capitolo ${i+1}`,summary:"Da definire",keyScene:"Da definire",emotionalArc:"Da definire"});}}
+      }
+      setGenError("");
+      setChapterBriefs(outlines.map((o,i)=>({...o,customInstructions:"",index:i})));
+      setStep(1);
+    }catch(e){setGenError("Errore: "+e.message);}
+    setGenerating(false);
+  };
+
+  /* Helper: genera testo di un singolo capitolo */
+  const buildChapterPrompt=(i,cb,prevChapters)=>{
+    const prevC=prevChapters.length>0?`\n\nCAPITOLI PRECEDENTI:\n${prevChapters.map((p,idx)=>`Cap.${idx+1}: ${p.slice(0,300)}...`).join("\n")}`:"";
+    const lengthGuide=brief.chapterLength.includes("300")?"300-500":brief.chapterLength.includes("500")?"500-1000":brief.chapterLength.includes("1000")?"1000-2000":"2000+";
+    const protagonistInfo=brief.protagonist?`PROTAGONISTA: ${brief.protagonist}`:"";
+    const antagonistInfo=brief.antagonist?`ANTAGONISTA: ${brief.antagonist}`:"";
+    const settingInfo=brief.setting?`AMBIENTAZIONE: ${brief.setting}`:"";
+    const premiseInfo=brief.premise?`TRAMA PRINCIPALE: ${brief.premise}`:"";
+    const plotTwistInfo=cb.plotTwist?`⚠️ COLPO DI SCENA IN QUESTO CAPITOLO: ${cb.plotTwist}`:"";
+    const contextBlock=[protagonistInfo,antagonistInfo,settingInfo,premiseInfo].filter(Boolean).join("\n");
+    return `Scrivi il capitolo ${i+1} di ${brief.numChapters} di un libro.\n\nINFORMAZIONI FONDAMENTALI DA RISPETTARE SEMPRE:\nTITOLO LIBRO: "${book.title||"Senza titolo"}"\nGENERE: ${book.genre} | TONO: ${brief.tone} | POV: ${brief.pov}\n${contextBlock}\n\nCAPITOLO DA SCRIVERE:\nTITOLO: ${cb.title}\nCOSA SUCCEDE: ${cb.summary}\nSCENA CHIAVE: ${cb.keyScene}\nARCO EMOTIVO: ${cb.emotionalArc}\n${plotTwistInfo}\n${cb.customInstructions?`NOTE EXTRA: ${cb.customInstructions}`:""}\n\nLUNGHEZZA TARGET: ${lengthGuide} parole${prevC}\n\nATTENZIONE: Rispetta SEMPRE i dettagli del protagonista, ambientazione e trama. Non inventare elementi in contraddizione con le informazioni fornite.\n\nScrivi SOLO il testo del capitolo, in italiano, senza titolo iniziale, senza commenti. Paragrafi separati da riga vuota.`;
+  }
+
+  /* Genera TUTTO il libro */
+  const generateAllChapters=async()=>{
+    setStep(2);setGenerating(true);setGenError("");setGeneratedChapters([]);
+    const results=[];const prevChapters=[];
+    for(let i=0;i<chapterBriefs.length;i++){
+      const cb=chapterBriefs[i];
+      setCurrentGen({chapter:i+1,status:`Scrittura "${cb.title}"...`});
+      try{
+        const r=await callClaude(buildChapterPrompt(i,cb,prevChapters),`Sei uno scrittore professionista italiano di ${book.genre||"narrativa"}.`);
+        results.push({title:cb.title,content:r.trim(),images:[]});
+        prevChapters.push(r.trim());
+        setGeneratedChapters([...results]);
+      }catch(e){setGenError(`Errore al capitolo ${i+1}: `+e.message);break;}
+    }
+    setGenerating(false);
+    if(results.length===chapterBriefs.length)setStep(3);
+  };
+
+  /* Genera UN singolo capitolo (modalità capitolo-per-capitolo) */
+  const generateSingleChapter=async()=>{
+    if(singleIdx>=chapterBriefs.length)return;
+    setSingleGenerating(true);setSingleDraft("");
+    const cb=chapterBriefs[singleIdx];
+    // Usa i capitoli già scritti nel libro come contesto
+    const prevChapters=book.chapters.slice(0,singleIdx).map(c=>c.content).filter(Boolean);
+    try{
+      const r=await callClaude(buildChapterPrompt(singleIdx,cb,prevChapters),`Sei uno scrittore professionista italiano di ${book.genre||"narrativa"}.`);
+      setSingleDraft(r.trim());
+    }catch(e){setSingleDraft("Errore: "+e.message);}
+    setSingleGenerating(false);
+  };
+
+  /* Accetta la bozza del capitolo singolo e la inserisce nel libro */
+  const acceptSingleChapter=()=>{
+    const cb=chapterBriefs[singleIdx];
+    setBook(b=>{
+      const chapters=[...b.chapters];
+      // Sostituisce o aggiunge il capitolo all'indice corretto
+      while(chapters.length<=singleIdx)chapters.push({title:`Capitolo ${chapters.length+1}`,content:"",images:[]});
+      chapters[singleIdx]={...chapters[singleIdx],title:cb.title,content:singleDraft};
+      return{...b,chapters};
+    });
+    setSingleDraft("");
+    // Avanza automaticamente al prossimo capitolo se esiste
+    if(singleIdx<chapterBriefs.length-1)setSingleIdx(i=>i+1);
+    else setActive("write");
+  };
+
+  const applyToBook=()=>{setBook(b=>({...b,chapters:generatedChapters}));setActive("write");};
+  const wordCount=generatedChapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0);
+
+  return(
+    React.createElement('div', { style: {flex:1,overflowY:"auto",padding:36}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1091}}
+      , React.createElement('h2', { style: {fontFamily:"'Playfair Display',serif",color:"#f5c842",fontSize:26,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1092}}, "🤖 Scrivi con AI"   )
+      , React.createElement('p', { style: {color:"#7a7890",fontSize:14,marginBottom:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1093}}, "Dai le indicazioni, l'AI scrive il tuo libro."       )
+
+      /* Progress steps */
+      , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:0,marginBottom:32,maxWidth:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1096}}
+        , ["Briefing","Scaletta","Modalità & Generazione","Risultato"].map((s,i)=>(
+          React.createElement('div', { key: i, style: {display:"flex",alignItems:"center",flex:i<3?1:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1098}}
+            , React.createElement('div', { style: {width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",background:step>i?"#f5c842":step===i?"#1a1829":"#12111e",border:step>=i?"2px solid #f5c842":"2px solid #2e2d3e",color:step>i?"#0f0e17":step===i?"#f5c842":"#5a5870",fontSize:13,fontWeight:700,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1099}}, step>i?"✓":i+1)
+            , React.createElement('div', { style: {fontSize:11,color:step>=i?"#f5c842":"#5a5870",marginLeft:6,flexShrink:0,marginRight:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1100}}, s)
+            , i<3&&React.createElement('div', { style: {flex:1,height:2,background:step>i?"#f5c842":"#2e2d3e",marginRight:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1101}} )
+          )
+        ))
+      )
+
+      /* STEP 0: Brief */
+      , step===0&&(
+        React.createElement('div', { style: {maxWidth:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1108}}
+          , React.createElement('div', { style: {...card,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1109}}
+            , React.createElement('div', { style: {fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1110}}, "📖 DI COSA PARLA IL LIBRO?"     )
+            , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1111}}, "Trama / Premessa principale *"    )
+            , React.createElement('textarea', { value: brief.premise, onChange: e=>setBrief(b=>({...b,premise:e.target.value})), rows: 3, placeholder: "es. Un detective in pensione scopre che la sua città nasconde un'organizzazione criminale..."            , style: {...inp,lineHeight:1.6,resize:"vertical"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1112}} )
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1113}}
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1114}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1114}}, "Protagonista"), React.createElement('input', { value: brief.protagonist, onChange: e=>setBrief(b=>({...b,protagonist:e.target.value})), placeholder: "Nome, età, carattere..."  , style: inp, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1114}} ))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1115}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1115}}, "Antagonista / Conflitto"  ), React.createElement('input', { value: brief.antagonist, onChange: e=>setBrief(b=>({...b,antagonist:e.target.value})), placeholder: "Chi o cosa si oppone..."    , style: inp, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1115}} ))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1116}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1116}}, "Ambientazione"), React.createElement('input', { value: brief.setting, onChange: e=>setBrief(b=>({...b,setting:e.target.value})), placeholder: "Dove e quando..."  , style: inp, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1116}} ))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1117}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1117}}, "Tema centrale" ), React.createElement('input', { value: brief.theme, onChange: e=>setBrief(b=>({...b,theme:e.target.value})), placeholder: "es. Redenzione, amore, tradimento..."   , style: inp, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1117}} ))
+            )
+          )
+          , React.createElement('div', { style: {...card,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1120}}
+            , React.createElement('div', { style: {fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1121}}, "⚙️ STILE E STRUTTURA"   )
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1122}}
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1123}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1123}}, "Tono narrativo" ), React.createElement('select', { value: brief.tone, onChange: e=>setBrief(b=>({...b,tone:e.target.value})), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1123}}, TONES.map(t=>React.createElement('option', { key: t, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1123}}, t))))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1124}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1124}}, "Punto di vista"  ), React.createElement('select', { value: brief.pov, onChange: e=>setBrief(b=>({...b,pov:e.target.value})), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1124}}, POV.map(p=>React.createElement('option', { key: p, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1124}}, p))))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1125}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1125}}, "Lunghezza capitoli" ), React.createElement('select', { value: brief.chapterLength, onChange: e=>setBrief(b=>({...b,chapterLength:e.target.value})), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1125}}, CHAPTER_LENGTHS.map(l=>React.createElement('option', { key: l, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1125}}, l))))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1126}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1126}}, "Numero di capitoli: "   , brief.numChapters), React.createElement('input', { type: "range", min: 3, max: 20, value: brief.numChapters, onChange: e=>setBrief(b=>({...b,numChapters:+e.target.value})), style: {width:"100%",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1126}} ), React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1126}}, "3 → 20 capitoli"   ))
+            )
+            , React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1128}}, "Note aggiuntive" )
+            , React.createElement('textarea', { value: brief.extraNotes, onChange: e=>setBrief(b=>({...b,extraNotes:e.target.value})), rows: 2, placeholder: "es. Includi un colpo di scena al capitolo 5..."        , style: {...inp,lineHeight:1.6,resize:"vertical"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1129}} )
+          )
+          , genError&&React.createElement('div', { style: {background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1131}}, genError)
+          , React.createElement('button', { onClick: generateOutlines, disabled: generating||!brief.premise, style: {...goldBtn,opacity:(generating||!brief.premise)?0.5:1,cursor:(generating||!brief.premise)?"not-allowed":"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1132}}, generating?"⏳ Generando scaletta...":"📋 Genera scaletta con AI →")
+          , !brief.premise&&React.createElement('div', { style: {fontSize:12,color:"#5a5870",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1133}}, "* Inserisci almeno la trama per continuare"      )
+        )
+      )
+
+      /* STEP 1: Scaletta + SCELTA MODALITÀ */
+      , step===1&&(
+        React.createElement('div', { style: {maxWidth:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1139}}
+          /* ── SCELTA MODALITÀ ── */
+          , React.createElement('div', { style: {...card,marginBottom:20,border:"1px solid #f5c84244"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1141}}
+            , React.createElement('div', { style: {fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1142}}, "⚡ COME VUOI GENERARE IL LIBRO?"     )
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1143}}
+              /* Modalità INTERO */
+              , React.createElement('div', { onClick: ()=>setMode("intero"), style: {borderRadius:12,border:`2px solid ${mode==="intero"?"#f5c842":"#2e2d3e"}`,background:mode==="intero"?"#f5c84211":"#0f0e17",padding:18,cursor:"pointer",transition:"all 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1145}}
+                , React.createElement('div', { style: {fontSize:28,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1146}}, "📚")
+                , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:15,color:mode==="intero"?"#f5c842":"#c8c6d8",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1147}}, "Scrivi tutto il libro"   )
+                , React.createElement('div', { style: {fontSize:12,color:"#7a7890",lineHeight:1.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1148}}, "L'AI genera tutti i capitoli in sequenza automaticamente. Ideale se vuoi avere subito una prima bozza completa."                )
+                , mode==="intero"&&React.createElement('div', { style: {marginTop:10,fontSize:11,color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1149}}, "✓ Selezionato" )
+              )
+              /* Modalità SINGOLO */
+              , React.createElement('div', { onClick: ()=>setMode("singolo"), style: {borderRadius:12,border:`2px solid ${mode==="singolo"?"#c084fc":"#2e2d3e"}`,background:mode==="singolo"?"#c084fc11":"#0f0e17",padding:18,cursor:"pointer",transition:"all 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1152}}
+                , React.createElement('div', { style: {fontSize:28,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1153}}, "✏️")
+                , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:15,color:mode==="singolo"?"#c084fc":"#c8c6d8",marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1154}}, "Capitolo per capitolo"  )
+                , React.createElement('div', { style: {fontSize:12,color:"#7a7890",lineHeight:1.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1155}}, "L'AI genera un capitolo alla volta. Tu lo leggi, lo modifichi, poi decidi di accettarlo prima di passare al successivo."                   )
+                , mode==="singolo"&&React.createElement('div', { style: {marginTop:10,fontSize:11,color:"#c084fc"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1156}}, "✓ Selezionato" )
+              )
+            )
+          )
+
+          /* Scaletta */
+          , React.createElement('div', { style: {...card,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1162}}
+            , React.createElement('div', { style: {fontSize:13,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1163}}, "📋 SCALETTA — Rivedila e personalizza"     )
+            , React.createElement('div', { style: {fontSize:12,color:"#7a7890",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1164}}, "Modifica titoli, riassunti e aggiungi istruzioni per ogni capitolo."        )
+            , chapterBriefs.map((cb,i)=>(
+              React.createElement('div', { key: i, style: {background:"#0f0e17",borderRadius:10,padding:16,marginBottom:10,border:`1px solid ${mode==="singolo"&&i===singleIdx?"#c084fc":"#2e2d3e"}`,position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1166}}
+                , mode==="singolo"&&(
+                  React.createElement('div', { style: {position:"absolute",top:10,right:10,fontSize:10,color:i===singleIdx?"#c084fc":"#5a5870",background:i===singleIdx?"#c084fc22":"transparent",padding:"2px 8px",borderRadius:10,cursor:"pointer"}, onClick: ()=>setSingleIdx(i), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1168}}
+                    , i<singleIdx?"✓ fatto":i===singleIdx?"▶ in corso":"in attesa"
+                  )
+                )
+                , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1172}}
+                  , React.createElement('div', { style: {width:28,height:28,borderRadius:"50%",background:"#f5c84222",border:"1px solid #f5c842",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#f5c842",fontWeight:700,flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1173}}, i+1)
+                  , React.createElement('input', { value: cb.title, onChange: e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],title:e.target.value};return n;}), style: {...inp,fontFamily:"'Playfair Display',serif",fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1174}} )
+                )
+                , React.createElement('textarea', { value: cb.summary, onChange: e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],summary:e.target.value};return n;}), rows: 2, style: {...inp,fontSize:12,lineHeight:1.6,resize:"vertical",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1176}} )
+                , React.createElement('input', { value: cb.customInstructions, onChange: e=>setChapterBriefs(arr=>{const n=[...arr];n[i]={...n[i],customInstructions:e.target.value};return n;}), placeholder: "Istruzioni extra per questo capitolo (opzionale)..."     , style: {...inp,fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1177}} )
+              )
+            ))
+          )
+
+          , React.createElement('div', { style: {display:"flex",gap:10,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1182}}
+            , React.createElement('button', { onClick: ()=>setStep(0), style: {padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1183}}, "← Modifica brief"  )
+            , mode==="intero"?(
+              React.createElement('button', { onClick: generateAllChapters, style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1185}}, "📚 Scrivi tutto il libro →"     )
+            ):(
+              React.createElement('button', { onClick: ()=>setStep(2), style: {...goldBtn,background:"linear-gradient(135deg,#c084fc,#8b5cf6)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1187}}, "✏️ Inizia capitolo per capitolo →"     )
+            )
+          )
+        )
+      )
+
+      /* STEP 2: Generazione - INTERO */
+      , step===2&&mode==="intero"&&(
+        React.createElement('div', { style: {maxWidth:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1195}}
+          , React.createElement('div', { style: {...card,marginBottom:20,textAlign:"center",padding:40}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1196}}
+            , React.createElement('div', { style: {fontSize:48,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1197}}, "✍️")
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:22,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1198}}, "L'AI sta scrivendo il tuo libro..."     )
+            , React.createElement('div', { style: {color:"#7a7890",fontSize:14,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1199}}, "Capitolo " , currentGen.chapter, " di "  , chapterBriefs.length, ": " , React.createElement('span', { style: {color:"#e8e6f0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1199}}, currentGen.status))
+            , React.createElement('div', { style: {background:"#0f0e17",borderRadius:8,height:12,overflow:"hidden",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1200}}, React.createElement('div', { style: {width:`${(currentGen.chapter/chapterBriefs.length)*100}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:8,transition:"width 0.8s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1200}} ))
+            , React.createElement('div', { style: {fontSize:13,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1201}}, Math.round((currentGen.chapter/chapterBriefs.length)*100), "% completato" )
+          )
+          , generatedChapters.length>0&&(React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1203}}, React.createElement('div', { style: {fontSize:12,color:"#4ade80",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1203}}, "✅ Completati: "  , generatedChapters.length, "/", chapterBriefs.length), generatedChapters.map((c,i)=>(React.createElement('div', { key: i, style: {display:"flex",alignItems:"center",gap:8,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1203}}, React.createElement('span', { style: {color:"#4ade80",fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1203}}, "✓"), React.createElement('span', { style: {color:"#c8c6d8",fontSize:13,fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1203}}, c.title), React.createElement('span', { style: {color:"#5a5870",fontSize:11,marginLeft:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1203}}, c.content.trim().split(/\s+/).length, "w"))))))
+          , genError&&React.createElement('div', { style: {background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1204}}, genError)
+        )
+      )
+
+      /* STEP 2: Modalità CAPITOLO PER CAPITOLO */
+      , step===2&&mode==="singolo"&&(
+        React.createElement('div', { style: {maxWidth:760}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1210}}
+          , React.createElement('div', { style: {...card,marginBottom:16,background:"#0c0b1e",border:"1px solid #c084fc44"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1211}}
+            /* Header del capitolo corrente */
+            , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1213}}
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1214}}
+                , React.createElement('div', { style: {fontSize:11,color:"#c084fc",textTransform:"uppercase",letterSpacing:1,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1215}}, "Capitolo " , singleIdx+1, " di "  , chapterBriefs.length)
+                , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#e8e6f0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1216}}, _optionalChain([chapterBriefs, 'access', _84 => _84[singleIdx], 'optionalAccess', _85 => _85.title]))
+              )
+              , React.createElement('div', { style: {display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1218}}
+                , React.createElement('button', { onClick: ()=>singleIdx>0&&setSingleIdx(i=>i-1), disabled: singleIdx===0, style: {padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13,opacity:singleIdx===0?0.4:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1219}}, "← Prec." )
+                , React.createElement('button', { onClick: ()=>singleIdx<chapterBriefs.length-1&&setSingleIdx(i=>i+1), disabled: singleIdx===chapterBriefs.length-1, style: {padding:"7px 14px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13,opacity:singleIdx===chapterBriefs.length-1?0.4:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1220}}, "Succ. →" )
+              )
+            )
+
+            /* Progressione capitoli */
+            , React.createElement('div', { style: {display:"flex",gap:4,marginBottom:20,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1225}}
+              , chapterBriefs.map((_,i)=>{
+                const isWritten=_optionalChain([book, 'access', _86 => _86.chapters, 'access', _87 => _87[i], 'optionalAccess', _88 => _88.content, 'optionalAccess', _89 => _89.trim, 'call', _90 => _90()]);
+                return(
+                  React.createElement('div', { key: i, onClick: ()=>setSingleIdx(i), style: {width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,cursor:"pointer",fontWeight:700,border:`2px solid ${i===singleIdx?"#c084fc":isWritten?"#4ade80":"#2e2d3e"}`,background:i===singleIdx?"#c084fc22":isWritten?"#4ade8022":"transparent",color:i===singleIdx?"#c084fc":isWritten?"#4ade80":"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1229}}, isWritten?"✓":i+1)
+                );
+              })
+            )
+
+            /* Genera bozza */
+            , !singleDraft&&!singleGenerating&&(
+              React.createElement('div', { style: {textAlign:"center",padding:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1236}}
+                , React.createElement('div', { style: {fontSize:14,color:"#7a7890",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1237}}
+                  , _optionalChain([book, 'access', _91 => _91.chapters, 'access', _92 => _92[singleIdx], 'optionalAccess', _93 => _93.content, 'optionalAccess', _94 => _94.trim, 'call', _95 => _95()])?"Questo capitolo è già stato scritto. Puoi rigenerare una nuova bozza o modificarlo direttamente nell'editor.":"Premi il pulsante per generare la bozza di questo capitolo."
+                )
+                , React.createElement('div', { style: {display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1240}}
+                  , React.createElement('button', { onClick: generateSingleChapter, style: {...goldBtn,background:"linear-gradient(135deg,#c084fc,#8b5cf6)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1241}}, "✍️ Genera bozza capitolo "    , singleIdx+1)
+                  , _optionalChain([book, 'access', _96 => _96.chapters, 'access', _97 => _97[singleIdx], 'optionalAccess', _98 => _98.content, 'optionalAccess', _99 => _99.trim, 'call', _100 => _100()])&&(
+                    React.createElement('button', { onClick: ()=>setActive("write"), style: {...goldBtn}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1243}}, "✏️ Vai all'editor"  )
+                  )
+                )
+              )
+            )
+
+            /* Loading */
+            , singleGenerating&&(
+              React.createElement('div', { style: {textAlign:"center",padding:"30px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1251}}
+                , React.createElement('div', { style: {fontSize:36,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1252}}, "✍️")
+                , React.createElement('div', { style: {color:"#c084fc",fontFamily:"'Playfair Display',serif",fontSize:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1253}}, "Scrittura del capitolo in corso..."    )
+              )
+            )
+
+            /* Bozza generata — revisione */
+            , singleDraft&&!singleGenerating&&(
+              React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1259}}
+                , React.createElement('div', { style: {fontSize:12,color:"#c084fc",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1260}}
+                  , React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1261}}, "✨ BOZZA GENERATA — Leggila e modificala prima di accettare"         )
+                  , React.createElement('span', { style: {color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1262}}, singleDraft.trim().split(/\s+/).length, " parole" )
+                )
+                , React.createElement('textarea', { value: singleDraft, onChange: e=>setSingleDraft(e.target.value), rows: 14,
+                  style: {...inp,lineHeight:1.85,resize:"vertical",fontFamily:"Georgia,serif",fontSize:14,color:"#c8c6d8",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1264}} )
+                , React.createElement('div', { style: {display:"flex",gap:10,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1266}}
+                  , React.createElement('button', { onClick: acceptSingleChapter, style: goldBtn, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1267}}, "✅ Accetta e "
+                       , singleIdx<chapterBriefs.length-1?"passa al capitolo "+(singleIdx+2):"completa il libro"
+                  )
+                  , React.createElement('button', { onClick: generateSingleChapter, style: {padding:"12px 20px",borderRadius:8,border:"1px solid #c084fc44",background:"transparent",color:"#c084fc",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1270}}, "🔄 Rigenera bozza"
+
+                  )
+                  , React.createElement('button', { onClick: ()=>setSingleDraft(""), style: {padding:"12px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1273}}, "✕ Scarta"
+
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+
+      /* STEP 3: Done — solo per modalità intero */
+      , step===3&&(
+        React.createElement('div', { style: {maxWidth:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1285}}
+          , React.createElement('div', { style: {...card,marginBottom:20,textAlign:"center",padding:40}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1286}}
+            , React.createElement('div', { style: {fontSize:56,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1287}}, "🎉")
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:24,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1288}}, "Il tuo libro è pronto!"    )
+            , React.createElement('div', { style: {display:"flex",justifyContent:"center",gap:20,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1289}}
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1290}}, React.createElement('div', { style: {fontSize:24,fontWeight:700,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1290}}, generatedChapters.length), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1290}}, "capitoli"))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1291}}, React.createElement('div', { style: {fontSize:24,fontWeight:700,color:"#c084fc",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1291}}, wordCount.toLocaleString()), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1291}}, "parole"))
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1292}}, React.createElement('div', { style: {fontSize:24,fontWeight:700,color:"#38bdf8",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1292}}, Math.ceil(wordCount/250)), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1292}}, "pagine stimate" ))
+            )
+            , React.createElement('button', { onClick: applyToBook, style: {...goldBtn,fontSize:16,padding:"14px 36px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1294}}, "✅ Carica nel progetto e vai all'editor"      )
+          )
+          , React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1296}}
+            , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1297}}, "ANTEPRIMA CAPITOLI" )
+            , React.createElement('div', { style: {display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1298}}, generatedChapters.map((c,i)=>(React.createElement('button', { key: i, onClick: ()=>setPreviewIdx(i), style: {padding:"6px 12px",borderRadius:20,border:previewIdx===i?"1px solid #f5c842":"1px solid #2e2d3e",background:previewIdx===i?"#f5c84222":"transparent",color:previewIdx===i?"#f5c842":"#7a7890",cursor:"pointer",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1298}}, "Cap. " , i+1))))
+            , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:16,color:"#f5c842",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1299}}, _optionalChain([generatedChapters, 'access', _101 => _101[previewIdx], 'optionalAccess', _102 => _102.title]))
+            , React.createElement('div', { style: {color:"#c8c6d8",fontSize:14,lineHeight:1.8,maxHeight:200,overflow:"auto",fontFamily:"Georgia,serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1300}}, _optionalChain([generatedChapters, 'access', _103 => _103[previewIdx], 'optionalAccess', _104 => _104.content, 'optionalAccess', _105 => _105.slice, 'call', _106 => _106(0,600)]), "...")
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginTop:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1301}}, _optionalChain([generatedChapters, 'access', _107 => _107[previewIdx], 'optionalAccess', _108 => _108.content, 'access', _109 => _109.trim, 'call', _110 => _110(), 'access', _111 => _111.split, 'call', _112 => _112(/\s+/), 'access', _113 => _113.length]), " parole" )
+          )
+          , React.createElement('div', { style: {display:"flex",gap:10,marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1303}}
+            , React.createElement('button', { onClick: ()=>{if(window.confirm("Sei sicuro? Il libro generato andrà perso e ripartirai dal briefing.")){setStep(0);setGeneratedChapters([]);}}, style: {padding:"10px 20px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1304}}, "🔄 Ricomincia" )
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   KDP ANALYZER PANEL — integrato in BookForge
+   Analizza profittabilità del libro in lavorazione
+   su tutti i mercati Amazon usando formule KDP std.
+───────────────────────────────────────────── */
+
+// Mappa generi BookForge → categorie KDP
+const GENRE_TO_KDP = {
+  "Romanzo":       { label:"Romanzi & Narrativa",           bsrBase:18000, priceEbook:3.99, pricePaper:12.99, opp:58 },
+  "Romance":       { label:"Romance & Storie d'Amore",      bsrBase:8000,  priceEbook:4.49, pricePaper:11.99, opp:90 },
+  "Thriller":      { label:"Thriller & Gialli",             bsrBase:14000, priceEbook:4.49, pricePaper:12.99, opp:72 },
+  "Giallo":        { label:"Thriller & Gialli",             bsrBase:14000, priceEbook:3.99, pricePaper:11.99, opp:70 },
+  "Fantasy":       { label:"Fantasy & Fantascienza",        bsrBase:12000, priceEbook:4.99, pricePaper:13.99, opp:74 },
+  "Horror":        { label:"Horror",                        bsrBase:20000, priceEbook:3.99, pricePaper:11.99, opp:65 },
+  "Storico":       { label:"Storia & Narrativa Storica",    bsrBase:22000, priceEbook:4.99, pricePaper:13.99, opp:62 },
+  "Saggio":        { label:"Saggistica",                    bsrBase:25000, priceEbook:5.99, pricePaper:14.99, opp:60 },
+  "Self-Help":     { label:"Self-Help & Crescita Personale",bsrBase:9000,  priceEbook:5.99, pricePaper:13.99, opp:78 },
+  "Business":      { label:"Business & Finanza",            bsrBase:11000, priceEbook:6.99, pricePaper:14.99, opp:75 },
+  "Autobiografia": { label:"Autobiografie & Memorie",       bsrBase:30000, priceEbook:4.99, pricePaper:13.99, opp:55 },
+  "Poesia":        { label:"Poesia",                        bsrBase:60000, priceEbook:2.99, pricePaper:9.99,  opp:35 },
+};
+
+const KDP_MARKETS = [
+  { id:"us", flag:"🇺🇸", label:"USA",       symbol:"$",    pm:1.00, pb:0.85, pp:0.012 },
+  { id:"uk", flag:"🇬🇧", label:"UK",        symbol:"£",    pm:0.82, pb:0.70, pp:0.010 },
+  { id:"de", flag:"🇩🇪", label:"Germania",  symbol:"€",    pm:0.92, pb:0.60, pp:0.012 },
+  { id:"it", flag:"🇮🇹", label:"Italia",    symbol:"€",    pm:0.88, pb:0.60, pp:0.012 },
+  { id:"fr", flag:"🇫🇷", label:"Francia",   symbol:"€",    pm:0.91, pb:0.60, pp:0.012 },
+  { id:"es", flag:"🇪🇸", label:"Spagna",    symbol:"€",    pm:0.85, pb:0.60, pp:0.012 },
+  { id:"ca", flag:"🇨🇦", label:"Canada",    symbol:"CA$",  pm:1.35, pb:1.10, pp:0.015 },
+  { id:"au", flag:"🇦🇺", label:"Australia", symbol:"AU$",  pm:1.50, pb:1.20, pp:0.015 },
+];
+
+const KDP_FORMATS_A = [
+  { id:"ebook",     label:"eBook Kindle", icon:"📱" },
+  { id:"paperback", label:"Paperback",    icon:"📖" },
+  { id:"hardcover", label:"Hardcover",    icon:"📚" },
+];
+
+function bsrToSalesA(bsr){
+  if(bsr<1000) return 400; if(bsr<5000) return 150; if(bsr<10000) return 80;
+  if(bsr<50000) return 30; if(bsr<100000) return 12; return 3;
+}
+function calcRoyaltyA(price, pages, format, market){
+  const m=KDP_MARKETS.find(x=>x.id===market);
+  const adjPrice=price*m.pm;
+  let royalty=0;
+  if(format==="ebook"){
+    royalty=adjPrice>=2.99&&adjPrice<=9.99?adjPrice*0.70:adjPrice*0.35;
+  } else {
+    const printCost=m.pb+pages*m.pp+(format==="hardcover"?4.50:0);
+    royalty=Math.max(0,adjPrice*0.60-printCost);
+  }
+  return { royalty:Math.round(royalty*100)/100, adjPrice:Math.round(adjPrice*100)/100 };
+}
+const scoreCol=s=>s>=75?"#4ade80":s>=50?"#facc15":s>=30?"#fb923c":"#f87171";
+const compCol=c=>({alta:"#f87171",media:"#facc15",bassa:"#4ade80"})[c]||"#999";
+
+
+function MarketAnalyzerPanel({setActive, setBook, book}) {
+  const [niche, setNiche] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+  const [error, setError] = React.useState("");
+
+  const analyze = async () => {
+    if (!niche.trim()) { setError("Inserisci una nicchia o argomento."); return; }
+    setLoading(true); setError(""); setResult(null);
+    try {
+      const prompt = `Sei un esperto di Amazon KDP e self publishing. Analizza questa nicchia editoriale: "${niche}"
+
+Rispondi SOLO con un oggetto JSON valido su una riga, nessun testo prima o dopo:
+{"demand":"Alta|Media|Bassa","demandExplanation":"spiegazione breve max 100 chars","competition":"Alta|Media|Bassa","competitionExplanation":"spiegazione breve max 100 chars","ebookPrice":"X.XX","paperbackPrice":"X.XX","monthlyRoyaltiesMin":N,"monthlyRoyaltiesMax":N,"relatedNiches":["nicchia1","nicchia2","nicchia3"],"verdict":"SI|NO","verdictReason":"motivazione max 150 chars","suggestedTitle":"titolo libro suggerito","suggestedGenre":"genere"}`;
+
+      const r = await callClaude(prompt, "Sei un esperto di Amazon KDP. Rispondi SOLO con JSON valido, nessun testo aggiuntivo.");
+      const start = r.indexOf("{"), end = r.lastIndexOf("}");
+      if (start === -1 || end === -1) throw new Error("Risposta non valida");
+      const data = JSON.parse(r.slice(start, end + 1));
+      setResult(data);
+    } catch(e) {
+      setError("Errore analisi: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  const startWriting = () => {
+    if (!result) return;
+    setBook(b => ({...b, title: result.suggestedTitle || "", genre: result.suggestedGenre || b.genre}));
+    setActive("aiwriter");
+  };
+
+  const demandColor = (v) => v === "Alta" ? "#4ade80" : v === "Media" ? "#f5c842" : "#ef4444";
+  const compColor = (v) => v === "Alta" ? "#ef4444" : v === "Media" ? "#f5c842" : "#4ade80";
+
+  return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
+    React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "🔍 Market Analyzer"),
+    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Analizza una nicchia prima di scrivere. Scopri se vale la pena investire il tuo tempo."),
+
+    React.createElement("div", { style: {maxWidth:680} },
+      React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:24, marginBottom:24} },
+        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "Nicchia o argomento da analizzare"),
+        React.createElement("div", { style: {display:"flex", gap:12} },
+          React.createElement("input", {
+            value: niche,
+            onChange: e => setNiche(e.target.value),
+            onKeyDown: e => e.key === "Enter" && analyze(),
+            placeholder: "es. ricettario vegano, self-help produttività, romanzo storico ambientato a Roma...",
+            style: {flex:1, background:"#1a1829", border:"1px solid #2e2d3e", borderRadius:8, padding:"12px 16px", color:"#e8e6f0", fontSize:14, outline:"none"}
+          }),
+          React.createElement("button", {
+            onClick: analyze,
+            disabled: loading,
+            style: {padding:"12px 24px", borderRadius:8, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:14, cursor:"pointer", opacity:loading?0.6:1, whiteSpace:"nowrap"}
+          }, loading ? "⏳ Analisi..." : "🔍 Analizza")
+        ),
+        error && React.createElement("div", { style: {color:"#ef4444", fontSize:13, marginTop:8} }, error)
+      ),
+
+      loading && React.createElement("div", { style: {textAlign:"center", padding:40, color:"#7a7890"} },
+        React.createElement("div", { style: {fontSize:32, marginBottom:12} }, "🔍"),
+        React.createElement("div", { style: {fontSize:14} }, "Analisi del mercato Amazon KDP in corso...")
+      ),
+
+      result && React.createElement("div", null,
+        // Verdetto principale
+        React.createElement("div", {
+          style: {
+            background: result.verdict === "SI" ? "#0d1f0d" : "#1f0d0d",
+            border: `2px solid ${result.verdict === "SI" ? "#4ade80" : "#ef4444"}`,
+            borderRadius:14, padding:24, marginBottom:20, textAlign:"center"
+          }
+        },
+          React.createElement("div", { style: {fontSize:40, marginBottom:8} }, result.verdict === "SI" ? "✅" : "❌"),
+          React.createElement("div", { style: {fontSize:22, fontWeight:700, color: result.verdict === "SI" ? "#4ade80" : "#ef4444", marginBottom:8} },
+            result.verdict === "SI" ? "NICCHIA PROFITTEVOLE" : "NICCHIA NON CONSIGLIATA"
+          ),
+          React.createElement("div", { style: {color:"#c8c6d8", fontSize:14, lineHeight:1.6} }, result.verdictReason)
+        ),
+
+        // Metriche principali
+        React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20} },
+          React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20} },
+            React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "📈 Domanda di mercato"),
+            React.createElement("div", { style: {fontSize:24, fontWeight:700, color: demandColor(result.demand), marginBottom:6} }, result.demand),
+            React.createElement("div", { style: {fontSize:12, color:"#7a7890", lineHeight:1.5} }, result.demandExplanation)
+          ),
+          React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20} },
+            React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "⚔️ Competizione"),
+            React.createElement("div", { style: {fontSize:24, fontWeight:700, color: compColor(result.competition), marginBottom:6} }, result.competition),
+            React.createElement("div", { style: {fontSize:12, color:"#7a7890", lineHeight:1.5} }, result.competitionExplanation)
+          )
+        ),
+
+        // Royalties e prezzi
+        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:16, textTransform:"uppercase", letterSpacing:1} }, "💰 Stima Royalties & Prezzi"),
+          React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16} },
+            React.createElement("div", { style: {textAlign:"center"} },
+              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#4ade80", fontFamily:"monospace"} }, `€${result.monthlyRoyaltiesMin}-${result.monthlyRoyaltiesMax}`),
+              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "royalties/mese stimate")
+            ),
+            React.createElement("div", { style: {textAlign:"center"} },
+              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#f5c842", fontFamily:"monospace"} }, `€${result.ebookPrice}`),
+              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "prezzo ebook consigliato")
+            ),
+            React.createElement("div", { style: {textAlign:"center"} },
+              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#c084fc", fontFamily:"monospace"} }, `€${result.paperbackPrice}`),
+              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "prezzo cartaceo consigliato")
+            )
+          )
+        ),
+
+        // Nicchie correlate
+        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:12, textTransform:"uppercase", letterSpacing:1} }, "🎯 Nicchie Correlate Meno Competitive"),
+          React.createElement("div", { style: {display:"flex", flexWrap:"wrap", gap:8} },
+            result.relatedNiches.map((n, i) =>
+              React.createElement("button", {
+                key: i,
+                onClick: () => { setNiche(n); setResult(null); },
+                style: {padding:"8px 16px", borderRadius:20, border:"1px solid #2e2d3e", background:"transparent", color:"#c8c6d8", cursor:"pointer", fontSize:13}
+              }, n)
+            )
+          )
+        ),
+
+        // Titolo suggerito e CTA
+        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "📚 Titolo Suggerito"),
+          React.createElement("div", { style: {fontSize:18, fontFamily:"'Playfair Display',serif", color:"#f5c842", fontStyle:"italic"} }, `"${result.suggestedTitle}"`)
+        ),
+
+        result.verdict === "SI" && React.createElement("button", {
+          onClick: startWriting,
+          style: {width:"100%", padding:"16px", borderRadius:12, border:"none", background:"linear-gradient(135deg,#4ade80,#22c55e)", color:"#0f0e17", fontWeight:700, fontSize:16, cursor:"pointer"}
+        }, "✍️ Inizia a scrivere questo libro →")
+      )
+    )
+  );
+}
+
+function KDPAnalyzerPanel({book}){
+  const wordCount=book.chapters.reduce((a,c)=>a+(_optionalChain([c, 'access', _114 => _114.content, 'optionalAccess', _115 => _115.trim, 'call', _116 => _116()])?c.content.trim().split(/\s+/).length:0),0);
+  const pageCount=Math.ceil(wordCount/250);
+  const genre=book.genre||"Romanzo";
+  const kdp=GENRE_TO_KDP[genre]||GENRE_TO_KDP["Romanzo"];
+
+  const [format,setFormat]=useState("ebook");
+  const [markets,setMarkets]=useState(["us","uk","de","it"]);
+  const [customPrice,setCustomPrice]=useState(null); // null = usa default
+  const [showCustom,setShowCustom]=useState(false);
+
+  const basePrice=customPrice!==null?customPrice:(format==="ebook"?kdp.priceEbook:format==="paperback"?kdp.pricePaper:kdp.pricePaper+4);
+  const pages=Math.max(pageCount,50);
+
+  const toggleMarket=id=>setMarkets(prev=>prev.includes(id)?prev.length>1?prev.filter(x=>x!==id):prev:[...prev,id]);
+
+  const results=markets.map(mid=>{
+    const m=KDP_MARKETS.find(x=>x.id===mid);
+    const {royalty,adjPrice}=calcRoyaltyA(basePrice,pages,format,mid);
+    const bsr=kdp.bsrBase;
+    const sales=bsrToSalesA(bsr);
+    const monthly=Math.round(royalty*sales*100)/100;
+    const score=Math.min(100,Math.round((monthly/5)*0.9));
+    return {m,royalty,adjPrice,bsr,sales,monthly,score};
+  });
+
+  const totalMonthly=results.reduce((s,r)=>s+r.monthly,0);
+  const best=results.reduce((a,b)=>b.monthly>a.monthly?b:a,results[0]);
+  const annualEst=totalMonthly*12;
+
+  // Completezza libro
+  const hasTitle=!!(_optionalChain([book, 'access', _117 => _117.title, 'optionalAccess', _118 => _118.trim, 'call', _119 => _119()]));
+  const hasAuthor=!!(_optionalChain([book, 'access', _120 => _120.author, 'optionalAccess', _121 => _121.trim, 'call', _122 => _122()]));
+  const hasBrief=!!(_optionalChain([book, 'access', _123 => _123.brief, 'optionalAccess', _124 => _124.premise, 'optionalAccess', _125 => _125.trim, 'call', _126 => _126()]));
+  const chWithContent=book.chapters.filter(c=>_optionalChain([c, 'access', _127 => _127.content, 'optionalAccess', _128 => _128.trim, 'call', _129 => _129(), 'access', _130 => _130.length])>200).length;
+  const completeness=Math.round(
+    (hasTitle?15:0)+(hasAuthor?10:0)+(hasBrief?10:0)+
+    Math.min(40,chWithContent/Math.max(book.chapters.length,1)*40)+
+    Math.min(25,Math.min(wordCount/200,1)*25)
+  );
+  const readyToPublish=completeness>=80;
+
+  return(
+    React.createElement('div', { style: {flex:1,overflowY:"auto",background:"#0f0e17",padding:"28px 32px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1413}}
+      , React.createElement('style', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1414}}, `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');`)
+      , React.createElement('div', { style: {maxWidth:1100,margin:"0 auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1415}}
+
+        /* Header */
+        , React.createElement('div', { style: {marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1418}}
+          , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:24,color:"#f5c842",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1419}}, "📊 KDP Profit Analyzer"   )
+          , React.createElement('div', { style: {fontSize:12,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1420}}, "Analisi profittabilità di "   , React.createElement('strong', { style: {color:"#c084fc"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1420}}, "\"", book.title||"Senza titolo", "\""), " su Amazon KDP · Solo autori indipendenti · Formule royalties ufficiali"           )
+        )
+
+        /* Stato libro */
+        , React.createElement('div', { style: {...card,marginBottom:20,borderColor:readyToPublish?"#4ade8033":"#f5c84233"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1424}}
+          , React.createElement('div', { style: {display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1425}}
+            , React.createElement('div', { style: {fontSize:13,color:"#c8c6d8",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1426}}, "📋 Stato del Libro"   )
+            , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1427}}
+              , React.createElement('div', { style: {fontSize:22,fontWeight:800,color:scoreCol(completeness)}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1428}}, completeness, "%")
+              , React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1429}}, "completezza")
+            )
+          )
+          , React.createElement('div', { style: {height:6,background:"#1a1829",borderRadius:3,marginBottom:14,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1432}}
+            , React.createElement('div', { style: {height:"100%",width:`${completeness}%`,background:`linear-gradient(90deg,#f5c842,${scoreCol(completeness)})`,borderRadius:3,transition:"width 0.5s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1433}} )
+          )
+          , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1435}}
+            , [
+              {l:"Parole",v:wordCount.toLocaleString(),c:"#f5c842",ok:wordCount>=10000},
+              {l:"Pagine stimate",v:pages,c:"#c084fc",ok:pages>=40},
+              {l:"Capitoli scritti",v:`${chWithContent}/${book.chapters.length}`,c:"#38bdf8",ok:chWithContent===book.chapters.length},
+              {l:"Genere",v:genre,c:"#4ade80",ok:true},
+            ].map(({l,v,c,ok})=>(
+              React.createElement('div', { key: l, style: {background:"#0c0b18",borderRadius:10,padding:"10px 12px",border:`1px solid ${ok?"#1e2e1e":"#2e2d3e"}`}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1442}}
+                , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1443}}, l)
+                , React.createElement('div', { style: {fontSize:16,fontWeight:700,color:c}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1444}}, v)
+                , React.createElement('div', { style: {fontSize:9,color:ok?"#4ade80":"#f59e0b",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1445}}, ok?"✓ ok":"⚠ migliora")
+              )
+            ))
+          )
+          , React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1449}}
+            , [
+              {l:"Titolo",ok:hasTitle},{l:"Autore",ok:hasAuthor},{l:"Briefing AI",ok:hasBrief},
+              {l:`Contenuto sufficiente (>${wordCount>=20000?"✓":wordCount.toLocaleString()} parole)`,ok:wordCount>=20000},
+            ].map(({l,ok})=>(
+              React.createElement('span', { key: l, style: {fontSize:11,padding:"3px 10px",borderRadius:20,background:ok?"#14291422":"#2e1a0a22",color:ok?"#4ade80":"#f59e0b",border:`1px solid ${ok?"#4ade8033":"#f59e0b33"}`}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1454}}
+                , ok?"✓":"○", " " , l
+              )
+            ))
+          )
+          , readyToPublish&&React.createElement('div', { style: {marginTop:12,padding:"10px 14px",background:"#14291a",borderRadius:8,fontSize:12,color:"#4ade80"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1459}}, "🚀 Il tuo libro è pronto per la pubblicazione su Amazon KDP!"           )
+        )
+
+        /* Configurazione */
+        , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1463}}
+          /* Formato */
+          , React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1465}}
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",textTransform:"uppercase",letterSpacing:1,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1466}}, "Formato di Pubblicazione"  )
+            , React.createElement('div', { style: {display:"flex",gap:8,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1467}}
+              , KDP_FORMATS_A.map(f=>(
+                React.createElement('button', { key: f.id, onClick: ()=>{setFormat(f.id);setCustomPrice(null);}, style: {flex:1,padding:"10px 8px",borderRadius:10,border:`1px solid ${format===f.id?"#f5c842":"#2e2d3e"}`,background:format===f.id?"#f5c84218":"#0c0b18",color:format===f.id?"#f5c842":"#5a5870",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1469}}
+                  , React.createElement('span', { style: {fontSize:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1470}}, f.icon), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1470}}, f.label)
+                )
+              ))
+            )
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1474}}, "Prezzo base suggerito per genere:"    )
+            , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1475}}
+              , React.createElement('div', { style: {fontSize:22,fontWeight:800,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1476}}, "$", basePrice.toFixed(2))
+              , React.createElement('button', { onClick: ()=>setShowCustom(s=>!s), style: {fontSize:11,color:"#c084fc",background:"transparent",border:"1px solid #c084fc44",borderRadius:8,padding:"4px 10px",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1477}}, "✏️ personalizza" )
+            )
+            , showCustom&&(
+              React.createElement('input', { type: "number", min: 0.99, max: 200, step: 0.01, value: _nullishCoalesce(customPrice, () => (basePrice)),
+                onChange: e=>setCustomPrice(Number(e.target.value)),
+                style: {...inp,marginTop:8,fontSize:14},
+                placeholder: "Inserisci prezzo personalizzato..."  , __self: this, __source: {fileName: _jsxFileName, lineNumber: 1480}}
+              )
+            )
+            , React.createElement('div', { style: {marginTop:10,fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1486}}
+              , format==="ebook"
+                ? basePrice>=2.99&&basePrice<=9.99
+                  ? "✅ Range 70% royalty ($2.99–$9.99)"
+                  : "⚠️ Fuori range 70% — royalty al 35%"
+                : `📄 ${pages} pagine → costo stampa incluso nel calcolo`
+              
+            )
+          )
+
+          /* Mercati */
+          , React.createElement('div', { style: {...card}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1497}}
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",textTransform:"uppercase",letterSpacing:1,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1498}}, "Mercati Amazon" )
+            , React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:7,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1499}}
+              , KDP_MARKETS.map(m=>(
+                React.createElement('button', { key: m.id, onClick: ()=>toggleMarket(m.id), style: {padding:"6px 12px",borderRadius:20,border:`1px solid ${markets.includes(m.id)?"#4ade80":"#2e2d3e"}`,background:markets.includes(m.id)?"#4ade8018":"transparent",color:markets.includes(m.id)?"#4ade80":"#5a5870",cursor:"pointer",fontSize:12,fontFamily:"inherit"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1501}}
+                  , m.flag, " " , m.label
+                )
+              ))
+            )
+            , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1506}}
+              , [
+                {l:"Roy/mese totale",v:`~$${totalMonthly.toFixed(0)}`,c:"#f5c842"},
+                {l:"Stima annua",v:`~$${annualEst.toFixed(0)}`,c:"#c084fc"},
+                {l:"Mercato migliore",v:`${_optionalChain([best, 'optionalAccess', _131 => _131.m, 'access', _132 => _132.flag])} ${_optionalChain([best, 'optionalAccess', _133 => _133.m, 'access', _134 => _134.label])}`,c:"#4ade80"},
+              ].map(({l,v,c})=>(
+                React.createElement('div', { key: l, style: {background:"#0c0b18",borderRadius:10,padding:"10px 12px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1512}}
+                  , React.createElement('div', { style: {fontSize:9,color:"#5a5870",marginBottom:4,textTransform:"uppercase",letterSpacing:0.4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1513}}, l)
+                  , React.createElement('div', { style: {fontSize:14,fontWeight:700,color:c}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1514}}, v)
+                )
+              ))
+            )
+          )
+        )
+
+        /* Tabella risultati per mercato */
+        , React.createElement('div', { style: {...card,marginBottom:20,padding:0,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1522}}
+          , React.createElement('div', { style: {padding:"14px 20px",borderBottom:"1px solid #1e1d2e",display:"flex",justifyContent:"space-between",alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1523}}
+            , React.createElement('div', { style: {fontSize:13,color:"#e8e6f0",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1524}}, "Analisi per Mercato — "    , _optionalChain([KDP_FORMATS_A, 'access', _135 => _135.find, 'call', _136 => _136(f=>f.id===format), 'optionalAccess', _137 => _137.icon]), " " , _optionalChain([KDP_FORMATS_A, 'access', _138 => _138.find, 'call', _139 => _139(f=>f.id===format), 'optionalAccess', _140 => _140.label]))
+            , React.createElement('span', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1525}}, kdp.label)
+          )
+          , React.createElement('div', { style: {overflowX:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1527}}
+            , React.createElement('table', { style: {width:"100%",borderCollapse:"collapse",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1528}}
+              , React.createElement('thead', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1529}}
+                , React.createElement('tr', { style: {background:"#0c0b18"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1530}}
+                  , ["Mercato","Prezzo","Royalty/copia","Vendite/mese stimate","Royalty/mese","Profittabilità"].map(h=>(
+                    React.createElement('th', { key: h, style: {padding:"10px 16px",textAlign:"left",color:"#3a3850",fontWeight:600,fontSize:10,textTransform:"uppercase",letterSpacing:0.5,borderBottom:"1px solid #1e1d2e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1532}}, h)
+                  ))
+                )
+              )
+              , React.createElement('tbody', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1536}}
+                , results.map(({m,royalty,adjPrice,sales,monthly,score})=>{
+                  const profitLabel=monthly>300?"🔥 Alta":monthly>80?"✅ Buona":monthly>20?"⚠️ Bassa":"❌ Scarsa";
+                  const profitColor=monthly>300?"#4ade80":monthly>80?"#f5c842":monthly>20?"#fb923c":"#f87171";
+                  return(
+                    React.createElement('tr', { key: m.id, style: {borderBottom:"1px solid #0f0e17",transition:"background 0.1s"},
+                      onMouseEnter: e=>e.currentTarget.style.background="#12111e",
+                      onMouseLeave: e=>e.currentTarget.style.background="transparent", __self: this, __source: {fileName: _jsxFileName, lineNumber: 1541}}
+                      , React.createElement('td', { style: {padding:"12px 16px",fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1544}}, m.flag, " " , m.label)
+                      , React.createElement('td', { style: {padding:"12px 16px",color:"#c084fc"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1545}}, m.symbol, adjPrice.toFixed(2))
+                      , React.createElement('td', { style: {padding:"12px 16px",color:"#4ade80",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1546}}, m.symbol, royalty.toFixed(2))
+                      , React.createElement('td', { style: {padding:"12px 16px",color:"#c8c6d8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1547}}, sales, " copie" )
+                      , React.createElement('td', { style: {padding:"12px 16px",fontWeight:700,color:profitColor}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1548}}, m.symbol, monthly.toFixed(0))
+                      , React.createElement('td', { style: {padding:"12px 16px",color:profitColor,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1549}}, profitLabel)
+                    )
+                  );
+                })
+              )
+            )
+          )
+        )
+
+        /* Insight categoria */
+        , React.createElement('div', { style: {display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1559}}
+          , React.createElement('div', { style: {...card,borderColor:"#f5c84233"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1560}}
+            , React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1561}}, "💡 Insight per \""   , genre, "\"")
+            , React.createElement('div', { style: {fontSize:12,color:"#c8c6d8",lineHeight:1.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1562}}
+              , genre==="Romance"&&"Categoria #1 KDP indie. Pubblica serie da 3+ libri per massimizzare i guadagni. Prezzo eBook ottimale: $3.99–$4.99."
+              , genre==="Romanzo"&&"Nicchie specifiche (fantasy italiano, distopico, saga familiare) performano meglio dei romanzi generici."
+              , genre==="Thriller"&&"Ambientazioni italiane specifiche (Sicilia, Venezia) differenziano dall'offerta anglofona. Serie con detective ricorrente = lettori fedeli."
+              , genre==="Giallo"&&"Il giallo italiano ha un pubblico dedicato. Personaggio investigatore ricorrente aumenta le vendite di tutta la serie."
+              , genre==="Fantasy"&&"Worldbuilding dettagliato e mappe aumentano le recensioni. Trilogia è il formato ideale per fantasy KDP indie."
+              , genre==="Self-Help"&&"Titoli ultra-specifici con promise concreta vincono. Libri brevi (150-220 pag) con piano step-by-step performano meglio."
+              , genre==="Business"&&"Argomenti evergreen (freelance, e-commerce, investing) garantiscono vendite costanti. Prezzi $6-$9 accettati."
+              , genre==="Storico"&&"Angolazioni originali su eventi noti differenziano. Biografie di figure minori trovano nicchie non competitive."
+              , genre==="Saggio"&&"Saggistica di nicchia (locale, settoriale) batte la saggistica generalista. Autorevolezza percepita è fondamentale."
+              , genre==="Horror"&&"Cover professionale obbligatoria. Sottocategorie specifiche (psychological horror, folk horror) meno competitive."
+              , genre==="Autobiografia"&&"Richiede piattaforma social preesistente per la prima spinta. Storie di trasformazione personale performano meglio."
+              , genre==="Poesia"&&"Mercato indie piccolo ma molto fedele. eBook a $0.99-$2.99 con paperback $9.99 è la combo più comune."
+            )
+          )
+          , React.createElement('div', { style: {...card,borderColor:"#c084fc33"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1577}}
+            , React.createElement('div', { style: {fontSize:12,color:"#c084fc",fontFamily:"'Playfair Display',serif",marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1578}}, "📈 Opportunità di mercato"   )
+            , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:12,marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1579}}
+              , React.createElement('div', { style: {fontSize:36,fontWeight:800,color:scoreCol(kdp.opp)}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1580}}, kdp.opp)
+              , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1581}}
+                , React.createElement('div', { style: {fontSize:12,color:"#c8c6d8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1582}}, "Opportunity Score su 100"   )
+                , React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1583}}, "per autori indie in questa categoria"     )
+              )
+            )
+            , React.createElement('div', { style: {height:8,background:"#1a1829",borderRadius:4,marginBottom:12,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1586}}
+              , React.createElement('div', { style: {height:"100%",width:`${kdp.opp}%`,background:`linear-gradient(90deg,#c084fc,${scoreCol(kdp.opp)})`,borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1587}} )
+            )
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",lineHeight:1.6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1589}}, "BSR medio categoria: "
+                 , React.createElement('strong', { style: {color:"#c8c6d8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1590}}, kdp.bsrBase.toLocaleString()), React.createElement('br', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1590}}), "Prezzo eBook tipico indie: "
+                  , React.createElement('strong', { style: {color:"#c8c6d8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1591}}, "$", kdp.priceEbook), React.createElement('br', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1591}}), "Prezzo Paperback tipico: "
+                 , React.createElement('strong', { style: {color:"#c8c6d8"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1592}}, "$", kdp.pricePaper), React.createElement('br', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1592}}), "Competizione indie: "
+                , React.createElement('strong', { style: {color:compCol(kdp.opp>=75?"bassa":kdp.opp>=55?"media":"alta")}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1593}}, kdp.opp>=75?"Bassa":kdp.opp>=55?"Media":"Alta")
+            )
+          )
+        )
+
+        /* Footer note */
+        , React.createElement('div', { style: {fontSize:11,color:"#3a3850",textAlign:"center",lineHeight:1.6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1599}}, "📦 Analisi basata su formule royalties KDP ufficiali e benchmark indie · Vendite stimate da BSR medio categoria · I valori reali dipendono da copertina, descrizione, marketing e recensioni"
+
+        )
+
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   ROOT
+───────────────────────────────────────────── */
+/* ─────────────────────────────────────────────
+   FIREBASE CONFIG
+───────────────────────────────────────────── */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDFnN8q4SW4l-SNrkXhWcV5mQW6K8q7Gwo",
+  authDomain: "bookforge-d0221.firebaseapp.com",
+  projectId: "bookforge-d0221",
+  storageBucket: "bookforge-d0221.firebasestorage.app",
+  messagingSenderId: "355020103230",
+  appId: "1:355020103230:web:e7f27db9f5109a1c453b6f"
+};
+
+let firebaseAuthInstance = null;
+async function getFirebaseAuth() {
+  if (firebaseAuthInstance) return firebaseAuthInstance;
+  return new Promise((resolve) => {
+    if (window.firebase && window.firebase.auth) {
+      if (!window._fbInitialized) {
+        window.firebase.initializeApp(FIREBASE_CONFIG);
+        window._fbInitialized = true;
+      }
+      firebaseAuthInstance = window.firebase.auth();
+      resolve(firebaseAuthInstance);
+      return;
+    }
+    const s1 = document.createElement("script");
+    s1.src = "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js";
+    s1.onload = () => {
+      const s2 = document.createElement("script");
+      s2.src = "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js";
+      s2.onload = () => {
+        window.firebase.initializeApp(FIREBASE_CONFIG);
+        window._fbInitialized = true;
+        firebaseAuthInstance = window.firebase.auth();
+        resolve(firebaseAuthInstance);
+      };
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s1);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   AUTH PANEL
+───────────────────────────────────────────── */
+function AuthPanel({ onLogin }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+
+  const handle = async () => {
+    setError(""); setMsg(""); setLoading(true);
+    try {
+      const auth = await getFirebaseAuth();
+      if (mode === "login") {
+        const res = await auth.signInWithEmailAndPassword(email, password);
+        onLogin(res.user);
+      } else if (mode === "register") {
+        const res = await auth.createUserWithEmailAndPassword(email, password);
+        await res.user.updateProfile({ displayName: name });
+        onLogin(res.user);
+      } else {
+        await auth.sendPasswordResetEmail(email);
+        setMsg("Email di reset inviata! Controlla la tua casella.");
+      }
+    } catch(e) {
+      const msgs = {
+        "auth/user-not-found": "Email non trovata",
+        "auth/wrong-password": "Password errata",
+        "auth/email-already-in-use": "Email gia\'  registrata",
+        "auth/weak-password": "Password troppo corta (min 6 caratteri)",
+        "auth/invalid-email": "Email non valida",
+        "auth/invalid-credential": "Credenziali non valide"
+      };
+      setError(msgs[e.code] || e.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    React.createElement('div', { style: {minHeight:"100vh",background:"#0f0e17",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1695}}
+      , React.createElement('div', { style: {background:"#12111e",border:"1px solid #2e2d3e",borderRadius:20,padding:"48px 40px",width:420,maxWidth:"90vw"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1696}}
+        , React.createElement('div', { style: {textAlign:"center",marginBottom:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1697}}
+          , React.createElement('div', { style: {fontSize:36,fontFamily:"Playfair Display,serif",color:"#f5c842",fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1698}}, "BookForge")
+          , React.createElement('div', { style: {color:"#888",fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1699}}, "La tua piattaforma AI per scrittori"     )
+        )
+
+        , React.createElement('div', { style: {display:"flex",gap:8,marginBottom:28,background:"#0f0e17",borderRadius:10,padding:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1702}}
+          , ["login","register"].map(m=>(
+            React.createElement('button', { key: m, onClick: ()=>{setMode(m);setError("");setMsg("");},
+              style: {flex:1,padding:"10px",borderRadius:8,border:"none",cursor:"pointer",
+                background:mode===m?"linear-gradient(135deg,#f5c842,#e8a020)":"transparent",
+                color:mode===m?"#0f0e17":"#888",fontWeight:700,fontSize:13,transition:"all 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1704}}
+              , m==="login"?"Accedi":"Registrati"
+            )
+          ))
+        )
+
+        , mode==="register"&&(
+          React.createElement('div', { style: {marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1714}}
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:6,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1715}}, "Nome")
+            , React.createElement('input', { value: name, onChange: e=>setName(e.target.value), placeholder: "Il tuo nome"  ,
+              style: {background:"#1a1829",border:"1px solid #2e2d3e",borderRadius:8,padding:"12px 14px",color:"#e8e6f0",fontSize:14,outline:"none",width:"100%",boxSizing:"border-box"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1716}})
+          )
+        )
+
+        , React.createElement('div', { style: {marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1721}}
+          , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:6,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1722}}, "Email")
+          , React.createElement('input', { type: "email", value: email, onChange: e=>setEmail(e.target.value), placeholder: "tua@email.com",
+            style: {background:"#1a1829",border:"1px solid #2e2d3e",borderRadius:8,padding:"12px 14px",color:"#e8e6f0",fontSize:14,outline:"none",width:"100%",boxSizing:"border-box"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1723}})
+        )
+
+        , mode!=="reset"&&(
+          React.createElement('div', { style: {marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1728}}
+            , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:6,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1729}}, "Password")
+            , React.createElement('input', { type: "password", value: password, onChange: e=>setPassword(e.target.value), placeholder: "••••••••",
+              onKeyDown: e=>e.key==="Enter"&&handle(),
+              style: {background:"#1a1829",border:"1px solid #2e2d3e",borderRadius:8,padding:"12px 14px",color:"#e8e6f0",fontSize:14,outline:"none",width:"100%",boxSizing:"border-box"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1730}})
+          )
+        )
+
+        , error&&React.createElement('div', { style: {background:"#3b0000",border:"1px solid #ef4444",borderRadius:8,padding:"10px 14px",color:"#fca5a5",fontSize:13,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1736}}, error)
+        , msg&&React.createElement('div', { style: {background:"#0a2a0a",border:"1px solid #4ade80",borderRadius:8,padding:"10px 14px",color:"#86efac",fontSize:13,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1737}}, msg)
+
+        , React.createElement('button', { onClick: handle, disabled: loading,
+          style: {width:"100%",padding:"14px",borderRadius:10,border:"none",cursor:"pointer",
+            background:"linear-gradient(135deg,#f5c842,#e8a020)",color:"#0f0e17",
+            fontSize:15,fontWeight:700,fontFamily:"Playfair Display,serif",
+            opacity:loading?0.7:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1739}}
+          , loading?"Caricamento...":(mode==="login"?"Accedi":mode==="register"?"Crea Account":"Invia Email Reset")
+        )
+
+        , React.createElement('div', { style: {textAlign:"center",marginTop:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1747}}
+          , React.createElement('button', { onClick: ()=>{setMode("reset");setError("");setMsg("");},
+            style: {background:"none",border:"none",color:"#f5c842",cursor:"pointer",fontSize:12,textDecoration:"underline"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1748}}, "Password dimenticata?"
+
+          )
+        )
+
+        , React.createElement('div', { style: {textAlign:"center",marginTop:24,color:"#444",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1754}}, "Continuando accetti i Termini di Servizio di BookForge"
+
+        )
+      )
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   VOICE DICTATION COMPONENT
+───────────────────────────────────────────── */
+function VoiceDictation({ onText, style = {} }) {
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [supported] = useState(()=>"webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+  const recognitionRef = useRef(null);
+
+  const start = () => {
+    if (!supported) { alert("Il tuo browser non supporta la dettatura vocale. Usa Chrome."); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = "it-IT";
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const t = Array.from(e.results).map(r=>r[0].transcript).join(" ");
+      rec.stop();
+      setListening(false);
+      setTranscript(t);
+      onText(t);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    rec.start();
+    setListening(true);
+  };
+
+  const stop = () => {
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setListening(false);
+  };
+
+  const improve = async () => {
+    if (!transcript) return;
+    setAiLoading("improve");
+    try {
+      const result = await callClaude("Migliora questo testo dettato correggendo grammatica e punteggiatura, mantieni il significato originale. Rispondi solo con il testo migliorato: " + transcript);
+      setTranscript(result);
+      onText(result);
+    } catch(e) { alert("Errore AI: " + e.message); }
+    setAiLoading(false);
+  };
+
+  const expand = async () => {
+    if (!transcript) return;
+    setAiLoading("expand");
+    try {
+      const result = await callClaude("Espandi questo testo in un paragrafo narrativo ricco e dettagliato, mantieni l'idea originale ma arricchisci lo stile letterario. Rispondi solo con il testo espanso: " + transcript);
+      setTranscript(result);
+      onText(result);
+    } catch(e) { alert("Errore AI: " + e.message); }
+    setAiLoading(false);
+  };
+
+  if (!supported) return null;
+
+  return (
+    React.createElement('div', { style: {background:"#12111e",border:"1px solid #2e2d3e",borderRadius:12,padding:"14px 16px",...style}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1817}}
+      , React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginBottom:10,textTransform:"uppercase",letterSpacing:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1818}}, "🎤 Dettatura Vocale" )
+      , React.createElement('button', { onClick: listening?stop:start,
+        style: {width:"100%",padding:"10px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
+          background:listening?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#7c3aed,#6d28d9)",
+          color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1829}}
+        , listening ? (
+          React.createElement(React.Fragment, null, React.createElement('span', { style: {width:10,height:10,borderRadius:"50%",background:"#fff",animation:"pulse 1s infinite"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1834}}), "Registrazione in corso — Clicca per fermare")
+        ) : (
+          React.createElement(React.Fragment, null, "🎤 Inizia a dettare")
+        )
+      )
+      , transcript && React.createElement('div', { style: {background:"#1a1829",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#c8c6d8",marginBottom:10,lineHeight:1.5,fontStyle:"italic"}}, transcript)
+      , transcript && React.createElement('div', { style: {display:"flex",gap:8}},
+        React.createElement('button', { onClick: improve, disabled: !!aiLoading,
+          style: {flex:1,padding:"8px",borderRadius:8,border:"1px solid #f5c84244",background:"transparent",
+            color:aiLoading==="improve"?"#f5c842":"#f5c842",cursor:"pointer",fontSize:12,fontWeight:700,
+            opacity:aiLoading?0.6:1}},
+          aiLoading==="improve"?"⏳ Migliorando...":"✨ Migliora con AI"
+        ),
+        React.createElement('button', { onClick: expand, disabled: !!aiLoading,
+          style: {flex:1,padding:"8px",borderRadius:8,border:"1px solid #c084fc44",background:"transparent",
+            color:"#c084fc",cursor:"pointer",fontSize:12,fontWeight:700,
+            opacity:aiLoading?0.6:1}},
+          aiLoading==="expand"?"⏳ Espandendo...":"🚀 Espandi con AI"
+        )
+      )
+    )
+  );
+}
+
+function AppInner({user, handleLogout}){
+  const [sidebarOpen,setSidebarOpen]=useState(false);
+  const [appStatus,setAppStatus]=useState("loading");
+  const [projects,setProjects]=useState([]);
+  const [currentId,setCurrentId]=useState(null);
+  const [book,setBook]=useState(null);
+  const [active,setActive]=useState("write");
+  const [savedAt,setSavedAt]=useState(null);
+  const saveTimer=useRef(null);
+
+  useEffect(()=>{
+    const t=setTimeout(()=>setAppStatus("projects"),2000);
+    (async()=>{
+      try{const list=await loadProjectsList();setProjects(list);}catch (e11){}
+      clearTimeout(t);setAppStatus("projects");
+    })();
+    return()=>clearTimeout(t);
+  },[]);
+
+  useEffect(()=>{
+    if(!book||!currentId)return;
+    if(saveTimer.current)clearTimeout(saveTimer.current);
+    saveTimer.current=setTimeout(async()=>{
+      const updated=await saveProject(currentId,book);
+      setProjects(prev=>prev.map(p=>p.id===currentId?{...p,title:book.title,author:book.author,genre:book.genre,chapters:book.chapters,brief:book.brief,chapterBriefs:book.chapterBriefs,updatedAt:updated.updatedAt}:p));
+      const n=new Date();setSavedAt(`${n.getHours().toString().padStart(2,"0")}:${n.getMinutes().toString().padStart(2,"0")}`);
+    },800);
+    return()=>clearTimeout(saveTimer.current);
+  },[book,currentId]);
+
+  const handleOpenProject=async(id)=>{const proj=await loadProject(id);if(!proj)return;// Assicura che ogni capitolo abbia images:[]
+    const chapters=(proj.chapters||[]).map(ch=>({...ch,images:ch.images||[]}));setBook({...proj,chapters});setCurrentId(id);setActive("write");setAppStatus("editor");};
+  const handleCreateProject=async()=>{const id=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const newBook=DEFAULT_BOOK();await saveProject(id,newBook);const meta={id,title:"",author:"",genre:"Romanzo",chapters:newBook.chapters,brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:newBook.createdAt,updatedAt:newBook.updatedAt};const newList=[...projects,meta];setProjects(newList);await saveProjectsList(newList);setBook(newBook);setCurrentId(id);setActive("write");setAppStatus("editor");};
+  const handleDeleteProject=async(id)=>{await deleteProject(id);const newList=projects.filter(p=>p.id!==id);setProjects(newList);await saveProjectsList(newList);if(currentId===id){setBook(null);setCurrentId(null);setAppStatus("projects");}};
+  const handleSetActive=async(panel)=>{
+    setSidebarOpen(false);
+    if(panel==="projects"){
+      setAppStatus("projects");
+    } else if(panel==="marketanalyzer"){
+      setActive("marketanalyzer");
+      setAppStatus("editor");
+      if(!book){const nb=DEFAULT_BOOK();setBook(nb);}
+    } else {
+      if(!book){
+        // Nessun progetto aperto - apri il primo disponibile o creane uno
+        if(projects.length>0){
+          const proj=await loadProject(projects[0].id);
+          if(proj){setBook(proj);setCurrentId(projects[0].id);}
+        } else {
+          const id=`proj_${Date.now()}`;const nb=DEFAULT_BOOK();
+          await saveProject(id,nb);setBook(nb);setCurrentId(id);
+          setProjects([{id,title:"",author:"",genre:"Romanzo",chapters:nb.chapters,brief:{},chapterBriefs:[],createdAt:nb.createdAt,updatedAt:nb.updatedAt}]);
+        }
+      }
+      setActive(panel);
+      setAppStatus("editor");
+    }
+  };
+  useEffect(()=>{if(appStatus==="loading")return;saveProjectsList(projects);},[projects]);
+
+  if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "Caricamento BookForge..." )));
+
+  return(
+    React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#e8e6f0",fontFamily:"Georgia,serif",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1882}}
+      , React.createElement('style', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1883}}, `
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        textarea,input,select{font-family:inherit;color:inherit;}
+        ::-webkit-scrollbar{width:5px;height:5px;}
+        ::-webkit-scrollbar-track{background:#0f0e17;}
+        ::-webkit-scrollbar-thumb{background:#2e2d3e;border-radius:3px;}
+        input::placeholder,textarea::placeholder{color:#3a3850;}
+        button:hover{opacity:0.85;}
+        h2,h3{margin:0;}
+      `)
+      , React.createElement("button", { className: "bf-hamburger", onClick: ()=>setSidebarOpen(true)}, "☰")
+      , sidebarOpen && React.createElement("div", { className: "bf-overlay", onClick: ()=>setSidebarOpen(false)})
+      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, sidebarOpen: sidebarOpen, setSidebarOpen: setSidebarOpen, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
+      , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1895}}
+        , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, onMarketAnalyzer: ()=>handleSetActive("marketanalyzer"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
+        , appStatus==="editor"&&book&&(
+          React.createElement(React.Fragment, null
+            , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1899}} )
+            , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1900}} )
+            , active==="chapters"  &&React.createElement(ChaptersPanel, {  book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1901}} )
+            , active==="cover"     &&React.createElement(CoverPanel, {     book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1902}} )
+            , active==="format"    &&React.createElement(FormatPanel, {    book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}} )
+            , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}} )
+            , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1905}} )
+            , active==="marketanalyzer"&&React.createElement(MarketAnalyzerPanel, { setActive: setActive, setBook: setBook, book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
+            , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
+          )
+        )
+      )
+    )
+  );
+}
+
+function BookForge(){
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(()=>{
+    getFirebaseAuth().then(auth=>{
+      auth.onAuthStateChanged(u=>{
+        setUser(u);
+        setFirestoreUser(u ? u.uid : null);
+        setAuthLoading(false);
+      });
+    });
+  },[]);
+
+  const handleLogout = async () => {
+    const auth = await getFirebaseAuth();
+    await auth.signOut();
+  };
+
+  if(authLoading) return (
+    React.createElement('div', { style: {minHeight:"100vh",background:"#0f0e17",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1933}}
+      , React.createElement('div', { style: {color:"#f5c842",fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1934}}, "BookForge")
+    )
+  );
+
+  if(!user) return React.createElement(AuthPanel, { onLogin: setUser, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1938}});
+
+  return React.createElement(AppInner, { user: user, handleLogout: handleLogout, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1940}});
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(BookForge));
+  </script>
+</body>
+</html>
