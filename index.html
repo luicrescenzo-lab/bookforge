@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.53 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.54 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1881,33 +1881,90 @@ const scoreCol=s=>s>=75?"#4ade80":s>=50?"#facc15":s>=30?"#fb923c":"#f87171";
 const compCol=c=>({alta:"#f87171",media:"#facc15",bassa:"#4ade80"})[c]||"#999";
 
 
-function MarketAnalyzerPanel({setActive, setBook, book}) {
+function MarketAnalyzerPanel({setActive, setBook, book, userPlan}) {
+  const MARKETS = [
+    { id:"us",   flag:"🇺🇸", label:"USA",           amazon:"amazon.com",    currency:"$",  lang:"inglese" },
+    { id:"uk",   flag:"🇬🇧", label:"UK",            amazon:"amazon.co.uk",  currency:"£",  lang:"inglese" },
+    { id:"de",   flag:"🇩🇪", label:"Germania",      amazon:"amazon.de",     currency:"€",  lang:"tedesco" },
+    { id:"it",   flag:"🇮🇹", label:"Italia",        amazon:"amazon.it",     currency:"€",  lang:"italiano" },
+    { id:"fr",   flag:"🇫🇷", label:"Francia",       amazon:"amazon.fr",     currency:"€",  lang:"francese" },
+    { id:"es",   flag:"🇪🇸", label:"Spagna",        amazon:"amazon.es",     currency:"€",  lang:"spagnolo" },
+    { id:"ca",   flag:"🇨🇦", label:"Canada",        amazon:"amazon.ca",     currency:"CA$",lang:"inglese/francese" },
+    { id:"au",   flag:"🇦🇺", label:"Australia",     amazon:"amazon.com.au", currency:"AU$",lang:"inglese" },
+    { id:"br",   flag:"🇧🇷", label:"Brasile",       amazon:"amazon.com.br", currency:"R$", lang:"portoghese" },
+    { id:"mx",   flag:"🇲🇽", label:"Messico",       amazon:"amazon.com.mx", currency:"MX$",lang:"spagnolo" },
+    { id:"jp",   flag:"🇯🇵", label:"Giappone",      amazon:"amazon.co.jp",  currency:"¥",  lang:"giapponese" },
+  ];
+
+  const MARKET_GROUPS = [
+    { label:"🌎 Nord America", ids:["us","ca","mx"] },
+    { label:"🌍 Europa",       ids:["it","de","fr","es","uk"] },
+    { label:"🌏 Resto del mondo", ids:["au","br","jp"] },
+  ];
+
   const [niche, setNiche] = React.useState("");
+  const [selectedMarkets, setSelectedMarkets] = React.useState(["us","it"]);
   const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState(null);
+  const [currentMarket, setCurrentMarket] = React.useState("");
+  const [results, setResults] = React.useState({});
   const [error, setError] = React.useState("");
+
+  const toggleMarket = (id) => {
+    setSelectedMarkets(prev =>
+      prev.includes(id) ? prev.length > 1 ? prev.filter(x => x !== id) : prev : [...prev, id]
+    );
+  };
+
+  const toggleGroup = (ids) => {
+    const allSelected = ids.every(id => selectedMarkets.includes(id));
+    if (allSelected) {
+      setSelectedMarkets(prev => prev.filter(id => !ids.includes(id)).length > 0
+        ? prev.filter(id => !ids.includes(id))
+        : prev
+      );
+    } else {
+      setSelectedMarkets(prev => [...new Set([...prev, ...ids])]);
+    }
+  };
 
   const analyze = async () => {
     if (!niche.trim()) { setError("Inserisci una nicchia o argomento."); return; }
-    setLoading(true); setError(""); setResult(null);
-    try {
-      const prompt = `Sei un esperto di Amazon KDP e self publishing. Analizza questa nicchia editoriale: "${niche}"
+    if (selectedMarkets.length === 0) { setError("Seleziona almeno un mercato."); return; }
+    setLoading(true); setError(""); setResults({});
 
-Rispondi SOLO con un oggetto JSON valido su una riga, nessun testo prima o dopo:
-{"demand":"Alta|Media|Bassa","demandExplanation":"spiegazione breve max 100 chars","competition":"Alta|Media|Bassa","competitionExplanation":"spiegazione breve max 100 chars","ebookPrice":"X.XX","paperbackPrice":"X.XX","monthlyRoyaltiesMin":N,"monthlyRoyaltiesMax":N,"relatedNiches":["nicchia1","nicchia2","nicchia3"],"verdict":"SI|NO","verdictReason":"motivazione max 150 chars","suggestedTitle":"titolo libro suggerito","suggestedGenre":"genere"}`;
+    for (const marketId of selectedMarkets) {
+      const market = MARKETS.find(m => m.id === marketId);
+      setCurrentMarket(market.label);
 
-      const r = await callClaude(prompt, "Sei un esperto di Amazon KDP. Rispondi SOLO con JSON valido, nessun testo aggiuntivo.");
-      const start = r.indexOf("{"), end = r.lastIndexOf("}");
-      if (start === -1 || end === -1) throw new Error("Risposta non valida");
-      const data = JSON.parse(r.slice(start, end + 1));
-      setResult(data);
-    } catch(e) {
-      setError("Errore analisi: " + e.message);
+      try {
+        const prompt = `Sei un esperto di Amazon KDP con conoscenza approfondita del marketplace ${market.amazon} (${market.label}).
+Analizza questa nicchia editoriale: "${niche}" specificamente per il mercato ${market.label} su ${market.amazon}.
+
+Considera:
+- I libri in questa nicchia vengono scritti in ${market.lang}
+- I prezzi sono in ${market.currency}
+- Le abitudini di lettura e acquisto specifiche del mercato ${market.label}
+- La competizione locale vs internazionale su ${market.amazon}
+- Quanti libri nella top 20 di questa nicchia su ${market.amazon} hanno 10-99 recensioni
+
+Rispondi SOLO con un oggetto JSON valido su una riga:
+{"demand":"Alta|Media|Bassa","demandExplanation":"max 100 chars specifico per ${market.label}","competition":"Alta|Media|Bassa","competitionExplanation":"max 100 chars","ebookPrice":"X.XX","paperbackPrice":"X.XX","monthlyRoyaltiesMin":N,"monthlyRoyaltiesMax":N,"bsrEstimate":N,"booksWithLowReviews":N,"opportunityWindow":"max 120 chars specifico per ${market.label}","localTip":"consiglio specifico per pubblicare su ${market.amazon} max 100 chars","relatedNiches":["nicchia1","nicchia2","nicchia3"],"verdict":"SI|NO","verdictReason":"max 150 chars","suggestedTitle":"titolo ottimizzato per mercato ${market.label}","suggestedGenre":"genere"}`;
+
+        const r = await callClaude(prompt, `Sei un esperto di Amazon KDP per il mercato ${market.label}. Rispondi SOLO con JSON valido.`);
+        const start = r.indexOf("{"), end = r.lastIndexOf("}");
+        if (start === -1 || end === -1) throw new Error("Risposta non valida");
+        const data = JSON.parse(r.slice(start, end + 1));
+        setResults(prev => ({ ...prev, [marketId]: { ...data, market } }));
+      } catch(e) {
+        setResults(prev => ({ ...prev, [marketId]: { error: e.message, market } }));
+      }
     }
+
     setLoading(false);
+    setCurrentMarket("");
   };
 
-  const startWriting = () => {
+  const startWriting = (result) => {
     if (!result) return;
     setBook(b => ({...b, title: result.suggestedTitle || "", genre: result.suggestedGenre || b.genre}));
     setActive("aiwriter");
@@ -1915,278 +1972,157 @@ Rispondi SOLO con un oggetto JSON valido su una riga, nessun testo prima o dopo:
 
   const demandColor = (v) => v === "Alta" ? "#4ade80" : v === "Media" ? "#f5c842" : "#ef4444";
   const compColor = (v) => v === "Alta" ? "#ef4444" : v === "Media" ? "#f5c842" : "#4ade80";
+  const completedMarkets = Object.keys(results).length;
+  const bestMarket = Object.values(results).filter(r => !r.error && r.verdict === "SI")
+    .sort((a,b) => (b.monthlyRoyaltiesMax||0) - (a.monthlyRoyaltiesMax||0))[0];
 
   return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
     React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "🔍 Market Analyzer"),
-    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Analizza una nicchia prima di scrivere. Scopri se vale la pena investire il tuo tempo."),
+    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Analizza una nicchia su più mercati Amazon. Scopri dove vale la pena pubblicare."),
 
-    React.createElement("div", { style: {maxWidth:680} },
-      React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:24, marginBottom:24} },
-        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "Nicchia o argomento da analizzare"),
-        React.createElement("div", { style: {display:"flex", gap:12} },
-          React.createElement("input", {
-            value: niche,
-            onChange: e => setNiche(e.target.value),
-            onKeyDown: e => e.key === "Enter" && analyze(),
-            placeholder: "es. ricettario vegano, self-help produttività, romanzo storico ambientato a Roma...",
-            style: {flex:1, background:"#1a1829", border:"1px solid #2e2d3e", borderRadius:8, padding:"12px 16px", color:"#e8e6f0", fontSize:14, outline:"none"}
-          }),
-          React.createElement("button", {
-            onClick: analyze,
-            disabled: loading,
-            style: {padding:"12px 24px", borderRadius:8, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:14, cursor:"pointer", opacity:loading?0.6:1, whiteSpace:"nowrap"}
-          }, loading ? "⏳ Analisi..." : "🔍 Analizza")
-        ),
+    React.createElement("div", { style: {maxWidth:780} },
+
+      // Input nicchia
+      React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:24, marginBottom:20} },
+        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "Nicchia o argomento"),
+        React.createElement("input", {
+          value: niche,
+          onChange: e => setNiche(e.target.value),
+          onKeyDown: e => e.key === "Enter" && !loading && analyze(),
+          placeholder: "es. ricettario vegano, self-help produttività, romanzo storico...",
+          style: {background:"#1a1829", border:"1px solid #2e2d3e", borderRadius:8, padding:"12px 16px", color:"#e8e6f0", fontSize:14, outline:"none", width:"100%", boxSizing:"border-box"}
+        }),
         error && React.createElement("div", { style: {color:"#ef4444", fontSize:13, marginTop:8} }, error)
       ),
 
-      loading && React.createElement("div", { style: {textAlign:"center", padding:40, color:"#7a7890"} },
-        React.createElement("div", { style: {fontSize:32, marginBottom:12} }, "🔍"),
-        React.createElement("div", { style: {fontSize:14} }, "Analisi del mercato Amazon KDP in corso...")
-      ),
+      // Selezione mercati
+      React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:24, marginBottom:20} },
+        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:16, textTransform:"uppercase", letterSpacing:1} }, "Seleziona i mercati da analizzare"),
 
-      result && React.createElement("div", null,
-        // Verdetto principale
-        React.createElement("div", {
-          style: {
-            background: result.verdict === "SI" ? "#0d1f0d" : "#1f0d0d",
-            border: `2px solid ${result.verdict === "SI" ? "#4ade80" : "#ef4444"}`,
-            borderRadius:14, padding:24, marginBottom:20, textAlign:"center"
-          }
-        },
-          React.createElement("div", { style: {fontSize:40, marginBottom:8} }, result.verdict === "SI" ? "✅" : "❌"),
-          React.createElement("div", { style: {fontSize:22, fontWeight:700, color: result.verdict === "SI" ? "#4ade80" : "#ef4444", marginBottom:8} },
-            result.verdict === "SI" ? "NICCHIA PROFITTEVOLE" : "NICCHIA NON CONSIGLIATA"
-          ),
-          React.createElement("div", { style: {color:"#c8c6d8", fontSize:14, lineHeight:1.6} }, result.verdictReason)
-        ),
-
-        // Metriche principali
-        React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:20} },
-          React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20} },
-            React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "📈 Domanda di mercato"),
-            React.createElement("div", { style: {fontSize:24, fontWeight:700, color: demandColor(result.demand), marginBottom:6} }, result.demand),
-            React.createElement("div", { style: {fontSize:12, color:"#7a7890", lineHeight:1.5} }, result.demandExplanation)
-          ),
-          React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20} },
-            React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "⚔️ Competizione"),
-            React.createElement("div", { style: {fontSize:24, fontWeight:700, color: compColor(result.competition), marginBottom:6} }, result.competition),
-            React.createElement("div", { style: {fontSize:12, color:"#7a7890", lineHeight:1.5} }, result.competitionExplanation)
-          )
-        ),
-
-        // Dati KDSpy-style
-        React.createElement("div", { style: {background:"#12111e", border:"1px solid #f5c84244", borderRadius:12, padding:20, marginBottom:20} },
-          React.createElement("div", { style: {fontSize:11, color:"#f5c842", marginBottom:16, textTransform:"uppercase", letterSpacing:1} }, "🔍 Analisi Competizione (stile KDSpy)"),
-          React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, marginBottom:16} },
-            React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#4ade80", fontFamily:"monospace"} }, result.booksWithLowReviews > 0 ? result.booksWithLowReviews : "—"),
-              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "libri top20 con"),
-              React.createElement("div", { style: {fontSize:11, color:"#4ade80", fontWeight:700} }, "10-99 recensioni")
-            ),
-            React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#f5c842", fontFamily:"monospace"} }, result.bsrEstimate ? result.bsrEstimate.toLocaleString() : "—"),
-              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "BSR medio stimato"),
-              React.createElement("div", { style: {fontSize:11, color:"#f5c842", fontWeight:700} }, result.bsrEstimate ? (result.bsrEstimate < 50000 ? "🔥 mercato attivo" : result.bsrEstimate < 150000 ? "✅ buone vendite" : "⚠️ mercato lento") : "")
-            ),
-            React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#c084fc", fontFamily:"monospace"} }, `€${result.monthlyRoyaltiesMin}-${result.monthlyRoyaltiesMax}`),
-              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "royalties/mese"),
-              React.createElement("div", { style: {fontSize:11, color:"#c084fc", fontWeight:700} }, "con 50 recensioni")
-            )
-          ),
-          result.opportunityWindow && React.createElement("div", { style: {background:"#0f1a0f", border:"1px solid #4ade8033", borderRadius:8, padding:12, fontSize:13, color:"#86efac", lineHeight:1.6} },
-            React.createElement("span", { style: {fontWeight:700} }, "💡 Opportunità: "), result.opportunityWindow
-          )
-        ),
-
-        // Royalties e prezzi
-        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
-          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:16, textTransform:"uppercase", letterSpacing:1} }, "💰 Prezzi Consigliati"),
-          React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr", gap:16} },
-            React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#f5c842", fontFamily:"monospace"} }, `€${result.ebookPrice}`),
-              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "prezzo ebook consigliato")
-            ),
-            React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:28, fontWeight:700, color:"#c084fc", fontFamily:"monospace"} }, `€${result.paperbackPrice}`),
-              React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "prezzo cartaceo consigliato")
-            )
-          )
-        ),
-
-        // Nicchie correlate
-        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
-          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:12, textTransform:"uppercase", letterSpacing:1} }, "🎯 Nicchie Correlate Meno Competitive"),
-          React.createElement("div", { style: {display:"flex", flexWrap:"wrap", gap:8} },
-            result.relatedNiches.map((n, i) =>
+        MARKET_GROUPS.map(group =>
+          React.createElement("div", { key: group.label, style: {marginBottom:16} },
+            React.createElement("div", { style: {display:"flex", alignItems:"center", gap:10, marginBottom:10} },
+              React.createElement("div", { style: {fontSize:12, color:"#7a7890", fontWeight:700} }, group.label),
               React.createElement("button", {
-                key: i,
-                onClick: () => { setNiche(n); setResult(null); },
-                style: {padding:"8px 16px", borderRadius:20, border:"1px solid #2e2d3e", background:"transparent", color:"#c8c6d8", cursor:"pointer", fontSize:13}
-              }, n)
+                onClick: () => toggleGroup(group.ids),
+                style: {fontSize:10, padding:"2px 10px", borderRadius:20, border:"1px solid #2e2d3e", background:"transparent", color:"#5a5870", cursor:"pointer"}
+              }, group.ids.every(id => selectedMarkets.includes(id)) ? "Deseleziona tutti" : "Seleziona tutti")
+            ),
+            React.createElement("div", { style: {display:"flex", flexWrap:"wrap", gap:8} },
+              group.ids.map(id => {
+                const m = MARKETS.find(x => x.id === id);
+                const sel = selectedMarkets.includes(id);
+                const done = results[id];
+                return React.createElement("button", {
+                  key: id,
+                  onClick: () => toggleMarket(id),
+                  style: {
+                    padding:"8px 14px", borderRadius:20, cursor:"pointer", fontSize:13,
+                    border: done ? `1px solid ${done.error ? "#ef4444" : done.verdict==="SI" ? "#4ade80" : "#f5c842"}` : sel ? "1px solid #f5c842" : "1px solid #2e2d3e",
+                    background: done ? (done.error ? "#2e1a1a" : done.verdict==="SI" ? "#0d1f0d" : "#1a1a0d") : sel ? "#f5c84222" : "transparent",
+                    color: done ? (done.error ? "#ef4444" : done.verdict==="SI" ? "#4ade80" : "#f5c842") : sel ? "#f5c842" : "#7a7890",
+                    fontWeight: sel ? 700 : 400
+                  }
+                }, m.flag + " " + m.label + (done && !done.error ? (done.verdict==="SI" ? " ✓" : " ✗") : ""));
+              })
             )
           )
-        ),
-
-        // Titolo suggerito e CTA
-        React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:20} },
-          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "📚 Titolo Suggerito"),
-          React.createElement("div", { style: {fontSize:18, fontFamily:"'Playfair Display',serif", color:"#f5c842", fontStyle:"italic"} }, `"${result.suggestedTitle}"`)
-        ),
-
-        result.verdict === "SI" && React.createElement("button", {
-          onClick: startWriting,
-          style: {width:"100%", padding:"16px", borderRadius:12, border:"none", background:"linear-gradient(135deg,#4ade80,#22c55e)", color:"#0f0e17", fontWeight:700, fontSize:16, cursor:"pointer"}
-        }, "✍️ Inizia a scrivere questo libro →")
-      )
-    )
-  );
-}
-
-/* ─────────────────────────────────────────────
-   ADMIN PANEL — solo per luicrescenzo@gmail.com
-───────────────────────────────────────────── */
-function AdminPanel({user}) {
-  const [codes, setCodes] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [generating, setGenerating] = React.useState(false);
-  const [newCode, setNewCode] = React.useState("");
-  const [copied, setCopied] = React.useState("");
-
-  React.useEffect(() => { loadCodes(); }, []);
-
-  const loadCodes = async () => {
-    setLoading(true);
-    try { const c = await getAllPromoCodes(); setCodes(c); } catch(e) {}
-    setLoading(false);
-  };
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const code = await generatePromoCode(user.uid);
-      setNewCode(code);
-      await loadCodes();
-    } catch(e) { alert("Errore: " + e.message); }
-    setGenerating(false);
-  };
-
-  const copyCode = (code) => {
-    navigator.clipboard.writeText(code);
-    setCopied(code);
-    setTimeout(() => setCopied(""), 2000);
-  };
-
-  return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
-    React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "⚙️ Pannello Admin"),
-    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Gestione codici promozionali — visibile solo a te."),
-
-    // Genera nuovo codice
-    React.createElement("div", { style: {background:"#12111e", border:"1px solid #f5c84244", borderRadius:14, padding:24, marginBottom:24, maxWidth:500} },
-      React.createElement("div", { style: {fontSize:13, color:"#f5c842", fontFamily:"'Playfair Display',serif", marginBottom:8} }, "🎁 Genera Nuovo Codice Promo"),
-      React.createElement("div", { style: {fontSize:12, color:"#7a7890", marginBottom:16} }, `Ogni codice dà ${PROMO_DAYS} giorni di piano PRO — usabile una sola volta.`),
-      newCode && React.createElement("div", { style: {background:"#0f1a0f", border:"1px solid #4ade80", borderRadius:10, padding:16, marginBottom:16, display:"flex", alignItems:"center", justifyContent:"space-between"} },
-        React.createElement("div", null,
-          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:4} }, "Nuovo codice generato:"),
-          React.createElement("div", { style: {fontSize:22, fontWeight:700, color:"#4ade80", fontFamily:"monospace", letterSpacing:2} }, newCode)
-        ),
-        React.createElement("button", {
-          onClick: () => copyCode(newCode),
-          style: {padding:"8px 16px", borderRadius:8, border:"1px solid #4ade80", background:"transparent", color:"#4ade80", cursor:"pointer", fontSize:12, fontWeight:700}
-        }, copied === newCode ? "✓ Copiato!" : "📋 Copia")
+        )
       ),
+
+      // Tasto analizza
       React.createElement("button", {
-        onClick: handleGenerate,
-        disabled: generating,
-        style: {padding:"12px 28px", borderRadius:8, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:14, cursor:"pointer", opacity:generating?0.6:1}
-      }, generating ? "⏳ Generando..." : "✨ Genera Codice")
-    ),
+        onClick: analyze,
+        disabled: loading || !niche.trim(),
+        style: {width:"100%", padding:"14px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:15, cursor:"pointer", opacity:loading||!niche.trim()?0.6:1, marginBottom:24}
+      }, loading ? `⏳ Analisi ${currentMarket}... (${completedMarkets}/${selectedMarkets.length})` : `🔍 Analizza su ${selectedMarkets.length} mercato${selectedMarkets.length>1?"i":""}`),
 
-    // Lista codici
-    React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, overflow:"hidden", maxWidth:700} },
-      React.createElement("div", { style: {padding:"14px 20px", borderBottom:"1px solid #2e2d3e", display:"flex", justifyContent:"space-between", alignItems:"center"} },
-        React.createElement("div", { style: {fontSize:13, color:"#f5c842", fontFamily:"'Playfair Display',serif"} }, "📋 Tutti i Codici"),
-        React.createElement("button", { onClick: loadCodes, style: {background:"transparent", border:"none", color:"#5a5870", cursor:"pointer", fontSize:12} }, "🔄 Aggiorna")
-      ),
-      loading ? React.createElement("div", { style: {padding:24, textAlign:"center", color:"#5a5870"} }, "Caricamento...") :
-      codes.length === 0 ? React.createElement("div", { style: {padding:24, textAlign:"center", color:"#5a5870"} }, "Nessun codice generato ancora.") :
-      codes.map(c => React.createElement("div", {
-        key: c.id,
-        style: {padding:"14px 20px", borderBottom:"1px solid #1e1d2e", display:"flex", alignItems:"center", gap:16}
-      },
-        React.createElement("div", { style: {flex:1} },
-          React.createElement("div", { style: {fontSize:16, fontWeight:700, fontFamily:"monospace", color: c.usedBy ? "#5a5870" : "#f5c842", letterSpacing:1} }, c.id),
-          c.usedBy && React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:3} },
-            `Usato da: ${c.usedBy} — ${new Date(c.usedAt).toLocaleDateString("it-IT")}`
+      // Risultati
+      completedMarkets > 0 && React.createElement("div", null,
+
+        // Riepilogo migliore mercato
+        bestMarket && React.createElement("div", {
+          style: {background:"#0d1f0d", border:"2px solid #4ade80", borderRadius:14, padding:20, marginBottom:20, display:"flex", alignItems:"center", gap:16}
+        },
+          React.createElement("div", { style: {fontSize:36} }, "🏆"),
+          React.createElement("div", null,
+            React.createElement("div", { style: {fontSize:12, color:"#4ade80", fontWeight:700, marginBottom:4} }, "MERCATO MIGLIORE PER QUESTA NICCHIA"),
+            React.createElement("div", { style: {fontSize:20, fontFamily:"'Playfair Display',serif", color:"#f5c842"} }, bestMarket.market.flag + " " + bestMarket.market.label),
+            React.createElement("div", { style: {fontSize:13, color:"#c8c6d8", marginTop:4} }, `Royalties stimate: ${bestMarket.market.currency}${bestMarket.monthlyRoyaltiesMin}-${bestMarket.monthlyRoyaltiesMax}/mese`)
           )
         ),
-        React.createElement("div", { style: {display:"flex", alignItems:"center", gap:10} },
-          React.createElement("span", { style: {fontSize:11, padding:"3px 10px", borderRadius:20, background: c.usedBy ? "#2e1a1a" : "#0f1a0f", color: c.usedBy ? "#ef4444" : "#4ade80", border: `1px solid ${c.usedBy ? "#ef444433" : "#4ade8033"}`} },
-            c.usedBy ? "Usato" : "Disponibile"
-          ),
-          !c.usedBy && React.createElement("button", {
-            onClick: () => copyCode(c.id),
-            style: {padding:"5px 12px", borderRadius:8, border:"1px solid #2e2d3e", background:"transparent", color:"#7a7890", cursor:"pointer", fontSize:11}
-          }, copied === c.id ? "✓ Copiato!" : "📋 Copia")
-        )
-      ))
-    )
-  );
-}
 
-/* ─────────────────────────────────────────────
-   PROMO CODE PANEL — per tutti gli utenti
-───────────────────────────────────────────── */
-function PromoPanel({user, onPlanActivated}) {
-  const [code, setCode] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const [success, setSuccess] = React.useState(null);
-  const [error, setError] = React.useState("");
+        // Schede per mercato
+        selectedMarkets.map(marketId => {
+          const r = results[marketId];
+          if (!r) return loading ? React.createElement("div", { key: marketId, style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:12, padding:20, marginBottom:14, color:"#5a5870", fontSize:13} },
+            r ? "" : `⏳ ${MARKETS.find(m=>m.id===marketId)?.flag} ${MARKETS.find(m=>m.id===marketId)?.label} — in attesa...`
+          ) : null;
 
-  const handleActivate = async () => {
-    if (!code.trim()) { setError("Inserisci un codice."); return; }
-    setLoading(true); setError(""); setSuccess(null);
-    try {
-      const result = await activatePromoCode(code, user.uid, user.email);
-      const expDate = new Date(result.expiresAt).toLocaleDateString("it-IT");
-      setSuccess({ plan: result.plan, days: result.days, expDate });
-      setCode("");
-      if (onPlanActivated) onPlanActivated(result.plan);
-    } catch(e) {
-      setError(e.message);
-    }
-    setLoading(false);
-  };
+          if (r.error) return React.createElement("div", { key: marketId, style: {background:"#2e1a1a", border:"1px solid #ef4444", borderRadius:12, padding:16, marginBottom:14} },
+            React.createElement("div", { style: {color:"#ef4444", fontSize:13} }, r.market.flag + " " + r.market.label + " — Errore: " + r.error)
+          );
 
-  return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
-    React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "🎁 Codice Promozionale"),
-    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Hai ricevuto un codice promo? Inseriscilo qui per attivare il tuo piano."),
+          return React.createElement("div", {
+            key: marketId,
+            style: {background:"#12111e", border:`1px solid ${r.verdict==="SI"?"#4ade8033":"#2e2d3e"}`, borderRadius:14, padding:24, marginBottom:16}
+          },
+            // Header mercato
+            React.createElement("div", { style: {display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16} },
+              React.createElement("div", { style: {display:"flex", alignItems:"center", gap:10} },
+                React.createElement("span", { style: {fontSize:24} }, r.market.flag),
+                React.createElement("div", null,
+                  React.createElement("div", { style: {fontSize:16, fontFamily:"'Playfair Display',serif", color:"#e8e6f0"} }, r.market.label),
+                  React.createElement("div", { style: {fontSize:11, color:"#5a5870"} }, r.market.amazon)
+                )
+              ),
+              React.createElement("div", {
+                style: {padding:"6px 16px", borderRadius:20, background: r.verdict==="SI"?"#0d1f0d":"#1f0d0d", border:`1px solid ${r.verdict==="SI"?"#4ade80":"#ef4444"}`, color: r.verdict==="SI"?"#4ade80":"#ef4444", fontWeight:700, fontSize:13}
+              }, r.verdict==="SI" ? "✅ OPPORTUNITÀ" : "❌ NON CONSIGLIATO")
+            ),
 
-    React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:28, maxWidth:480} },
-      success ? React.createElement("div", { style: {textAlign:"center"} },
-        React.createElement("div", { style: {fontSize:48, marginBottom:12} }, "🎉"),
-        React.createElement("div", { style: {fontSize:20, fontFamily:"'Playfair Display',serif", color:"#4ade80", marginBottom:8} }, "Piano PRO Attivato!"),
-        React.createElement("div", { style: {color:"#c8c6d8", fontSize:14, lineHeight:1.6} },
-          `Hai ${success.days} giorni di accesso PRO completo.`,
-          React.createElement("br"),
-          `Scade il: ${success.expDate}`
-        )
-      ) : React.createElement("div", null,
-        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "Il tuo codice"),
-        React.createElement("input", {
-          value: code,
-          onChange: e => setCode(e.target.value.toUpperCase()),
-          onKeyDown: e => e.key === "Enter" && handleActivate(),
-          placeholder: "es. BF-X7K2-PRO1",
-          style: {background:"#1a1829", border:"1px solid #2e2d3e", borderRadius:8, padding:"14px 16px", color:"#f5c842", fontSize:18, outline:"none", width:"100%", boxSizing:"border-box", fontFamily:"monospace", letterSpacing:2, marginBottom:16}
-        }),
-        error && React.createElement("div", { style: {color:"#ef4444", fontSize:13, marginBottom:12} }, "❌ " + error),
-        React.createElement("button", {
-          onClick: handleActivate,
-          disabled: loading || !code.trim(),
-          style: {width:"100%", padding:"14px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:15, cursor:"pointer", opacity:loading||!code.trim()?0.6:1}
-        }, loading ? "⏳ Verifica in corso..." : "✅ Attiva Codice")
+            // Metriche
+            React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:10, marginBottom:14} },
+              React.createElement("div", { style: {background:"#0f0e17", borderRadius:10, padding:12, textAlign:"center"} },
+                React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:4} }, "Domanda"),
+                React.createElement("div", { style: {fontSize:16, fontWeight:700, color:demandColor(r.demand)} }, r.demand)
+              ),
+              React.createElement("div", { style: {background:"#0f0e17", borderRadius:10, padding:12, textAlign:"center"} },
+                React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:4} }, "Competizione"),
+                React.createElement("div", { style: {fontSize:16, fontWeight:700, color:compColor(r.competition)} }, r.competition)
+              ),
+              React.createElement("div", { style: {background:"#0f0e17", borderRadius:10, padding:12, textAlign:"center"} },
+                React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:4} }, "Royalties/mese"),
+                React.createElement("div", { style: {fontSize:16, fontWeight:700, color:"#4ade80"} }, `${r.market.currency}${r.monthlyRoyaltiesMin}-${r.monthlyRoyaltiesMax}`)
+              ),
+              React.createElement("div", { style: {background:"#0f0e17", borderRadius:10, padding:12, textAlign:"center"} },
+                React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:4} }, "Libri <100 rec."),
+                React.createElement("div", { style: {fontSize:16, fontWeight:700, color:"#c084fc"} }, r.booksWithLowReviews > 0 ? r.booksWithLowReviews : "—")
+              )
+            ),
+
+            // Prezzi
+            React.createElement("div", { style: {display:"flex", gap:10, marginBottom:12} },
+              React.createElement("div", { style: {background:"#0f0e17", borderRadius:8, padding:"8px 14px", fontSize:12, color:"#f5c842"} }, `📱 eBook: ${r.market.currency}${r.ebookPrice}`),
+              React.createElement("div", { style: {background:"#0f0e17", borderRadius:8, padding:"8px 14px", fontSize:12, color:"#c084fc"} }, `📖 Cartaceo: ${r.market.currency}${r.paperbackPrice}`)
+            ),
+
+            // Opportunità e consiglio locale
+            r.opportunityWindow && React.createElement("div", { style: {background:"#0f1a0f", border:"1px solid #4ade8022", borderRadius:8, padding:10, marginBottom:8, fontSize:12, color:"#86efac"} },
+              React.createElement("span", { style: {fontWeight:700} }, "💡 "), r.opportunityWindow
+            ),
+            r.localTip && React.createElement("div", { style: {background:"#0f0e1a", border:"1px solid #c084fc22", borderRadius:8, padding:10, marginBottom:12, fontSize:12, color:"#c8b4f8"} },
+              React.createElement("span", { style: {fontWeight:700} }, "🎯 Consiglio locale: "), r.localTip
+            ),
+
+            // Verdetto e CTA
+            React.createElement("div", { style: {fontSize:12, color:"#7a7890", marginBottom:r.verdict==="SI"?12:0} }, r.verdictReason),
+            r.verdict==="SI" && React.createElement("button", {
+              onClick: () => startWriting(r),
+              style: {padding:"10px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#4ade80,#22c55e)", color:"#0f0e17", fontWeight:700, fontSize:13, cursor:"pointer", marginTop:8}
+            }, `✍️ Scrivi per ${r.market.label} →`)
+          );
+        })
       )
     )
   );
