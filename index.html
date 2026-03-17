@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.55 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.56 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -271,7 +271,7 @@ async function callDeepL(text, targetLang) {
 }
 
 async function callClaude(prompt,system=""){
-  const body={model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]};
+  const body={model:"claude-sonnet-4-6",max_tokens:4000,messages:[{role:"user",content:prompt}]};
   if(system)body.system=system;
   try {
     const res=await fetch("https://bookforge-api.luicrescenzo.workers.dev",{
@@ -1489,7 +1489,7 @@ function AIWriterPanel({book,setBook,setActive,userPlan}){
       const outlines=[];
       for(let i=0;i<brief.numChapters;i++){
         setGenError(`Generando scaletta capitolo ${i+1} di ${brief.numChapters}...`);
-        const res=await fetch("https://bookforge-api.luicrescenzo.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,system:"Rispondi SOLO con un oggetto JSON su una riga. Niente altro.",messages:[{role:"user",content:`Crea la scheda del CAPITOLO ${i+1} di ${brief.numChapters}:\nTITOLO: "${book.title||"Senza titolo"}" | GENERE: ${book.genre} | TRAMA: ${brief.premise} | PROTAGONISTA: ${brief.protagonist||"n/d"} | ANTAGONISTA: ${brief.antagonist||"n/d"} | AMBIENTAZIONE: ${brief.setting||"n/d"} | TONO: ${brief.tone}\n${outlines.length>0?`PRECEDENTI: ${outlines.map((o,j)=>`Cap.${j+1}: ${o.title}`).join(", ")}`:""}
+        const res=await fetch("https://bookforge-api.luicrescenzo.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:400,system:"Rispondi SOLO con un oggetto JSON su una riga. Niente altro.",messages:[{role:"user",content:`Crea la scheda del CAPITOLO ${i+1} di ${brief.numChapters}:\nTITOLO: "${book.title||"Senza titolo"}" | GENERE: ${book.genre} | TRAMA: ${brief.premise} | PROTAGONISTA: ${brief.protagonist||"n/d"} | ANTAGONISTA: ${brief.antagonist||"n/d"} | AMBIENTAZIONE: ${brief.setting||"n/d"} | TONO: ${brief.tone}\n${outlines.length>0?`PRECEDENTI: ${outlines.map((o,j)=>`Cap.${j+1}: ${o.title}`).join(", ")}`:""}
 Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 chars","keyScene":"scena principale 60 chars","emotionalArc":"arco emotivo 50 chars"}`}]})});
         const data=await res.json();
         const r=_optionalChain([data, 'access', _77 => _77.content, 'optionalAccess', _78 => _78.map, 'call', _79 => _79(b=>b.text||""), 'access', _80 => _80.join, 'call', _81 => _81(""), 'access', _82 => _82.trim, 'call', _83 => _83()])||"";
