@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.47 BUILD 20260316 -->
+<!-- BOOKFORGE VERSION 3.48 BUILD 20260316 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -347,7 +347,7 @@ async function exportPDF(book,sizeIdx,margins,fontName,fontSize,lineSpacing){
   const needsUnicode=hasNonLatinChars(allText);
   let pageNum=1;
   function addNum(){doc.setFont(pdfFont,"normal");doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`— ${pageNum} —`,mmW/2,mmH-10,{align:"center"});}
-  function addHeader(chTitle){doc.setFont(pdfFont,"italic");doc.setFontSize(8);doc.setTextColor(130,130,130);doc.text(book.title||"",mIn,mTop-5);doc.text(chTitle,mmW-mOut,mTop-5,{align:"right"});}
+  function addHeader(chTitle){}
   doc.setFont(pdfFont,"bold");doc.setFontSize(28);doc.setTextColor(30,30,30);
   const bookTitleText=needsUnicode?sanitizeForPDF(book.title||"Il Mio Libro"):(book.title||"Il Mio Libro");
   const bookTitleLines=doc.splitTextToSize(bookTitleText,textW);
