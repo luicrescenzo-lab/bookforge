@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.54 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.55 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1966,8 +1966,8 @@ Rispondi SOLO con un oggetto JSON valido su una riga:
 
   const startWriting = (result) => {
     if (!result) return;
-    setBook(b => ({...b, title: result.suggestedTitle || "", genre: result.suggestedGenre || b.genre}));
-    setActive("aiwriter");
+    if (setBook) setBook(b => ({...b, title: result.suggestedTitle || "", genre: result.suggestedGenre || b.genre}));
+    if (setActive) setActive("aiwriter");
   };
 
   const demandColor = (v) => v === "Alta" ? "#4ade80" : v === "Media" ? "#f5c842" : "#ef4444";
@@ -2117,10 +2117,13 @@ Rispondi SOLO con un oggetto JSON valido su una riga:
 
             // Verdetto e CTA
             React.createElement("div", { style: {fontSize:12, color:"#7a7890", marginBottom:r.verdict==="SI"?12:0} }, r.verdictReason),
-            r.verdict==="SI" && React.createElement("button", {
-              onClick: () => startWriting(r),
-              style: {padding:"10px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#4ade80,#22c55e)", color:"#0f0e17", fontWeight:700, fontSize:13, cursor:"pointer", marginTop:8}
-            }, `✍️ Scrivi per ${r.market.label} →`)
+            r.verdict==="SI" && React.createElement("div", { style: {display:"flex", gap:10, marginTop:8, flexWrap:"wrap"} },
+              setActive && React.createElement("button", {
+                onClick: () => startWriting(r),
+                style: {padding:"10px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#4ade80,#22c55e)", color:"#0f0e17", fontWeight:700, fontSize:13, cursor:"pointer"}
+              }, `✍️ Scrivi per ${r.market.label} →`),
+              !setActive && React.createElement("div", { style: {fontSize:12, color:"#7a7890", padding:"10px 0"} }, "💡 Apri o crea un progetto per iniziare a scrivere su questa nicchia")
+            )
           );
         })
       )
@@ -2661,7 +2664,6 @@ function AppInner({user, handleLogout}){
     } else if(panel==="marketanalyzer"){
       setActive("marketanalyzer");
       setAppStatus("editor");
-      if(!book){const nb=DEFAULT_BOOK();setBook(nb);}
     } else {
       if(!book){
         // Nessun progetto aperto - apri il primo disponibile o creane uno
@@ -2709,7 +2711,7 @@ function AppInner({user, handleLogout}){
             , active==="format"    &&React.createElement(FormatPanel, {    book: book, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}} )
             , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, userPlan: userPlan, onSaveProject: async(newBook)=>{ const newId=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; const saved=await saveProject(newId,newBook); const newMeta={id:newId,title:newBook.title,author:newBook.author||"",genre:newBook.genre||"Romanzo",chapters:newBook.chapters,brief:newBook.brief||{},chapterBriefs:newBook.chapterBriefs||[],createdAt:newBook.createdAt||Date.now(),updatedAt:Date.now()}; setProjects(prev=>[...prev,newMeta]); alert(`✅ Progetto "${newBook.title}" salvato!`); }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}} )
             , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1905}} )
-            , active==="marketanalyzer"&&React.createElement(MarketAnalyzerPanel, { setActive: setActive, setBook: setBook, book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
+            , active==="marketanalyzer"&&React.createElement(MarketAnalyzerPanel, { setActive: book?setActive:null, setBook: book?setBook:null, book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
             , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
             , active==="promo"&&React.createElement(PromoPanel, { user: user, onPlanActivated: (plan)=>setUserPlan(plan) })
             , active==="admin"&&user.email===ADMIN_EMAIL&&React.createElement(AdminPanel, { user: user })
