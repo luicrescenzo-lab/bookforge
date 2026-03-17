@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.52 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.53 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -119,6 +119,39 @@ const POV = ["Prima persona (Io)","Terza persona (Lui/Lei)","Seconda persona (Tu
 const CHAPTER_LENGTHS = ["Breve (300-500 parole)","Medio (500-1000 parole)","Lungo (1000-2000 parole)","Molto lungo (2000+ parole)"];
 const PROJECTS_INDEX_KEY = "bookforge_projects_index";
 const ADMIN_EMAIL = "luicrescenzo@gmail.com";
+
+const PLAN_LIMITS = {
+  free:  { chaptersPerDay: 2, translationsPerDay: 0, maxProjects: 1, export: false },
+  base:  { chaptersPerDay: 10, translationsPerDay: 5, maxProjects: 3, export: true },
+  pro:   { chaptersPerDay: 999, translationsPerDay: 999, maxProjects: 999, export: true },
+  business: { chaptersPerDay: 999, translationsPerDay: 999, maxProjects: 999, export: true },
+};
+
+// Contatori giornalieri in localStorage (si azzera ogni giorno)
+function getTodayKey(type) {
+  const today = new Date().toISOString().slice(0,10);
+  return `bf_counter_${type}_${today}`;
+}
+function getCounter(type) {
+  try { return parseInt(localStorage.getItem(getTodayKey(type)) || "0"); } catch(e) { return 0; }
+}
+function incrementCounter(type) {
+  try { localStorage.setItem(getTodayKey(type), getCounter(type) + 1); } catch(e) {}
+}
+function checkLimit(type, plan) {
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const current = getCounter(type);
+  if (type === "chapter") return current < limits.chaptersPerDay;
+  if (type === "translation") return current < limits.translationsPerDay;
+  return true;
+}
+function getRemainingCalls(type, plan) {
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const current = getCounter(type);
+  if (type === "chapter") return Math.max(0, limits.chaptersPerDay - current);
+  if (type === "translation") return Math.max(0, limits.translationsPerDay - current);
+  return 999;
+}
 const PROMO_DAYS = 10;
 const PROMO_PLAN = "pro";
 const PROJECT_PREFIX     = "bookforge_proj_";
@@ -942,18 +975,23 @@ function CoverPanel({book}){
 /* ─────────────────────────────────────────────
    FORMAT PANEL
 ───────────────────────────────────────────── */
-function FormatPanel({book}){
+function FormatPanel({book,userPlan}){
   const [sizeIdx,setSizeIdx]=useState(1);const [margins,setMargins]=useState({top:1,bottom:1,inner:1.25,outer:0.75});const [font,setFont]=useState("Georgia");const [fontSize,setFontSize]=useState(11);const [lineSpacing,setLineSpacing]=useState(1.5);const [exporting,setExporting]=useState(false);
   const size=KDP_SIZES[sizeIdx];const preview=_optionalChain([book, 'access', _30 => _30.chapters, 'access', _31 => _31[0], 'optionalAccess', _32 => _32.content])||"Il tuo testo apparirà qui...";
-  return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {width:260,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "IMPAGINAZIONE KDP" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Formato pagina" ), KDP_SIZES.map((s,i)=>(React.createElement('button', { key: i, onClick: ()=>setSizeIdx(i), style: {display:"block",width:"100%",padding:"9px 12px",borderRadius:7,marginBottom:5,border:sizeIdx===i?"1px solid #f5c842":"1px solid #2e2d3e",background:sizeIdx===i?"#f5c84211":"transparent",color:sizeIdx===i?"#f5c842":"#7a7890",cursor:"pointer",fontSize:12,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, s.label))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Font"), React.createElement('select', { value: font, onChange: e=>setFont(e.target.value), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, FONTS.map(f=>React.createElement('option', { key: f, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, f))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Dimensione: " , fontSize, "pt"), React.createElement('input', { type: "range", min: 9, max: 14, step: 0.5, value: fontSize, onChange: e=>setFontSize(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Interlinea: " , lineSpacing, "x"), React.createElement('input', { type: "range", min: 1, max: 2.5, step: 0.1, value: lineSpacing, onChange: e=>setLineSpacing(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Margini (pollici)" ), ["top","bottom","inner","outer"].map(m=>(React.createElement('div', { key: m, style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {color:"#7a7890",fontSize:12,minWidth:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, m==="inner"?"interno":m==="outer"?"esterno":m==="top"?"alto":"basso"), React.createElement('input', { type: "number", min: 0.5, max: 2, step: 0.05, value: margins[m], onChange: e=>setMargins(mg=>({...mg,[m]:+e.target.value})), style: {width:65,...inp,padding:"5px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} )))), React.createElement('div', { style: {height:1,background:"#1a1929",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement('button', { onClick: async()=>{setExporting(true);try{await exportPDF(book,sizeIdx,margins,font,fontSize,lineSpacing);}catch(e){alert("Errore: "+e.message);}setExporting(false);}, disabled: exporting, style: {...goldBtn,width:"100%",marginBottom:8,opacity:exporting?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, exporting?"⏳ Generando...":"📥 Esporta PDF KDP"), React.createElement('button', { onClick: ()=>exportEPUB(book), style: {width:"100%",padding:"10px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "📱 Esporta EPUB (Kindle)"   ), React.createElement('div', { style: {fontSize:11,color:"#f5c84299",marginTop:10,lineHeight:1.5}}, "⚠️ Per libri in Russo, Cinese, Giapponese o Arabo usa EPUB — il PDF usa traslitterazione latina.")), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40,overflow:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {textAlign:"center",marginBottom:16,fontSize:12,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "ANTEPRIMA — "  , size.label), React.createElement('div', { style: {background:"#fff",width:`${Math.round(size.pts[0]*60)}px`,minHeight:`${Math.round(size.pts[1]*60)}px`,boxShadow:"0 20px 60px rgba(0,0,0,0.7)",padding:`${margins.top*25}px ${margins.outer*30}px ${margins.bottom*25}px ${margins.inner*30}px`,boxSizing:"border-box",position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, _optionalChain([book, 'access', _35 => _35.chapters, 'access', _36 => _36[0], 'optionalAccess', _37 => _37.title])&&React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize*1.3*0.55}pt`,fontWeight:"bold",textAlign:"center",marginBottom:"1em",color:"#111"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, book.chapters[0].title), React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize}pt`,lineHeight:lineSpacing,color:"#111",textAlign:"left",textIndent:"1.5em",wordBreak:"normal",overflowWrap:"break-word",whiteSpace:"pre-wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, preview), React.createElement('div', { style: {textAlign:"center",fontSize:"8pt",color:"#999",fontFamily:font,marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "— 1 —"  ))))));
+  return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {width:260,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "IMPAGINAZIONE KDP" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Formato pagina" ), KDP_SIZES.map((s,i)=>(React.createElement('button', { key: i, onClick: ()=>setSizeIdx(i), style: {display:"block",width:"100%",padding:"9px 12px",borderRadius:7,marginBottom:5,border:sizeIdx===i?"1px solid #f5c842":"1px solid #2e2d3e",background:sizeIdx===i?"#f5c84211":"transparent",color:sizeIdx===i?"#f5c842":"#7a7890",cursor:"pointer",fontSize:12,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, s.label))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Font"), React.createElement('select', { value: font, onChange: e=>setFont(e.target.value), style: {...sel,width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, FONTS.map(f=>React.createElement('option', { key: f, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, f))), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Dimensione: " , fontSize, "pt"), React.createElement('input', { type: "range", min: 9, max: 14, step: 0.5, value: fontSize, onChange: e=>setFontSize(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Interlinea: " , lineSpacing, "x"), React.createElement('input', { type: "range", min: 1, max: 2.5, step: 0.1, value: lineSpacing, onChange: e=>setLineSpacing(+e.target.value), style: {width:"100%"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "Margini (pollici)" ), ["top","bottom","inner","outer"].map(m=>(React.createElement('div', { key: m, style: {display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('span', { style: {color:"#7a7890",fontSize:12,minWidth:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, m==="inner"?"interno":m==="outer"?"esterno":m==="top"?"alto":"basso"), React.createElement('input', { type: "number", min: 0.5, max: 2, step: 0.05, value: margins[m], onChange: e=>setMargins(mg=>({...mg,[m]:+e.target.value})), style: {width:65,...inp,padding:"5px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} )))), React.createElement('div', { style: {height:1,background:"#1a1929",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}} ), React.createElement('button', { onClick: async()=>{const lim=PLAN_LIMITS[userPlan||'free'];if(!lim.export){alert("⛔ L'export è disponibile dal piano BASE. Usa un codice promo o passa a un piano superiore.");return;}setExporting(true);try{await exportPDF(book,sizeIdx,margins,font,fontSize,lineSpacing);}catch(e){alert("Errore: "+e.message);}setExporting(false);}, disabled: exporting, style: {...goldBtn,width:"100%",marginBottom:8,opacity:exporting?0.6:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, exporting?"⏳ Generando...":"📥 Esporta PDF KDP"), React.createElement('button', { onClick: ()=>{const lim=PLAN_LIMITS[userPlan||'free'];if(!lim.export){alert("⛔ L'export è disponibile dal piano BASE. Usa un codice promo o passa a un piano superiore.");return;}exportEPUB(book);}, style: {width:"100%",padding:"10px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "📱 Esporta EPUB (Kindle)"   ), React.createElement('div', { style: {fontSize:11,color:"#f5c84299",marginTop:10,lineHeight:1.5}}, "⚠️ Per libri in Russo, Cinese, Giapponese o Arabo usa EPUB — il PDF usa traslitterazione latina.")), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40,overflow:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, React.createElement('div', { style: {textAlign:"center",marginBottom:16,fontSize:12,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "ANTEPRIMA — "  , size.label), React.createElement('div', { style: {background:"#fff",width:`${Math.round(size.pts[0]*60)}px`,minHeight:`${Math.round(size.pts[1]*60)}px`,boxShadow:"0 20px 60px rgba(0,0,0,0.7)",padding:`${margins.top*25}px ${margins.outer*30}px ${margins.bottom*25}px ${margins.inner*30}px`,boxSizing:"border-box",position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, _optionalChain([book, 'access', _35 => _35.chapters, 'access', _36 => _36[0], 'optionalAccess', _37 => _37.title])&&React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize*1.3*0.55}pt`,fontWeight:"bold",textAlign:"center",marginBottom:"1em",color:"#111"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, book.chapters[0].title), React.createElement('div', { style: {fontFamily:font,fontSize:`${fontSize}pt`,lineHeight:lineSpacing,color:"#111",textAlign:"left",textIndent:"1.5em",wordBreak:"normal",overflowWrap:"break-word",whiteSpace:"pre-wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, preview), React.createElement('div', { style: {textAlign:"center",fontSize:"8pt",color:"#999",fontFamily:font,marginTop:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 541}}, "— 1 —"  ))))));
 }
 
 /* ─────────────────────────────────────────────
    TRANSLATE PANEL
 ───────────────────────────────────────────── */
-function TranslatePanel({book,setBook,onSaveProject}){
+function TranslatePanel({book,setBook,onSaveProject,userPlan}){
   const [targetLang,setTargetLang]=useState("en");const [loading,setLoading]=useState(false);const [progress,setProgress]=useState({current:0,total:0,name:""});const [translated,setTranslated]=useState(null);const [error,setError]=useState("");
-  const translate=async()=>{setLoading(true);setError("");setTranslated(null);const langLabel=_optionalChain([LANGUAGES, 'access', _38 => _38.find, 'call', _39 => _39(l=>l.code===targetLang), 'optionalAccess', _40 => _40.label])||targetLang;const total=book.chapters.length;const result=[];try{for(let i=0;i<total;i++){const ch=book.chapters[i];setProgress({current:i+1,total,name:ch.title||`Capitolo ${i+1}`});let r;
+  const translate=async()=>{
+    if(!checkLimit("translation",userPlan||"free")){
+      setError("⛔ Hai raggiunto il limite giornaliero di traduzioni per il tuo piano. Torna domani o passa a un piano superiore.");
+      return;
+    }
+    setLoading(true);setError("");setTranslated(null);const langLabel=_optionalChain([LANGUAGES, 'access', _38 => _38.find, 'call', _39 => _39(l=>l.code===targetLang), 'optionalAccess', _40 => _40.label])||targetLang;const total=book.chapters.length;const result=[];try{for(let i=0;i<total;i++){const ch=book.chapters[i];setProgress({current:i+1,total,name:ch.title||`Capitolo ${i+1}`});let r;
       try {
         const [translatedTitle, translatedContent] = await Promise.all([
           callDeepL(ch.title||"", targetLang),
@@ -963,7 +1001,7 @@ function TranslatePanel({book,setBook,onSaveProject}){
       } catch(deeplErr) {
         console.warn("DeepL fallback a Claude:", deeplErr);
         r = await callClaude(`Traduci in ${langLabel}: TITOLO: ${ch.title}\n\n${ch.content||""}`, `Traduttore ${langLabel}. Rispondi: TITOLO: [titolo]\n[testo]`);
-      }const titleMatch=r.match(/^TITOLO:\s*(.+)\n/);const translatedTitle=titleMatch?titleMatch[1].trim():ch.title;const bodyText=r.replace(/^TITOLO:.+\n/,"").trim();result.push({title:translatedTitle,content:bodyText,images:ch.images||[]});}setTranslated({lang:langLabel,chapters:result});}catch(e){setError("Errore: "+e.message);}setLoading(false);};
+      }const titleMatch=r.match(/^TITOLO:\s*(.+)\n/);const translatedTitle=titleMatch?titleMatch[1].trim():ch.title;const bodyText=r.replace(/^TITOLO:.+\n/,"").trim();result.push({title:translatedTitle,content:bodyText,images:ch.images||[]});}setTranslated({lang:langLabel,chapters:result});incrementCounter("translation");}catch(e){setError("Errore: "+e.message);}setLoading(false);};
   const pct=progress.total?Math.round((progress.current/progress.total)*100):0;
   return(React.createElement('div', { style: {flex:1,padding:36,overflowY:"auto"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('h2', { style: {fontFamily:"'Playfair Display',serif",color:"#f5c842",fontSize:26,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Traduzione Automatica" ), React.createElement('p', { style: {color:"#7a7890",marginBottom:28,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Traduci l'intero libro preservando lo stile letterario."      ), React.createElement('div', { style: {maxWidth:640}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Lingua di destinazione"  ), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:7,marginBottom:24}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, LANGUAGES.filter(l=>l.code!=="it").map(l=>(React.createElement('button', { key: l.code, onClick: ()=>setTargetLang(l.code), style: {padding:"8px 14px",borderRadius:20,cursor:"pointer",fontSize:13,border:targetLang===l.code?"1px solid #f5c842":"1px solid #2e2d3e",background:targetLang===l.code?"#f5c84222":"transparent",color:targetLang===l.code?"#f5c842":"#7a7890",fontWeight:targetLang===l.code?700:400}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, l.flag, " " , l.label)))), React.createElement('div', { style: {...card,marginBottom:20,display:"flex",gap:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22,fontWeight:700,color:"#f5c842",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, book.chapters.length), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "capitoli")), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22,fontWeight:700,color:"#c084fc",fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0).toLocaleString()), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "parole")), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {fontSize:22}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([LANGUAGES, 'access', _41 => _41.find, 'call', _42 => _42(l=>l.code===targetLang), 'optionalAccess', _43 => _43.flag])), React.createElement('div', { style: {fontSize:11,color:"#5a5870"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([LANGUAGES, 'access', _44 => _44.find, 'call', _45 => _45(l=>l.code===targetLang), 'optionalAccess', _46 => _46.label])))), loading&&(React.createElement('div', { style: {marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12,color:"#7a7890"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "Capitolo: " , React.createElement('span', { style: {color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, progress.name)), React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, pct, "%")), React.createElement('div', { style: {background:"#1a1829",borderRadius:4,height:8,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {width:`${pct}%`,height:"100%",background:"linear-gradient(90deg,#f5c842,#c084fc)",borderRadius:4,transition:"width 0.5s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}} )))), error&&React.createElement('div', { style: {background:"#2e1a1a",border:"1px solid #5e2a2a",borderRadius:8,padding:14,color:"#ff6b6b",fontSize:13,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, error), translated&&(React.createElement('div', { style: {background:"#0d1f0d",border:"1px solid #1a4a1a",borderRadius:12,padding:20,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('div', { style: {color:"#4ade80",fontSize:14,fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, "✅ Traduzione completata in "    , translated.lang, "!"), React.createElement('div', { style: {color:"#a8d8a8",fontSize:13,lineHeight:1.65,maxHeight:100,overflow:"hidden",fontStyle:"italic"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, _optionalChain([translated, 'access', _47 => _47.chapters, 'access', _48 => _48[0], 'optionalAccess', _49 => _49.content, 'optionalAccess', _50 => _50.slice, 'call', _51 => _51(0,280)]), "..."), React.createElement('div', { style: {display:"flex",gap:8,marginTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 551}}, React.createElement('button', { onClick: async()=>{
               try {
@@ -1426,7 +1464,7 @@ function PublishPanel({book,setBook}){
 /* ─────────────────────────────────────────────
    AI WRITER PANEL — modalità INTERO / CAPITOLO x CAPITOLO
 ───────────────────────────────────────────── */
-function AIWriterPanel({book,setBook,setActive}){
+function AIWriterPanel({book,setBook,setActive,userPlan}){
   const [step,setStep]=useState(()=>(book.chapterBriefs||[]).length>0?1:0);
   const [brief,setBrief]=useState(book.brief||DEFAULT_BRIEF);
   const [chapterBriefs,setChapterBriefs]=useState(book.chapterBriefs||[]);
@@ -1481,10 +1519,22 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
 
   /* Genera TUTTO il libro */
   const generateAllChapters=async()=>{
+    // Controllo limite piano
+    const remaining=getRemainingCalls("chapter",userPlan||"free");
+    if(remaining===0){
+      setGenError("⛔ Hai raggiunto il limite giornaliero di generazioni AI per il tuo piano. Torna domani o passa a un piano superiore.");
+      return;
+    }
     setStep(2);setGenerating(true);setGenError("");setGeneratedChapters([]);
     const results=[];const prevChapters=[];
+    let chaptersGenerated=0;
     for(let i=0;i<chapterBriefs.length;i++){
       const cb=chapterBriefs[i];
+      // Controlla limite ad ogni capitolo
+      if(!checkLimit("chapter",userPlan||"free")){
+        setGenError(`⛔ Limite giornaliero raggiunto dopo ${chaptersGenerated} capitoli. Passa a un piano superiore per continuare.`);
+        break;
+      }
       setCurrentGen({chapter:i+1,status:`Scrittura "${cb.title}"...`});
       try{
         const r=await callClaude(buildChapterPrompt(i,cb,prevChapters),`Sei uno scrittore professionista italiano di ${book.genre||"narrativa"}.`);
@@ -1492,6 +1542,8 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
         results.push({title:cb.title,content:cleanContent,images:[]});
         prevChapters.push(r.trim());
         setGeneratedChapters([...results]);
+        incrementCounter("chapter");
+        chaptersGenerated++;
       }catch(e){setGenError(`Errore al capitolo ${i+1}: `+e.message);break;}
     }
     setGenerating(false);
@@ -1501,6 +1553,10 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
   /* Genera UN singolo capitolo (modalità capitolo-per-capitolo) */
   const generateSingleChapter=async()=>{
     if(singleIdx>=chapterBriefs.length)return;
+    if(!checkLimit("chapter",userPlan||"free")){
+      setSingleDraft("⛔ Hai raggiunto il limite giornaliero di generazioni AI per il tuo piano. Torna domani o passa a un piano superiore.");
+      return;
+    }
     setSingleGenerating(true);setSingleDraft("");
     const cb=chapterBriefs[singleIdx];
     // Usa i capitoli già scritti nel libro come contesto
@@ -1509,6 +1565,7 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
       const r=await callClaude(buildChapterPrompt(singleIdx,cb,prevChapters),`Sei uno scrittore professionista italiano di ${book.genre||"narrativa"}.`);
       const cleanR = r.trim().replace(/^(TITLE|TITOLO|Title|Titolo)\s*:\s*.+\n?/gm, "").replace(/^#+\s*.+\n?/gm, "").trim();
       setSingleDraft(cleanR);
+      incrementCounter("chapter");
     }catch(e){setSingleDraft("Errore: "+e.message);}
     setSingleGenerating(false);
   };
@@ -1535,7 +1592,18 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
   return(
     React.createElement('div', { style: {flex:1,overflowY:"auto",padding:36}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1091}}
       , React.createElement('h2', { style: {fontFamily:"'Playfair Display',serif",color:"#f5c842",fontSize:26,marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1092}}, "🤖 Scrivi con AI"   )
-      , React.createElement('p', { style: {color:"#7a7890",fontSize:14,marginBottom:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1093}}, "Dai le indicazioni, l'AI scrive il tuo libro."       )
+      , React.createElement('p', { style: {color:"#7a7890",fontSize:14,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1093}}, "Dai le indicazioni, l'AI scrive il tuo libro."       )
+  , React.createElement('div', { style: {marginBottom:20,padding:"10px 16px",background:"#12111e",borderRadius:10,border:"1px solid #2e2d3e",display:"flex",alignItems:"center",gap:12,maxWidth:500} },
+      React.createElement('span', { style: {fontSize:16} }, getRemainingCalls("chapter",userPlan||"free")===0?"⛔":"✅"),
+      React.createElement('div', null,
+        React.createElement('div', { style: {fontSize:12,color:"#e8e6f0"} },
+          getRemainingCalls("chapter",userPlan||"free")===0
+            ? "Limite giornaliero raggiunto — torna domani"
+            : `Capitoli AI rimanenti oggi: ${getRemainingCalls("chapter",userPlan||"free")=== 999 ? "illimitati" : getRemainingCalls("chapter",userPlan||"free")}`
+        ),
+        React.createElement('div', { style: {fontSize:11,color:"#5a5870"} }, `Piano: ${(userPlan||"free").toUpperCase()}`)
+      )
+    )
 
       /* Progress steps */
       , React.createElement('div', { style: {display:"flex",alignItems:"center",gap:0,marginBottom:32,maxWidth:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1096}}
@@ -2642,7 +2710,13 @@ function AppInner({user, handleLogout}){
 
   const handleOpenProject=async(id)=>{const proj=await loadProject(id);if(!proj)return;// Assicura che ogni capitolo abbia images:[]
     const chapters=(proj.chapters||[]).map(ch=>({...ch,images:ch.images||[]}));setBook({...proj,chapters});setCurrentId(id);setActive("write");setAppStatus("editor");};
-  const handleCreateProject=async()=>{const id=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const newBook=DEFAULT_BOOK();await saveProject(id,newBook);const meta={id,title:"",author:"",genre:"Romanzo",chapters:newBook.chapters,brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:newBook.createdAt,updatedAt:newBook.updatedAt};const newList=[...projects,meta];setProjects(newList);await saveProjectsList(newList);setBook(newBook);setCurrentId(id);setActive("write");setAppStatus("editor");};
+  const handleCreateProject=async()=>{
+    const limits=PLAN_LIMITS[userPlan||"free"];
+    if(projects.length>=limits.maxProjects){
+      alert(`⛔ Hai raggiunto il limite di ${limits.maxProjects} progett${limits.maxProjects===1?"o":"i"} per il piano ${(userPlan||"free").toUpperCase()}. Passa a un piano superiore per creare altri progetti.`);
+      return;
+    }
+    const id=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const newBook=DEFAULT_BOOK();await saveProject(id,newBook);const meta={id,title:"",author:"",genre:"Romanzo",chapters:newBook.chapters,brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:newBook.createdAt,updatedAt:newBook.updatedAt};const newList=[...projects,meta];setProjects(newList);await saveProjectsList(newList);setBook(newBook);setCurrentId(id);setActive("write");setAppStatus("editor");};
   const handleDeleteProject=async(id)=>{await deleteProject(id);const newList=projects.filter(p=>p.id!==id);setProjects(newList);await saveProjectsList(newList);if(currentId===id){setBook(null);setCurrentId(null);setAppStatus("projects");}};
   const handleSetActive=async(panel)=>{
     setSidebarOpen(false);
@@ -2693,11 +2767,11 @@ function AppInner({user, handleLogout}){
         , appStatus==="editor"&&book&&(
           React.createElement(React.Fragment, null
             , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1899}} )
-            , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1900}} )
+            , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1900}} )
             , active==="chapters"  &&React.createElement(ChaptersPanel, {  book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1901}} )
             , active==="cover"     &&React.createElement(CoverPanel, {     book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1902}} )
-            , active==="format"    &&React.createElement(FormatPanel, {    book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}} )
-            , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, onSaveProject: async(newBook)=>{ const newId=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; const saved=await saveProject(newId,newBook); const newMeta={id:newId,title:newBook.title,author:newBook.author||"",genre:newBook.genre||"Romanzo",chapters:newBook.chapters,brief:newBook.brief||{},chapterBriefs:newBook.chapterBriefs||[],createdAt:newBook.createdAt||Date.now(),updatedAt:Date.now()}; setProjects(prev=>[...prev,newMeta]); alert(`✅ Progetto "${newBook.title}" salvato!`); }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}} )
+            , active==="format"    &&React.createElement(FormatPanel, {    book: book, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1903}} )
+            , active==="translate" &&React.createElement(TranslatePanel, { book: book, setBook: setBook, userPlan: userPlan, onSaveProject: async(newBook)=>{ const newId=`proj_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; const saved=await saveProject(newId,newBook); const newMeta={id:newId,title:newBook.title,author:newBook.author||"",genre:newBook.genre||"Romanzo",chapters:newBook.chapters,brief:newBook.brief||{},chapterBriefs:newBook.chapterBriefs||[],createdAt:newBook.createdAt||Date.now(),updatedAt:Date.now()}; setProjects(prev=>[...prev,newMeta]); alert(`✅ Progetto "${newBook.title}" salvato!`); }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1904}} )
             , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1905}} )
             , active==="marketanalyzer"&&React.createElement(MarketAnalyzerPanel, { setActive: setActive, setBook: setBook, book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
             , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
