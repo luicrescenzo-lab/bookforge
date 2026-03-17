@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.49 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.50 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1832,14 +1832,14 @@ Rispondi SOLO con un oggetto JSON valido su una riga, nessun testo prima o dopo:
           React.createElement("div", { style: {fontSize:11, color:"#f5c842", marginBottom:16, textTransform:"uppercase", letterSpacing:1} }, "🔍 Analisi Competizione (stile KDSpy)"),
           React.createElement("div", { style: {display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, marginBottom:16} },
             React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#4ade80", fontFamily:"monospace"} }, result.booksWithLowReviews || "?"),
+              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#4ade80", fontFamily:"monospace"} }, result.booksWithLowReviews > 0 ? result.booksWithLowReviews : "—"),
               React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "libri top20 con"),
               React.createElement("div", { style: {fontSize:11, color:"#4ade80", fontWeight:700} }, "10-99 recensioni")
             ),
             React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
-              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#f5c842", fontFamily:"monospace"} }, result.bsrEstimate ? result.bsrEstimate.toLocaleString() : "?"),
+              React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#f5c842", fontFamily:"monospace"} }, result.bsrEstimate ? result.bsrEstimate.toLocaleString() : "—"),
               React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:4} }, "BSR medio stimato"),
-              React.createElement("div", { style: {fontSize:11, color:"#f5c842", fontWeight:700} }, result.bsrEstimate < 50000 ? "🔥 mercato attivo" : result.bsrEstimate < 150000 ? "✅ buone vendite" : "⚠️ mercato lento")
+              React.createElement("div", { style: {fontSize:11, color:"#f5c842", fontWeight:700} }, result.bsrEstimate ? (result.bsrEstimate < 50000 ? "🔥 mercato attivo" : result.bsrEstimate < 150000 ? "✅ buone vendite" : "⚠️ mercato lento") : "")
             ),
             React.createElement("div", { style: {textAlign:"center", background:"#0f0e17", borderRadius:10, padding:14} },
               React.createElement("div", { style: {fontSize:32, fontWeight:700, color:"#c084fc", fontFamily:"monospace"} }, `€${result.monthlyRoyaltiesMin}-${result.monthlyRoyaltiesMax}`),
