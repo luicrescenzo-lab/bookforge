@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.51 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.52 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -599,7 +599,7 @@ function ProjectsPanel({projects,currentId,onOpen,onCreate,onDelete,onMarketAnal
 /* ─────────────────────────────────────────────
    SIDEBAR
 ───────────────────────────────────────────── */
-function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sidebarOpen,setSidebarOpen}){
+function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sidebarOpen,setSidebarOpen,userPlan}){
   const totalW=book.chapters.reduce((a,c)=>a+(c.content.trim()?c.content.trim().split(/\s+/).length:0),0);
   const nav=[
     {id:"projects",icon:"📚",label:"Progetti"},
@@ -2687,7 +2687,7 @@ function AppInner({user, handleLogout}){
       `)
       , React.createElement("button", { className: "bf-hamburger", onClick: ()=>setSidebarOpen(true)}, "☰")
       , sidebarOpen && React.createElement("div", { className: "bf-overlay", onClick: ()=>setSidebarOpen(false)})
-      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, sidebarOpen: sidebarOpen, setSidebarOpen: setSidebarOpen, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
+      , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, sidebarOpen: sidebarOpen, setSidebarOpen: setSidebarOpen, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
       , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1895}}
         , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, onMarketAnalyzer: ()=>handleSetActive("marketanalyzer"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
         , appStatus==="editor"&&book&&(
