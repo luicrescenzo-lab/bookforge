@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.50 BUILD 20260317 -->
+<!-- BOOKFORGE VERSION 3.51 BUILD 20260317 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -118,6 +118,9 @@ const TONES = ["Letterario","Semplice e diretto","Poetico","Drammatico","Ironico
 const POV = ["Prima persona (Io)","Terza persona (Lui/Lei)","Seconda persona (Tu)","Narratore onnisciente"];
 const CHAPTER_LENGTHS = ["Breve (300-500 parole)","Medio (500-1000 parole)","Lungo (1000-2000 parole)","Molto lungo (2000+ parole)"];
 const PROJECTS_INDEX_KEY = "bookforge_projects_index";
+const ADMIN_EMAIL = "luicrescenzo@gmail.com";
+const PROMO_DAYS = 10;
+const PROMO_PLAN = "pro";
 const PROJECT_PREFIX     = "bookforge_proj_";
 const DEFAULT_BRIEF = { premise:"",protagonist:"",antagonist:"",setting:"",theme:"",tone:"Letterario",pov:"Terza persona (Lui/Lei)",chapterLength:"Medio (500-1000 parole)",numChapters:5,extraNotes:"" };
 const DEFAULT_BOOK = ()=>({ title:"",author:"",genre:"Romanzo",chapters:[{title:"Capitolo 1",content:"",images:[]}],brief:DEFAULT_BRIEF,chapterBriefs:[],createdAt:Date.now(),updatedAt:Date.now() });
@@ -144,6 +147,73 @@ function cleanAIText(text) {
     .replace(/^#+\s*.+\n?/gm, "")
     .replace(/^\*\*[^\*]+\*\*\s*\n/gm, "")
     .trim();
+}
+
+/* ─────────────────────────────────────────────
+   PIANI E CODICI PROMO
+───────────────────────────────────────────── */
+async function getUserPlan(uid) {
+  try {
+    const db = await getFirestoreDb();
+    const doc = await db.collection('users').doc(uid).collection('settings').doc('plan').get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.plan === 'pro' || data.plan === 'base') {
+        // Verifica scadenza
+        if (data.expiresAt && data.expiresAt < Date.now()) {
+          return 'free';
+        }
+        return data.plan;
+      }
+      return data.plan || 'free';
+    }
+  } catch(e) {}
+  return 'free';
+}
+
+async function activatePromoCode(code, uid, userEmail) {
+  const db = await getFirestoreDb();
+  const codeRef = db.collection('promoCodes').doc(code.toUpperCase().trim());
+  const codeDoc = await codeRef.get();
+  if (!codeDoc.exists) throw new Error("Codice non valido");
+  const data = codeDoc.data();
+  if (data.usedBy) throw new Error("Codice già utilizzato");
+  // Attiva il piano
+  const expiresAt = Date.now() + (data.days || PROMO_DAYS) * 24 * 60 * 60 * 1000;
+  await db.collection('users').doc(uid).collection('settings').doc('plan').set({
+    plan: data.plan || PROMO_PLAN,
+    expiresAt,
+    activatedAt: Date.now(),
+    promoCode: code.toUpperCase().trim()
+  });
+  // Segna il codice come usato
+  await codeRef.update({ usedBy: userEmail, usedAt: Date.now() });
+  return { plan: data.plan || PROMO_PLAN, expiresAt, days: data.days || PROMO_DAYS };
+}
+
+async function generatePromoCode(uid) {
+  const db = await getFirestoreDb();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const part1 = Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+  const part2 = Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+  const code = `BF-${part1}-${part2}`;
+  await db.collection('promoCodes').doc(code).set({
+    createdAt: Date.now(),
+    createdBy: uid,
+    plan: PROMO_PLAN,
+    days: PROMO_DAYS,
+    usedBy: null,
+    usedAt: null
+  });
+  return code;
+}
+
+async function getAllPromoCodes() {
+  const db = await getFirestoreDb();
+  const snap = await db.collection('promoCodes').orderBy('createdAt', 'desc').get();
+  const codes = [];
+  snap.forEach(doc => codes.push({ id: doc.id, ...doc.data() }));
+  return codes;
 }
 
 async function callDeepL(text, targetLang) {
@@ -542,6 +612,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sideba
     {id:"publish",icon:"🚀",label:"Pubblica su KDP"},
     {id:"marketanalyzer",icon:"🔍",label:"Market Analyzer"},
     {id:"kdpanalyzer",icon:"📊",label:"KDP Analyzer"},
+    {id:"promo",icon:"🎁",label:"Codice Promo"},
   ];
   return(
     React.createElement('aside', { className: `bf-sidebar${sidebarOpen?' open':''}`, style: {width:240,background:"#0c0b18",borderRight:"1px solid #1a1929",display:"flex",flexDirection:"column",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}
@@ -550,6 +621,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sideba
         , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginTop:3,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "Write · Format · Publish"    )
         , React.createElement('div', { style: {marginTop:10,padding:"8px 10px",background:"#1a1829",borderRadius:8,border:"1px solid #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}
           , React.createElement('div', { style: {fontSize:11,color:"#f5c842",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 284}}, user.displayName||user.email)
+          , React.createElement('div', { style: {fontSize:10,color:userPlan==="pro"?"#c084fc":userPlan==="base"?"#38bdf8":"#5a5870",marginTop:2,fontWeight:700} }, userPlan==="pro"?"⭐ PRO":userPlan==="base"?"✅ BASE":"FREE")
           , React.createElement('button', { onClick: handleLogout, style: {background:"none",border:"none",color:"#5a5870",fontSize:10,cursor:"pointer",padding:0,marginTop:2,textDecoration:"underline"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 285}}, "Esci")
         )
       )
@@ -560,6 +632,14 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sideba
             , React.createElement('span', { style: {fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}, item.label)
           )
         ))
+      )
+      , user.email===ADMIN_EMAIL&&(
+        React.createElement('div', { style: {padding:"8px 10px",borderTop:"1px solid #1a1929",marginTop:4} },
+          React.createElement('button', { onClick: ()=>setActive("admin"), style: {display:"flex",alignItems:"center",gap:10,width:"100%",padding:"9px 12px",borderRadius:8,border:"none",cursor:"pointer",background:active==="admin"?"#1a1829":"transparent",color:active==="admin"?"#ef4444":"#3a3850",fontSize:12,textAlign:"left",borderLeft:active==="admin"?"2px solid #ef4444":"2px solid transparent"} },
+            React.createElement('span', { style: {fontSize:14} }, "⚙️"),
+            React.createElement('span', { style: {fontFamily:"'Playfair Display',serif"} }, "Admin")
+          )
+        )
       )
       , active!=="projects"&&(
         React.createElement('div', { style: {padding:"14px 16px",borderTop:"1px solid #1a1929"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 297}}
@@ -1896,6 +1976,154 @@ Rispondi SOLO con un oggetto JSON valido su una riga, nessun testo prima o dopo:
   );
 }
 
+/* ─────────────────────────────────────────────
+   ADMIN PANEL — solo per luicrescenzo@gmail.com
+───────────────────────────────────────────── */
+function AdminPanel({user}) {
+  const [codes, setCodes] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [generating, setGenerating] = React.useState(false);
+  const [newCode, setNewCode] = React.useState("");
+  const [copied, setCopied] = React.useState("");
+
+  React.useEffect(() => { loadCodes(); }, []);
+
+  const loadCodes = async () => {
+    setLoading(true);
+    try { const c = await getAllPromoCodes(); setCodes(c); } catch(e) {}
+    setLoading(false);
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const code = await generatePromoCode(user.uid);
+      setNewCode(code);
+      await loadCodes();
+    } catch(e) { alert("Errore: " + e.message); }
+    setGenerating(false);
+  };
+
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopied(code);
+    setTimeout(() => setCopied(""), 2000);
+  };
+
+  return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
+    React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "⚙️ Pannello Admin"),
+    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Gestione codici promozionali — visibile solo a te."),
+
+    // Genera nuovo codice
+    React.createElement("div", { style: {background:"#12111e", border:"1px solid #f5c84244", borderRadius:14, padding:24, marginBottom:24, maxWidth:500} },
+      React.createElement("div", { style: {fontSize:13, color:"#f5c842", fontFamily:"'Playfair Display',serif", marginBottom:8} }, "🎁 Genera Nuovo Codice Promo"),
+      React.createElement("div", { style: {fontSize:12, color:"#7a7890", marginBottom:16} }, `Ogni codice dà ${PROMO_DAYS} giorni di piano PRO — usabile una sola volta.`),
+      newCode && React.createElement("div", { style: {background:"#0f1a0f", border:"1px solid #4ade80", borderRadius:10, padding:16, marginBottom:16, display:"flex", alignItems:"center", justifyContent:"space-between"} },
+        React.createElement("div", null,
+          React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:4} }, "Nuovo codice generato:"),
+          React.createElement("div", { style: {fontSize:22, fontWeight:700, color:"#4ade80", fontFamily:"monospace", letterSpacing:2} }, newCode)
+        ),
+        React.createElement("button", {
+          onClick: () => copyCode(newCode),
+          style: {padding:"8px 16px", borderRadius:8, border:"1px solid #4ade80", background:"transparent", color:"#4ade80", cursor:"pointer", fontSize:12, fontWeight:700}
+        }, copied === newCode ? "✓ Copiato!" : "📋 Copia")
+      ),
+      React.createElement("button", {
+        onClick: handleGenerate,
+        disabled: generating,
+        style: {padding:"12px 28px", borderRadius:8, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:14, cursor:"pointer", opacity:generating?0.6:1}
+      }, generating ? "⏳ Generando..." : "✨ Genera Codice")
+    ),
+
+    // Lista codici
+    React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, overflow:"hidden", maxWidth:700} },
+      React.createElement("div", { style: {padding:"14px 20px", borderBottom:"1px solid #2e2d3e", display:"flex", justifyContent:"space-between", alignItems:"center"} },
+        React.createElement("div", { style: {fontSize:13, color:"#f5c842", fontFamily:"'Playfair Display',serif"} }, "📋 Tutti i Codici"),
+        React.createElement("button", { onClick: loadCodes, style: {background:"transparent", border:"none", color:"#5a5870", cursor:"pointer", fontSize:12} }, "🔄 Aggiorna")
+      ),
+      loading ? React.createElement("div", { style: {padding:24, textAlign:"center", color:"#5a5870"} }, "Caricamento...") :
+      codes.length === 0 ? React.createElement("div", { style: {padding:24, textAlign:"center", color:"#5a5870"} }, "Nessun codice generato ancora.") :
+      codes.map(c => React.createElement("div", {
+        key: c.id,
+        style: {padding:"14px 20px", borderBottom:"1px solid #1e1d2e", display:"flex", alignItems:"center", gap:16}
+      },
+        React.createElement("div", { style: {flex:1} },
+          React.createElement("div", { style: {fontSize:16, fontWeight:700, fontFamily:"monospace", color: c.usedBy ? "#5a5870" : "#f5c842", letterSpacing:1} }, c.id),
+          c.usedBy && React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginTop:3} },
+            `Usato da: ${c.usedBy} — ${new Date(c.usedAt).toLocaleDateString("it-IT")}`
+          )
+        ),
+        React.createElement("div", { style: {display:"flex", alignItems:"center", gap:10} },
+          React.createElement("span", { style: {fontSize:11, padding:"3px 10px", borderRadius:20, background: c.usedBy ? "#2e1a1a" : "#0f1a0f", color: c.usedBy ? "#ef4444" : "#4ade80", border: `1px solid ${c.usedBy ? "#ef444433" : "#4ade8033"}`} },
+            c.usedBy ? "Usato" : "Disponibile"
+          ),
+          !c.usedBy && React.createElement("button", {
+            onClick: () => copyCode(c.id),
+            style: {padding:"5px 12px", borderRadius:8, border:"1px solid #2e2d3e", background:"transparent", color:"#7a7890", cursor:"pointer", fontSize:11}
+          }, copied === c.id ? "✓ Copiato!" : "📋 Copia")
+        )
+      ))
+    )
+  );
+}
+
+/* ─────────────────────────────────────────────
+   PROMO CODE PANEL — per tutti gli utenti
+───────────────────────────────────────────── */
+function PromoPanel({user, onPlanActivated}) {
+  const [code, setCode] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [success, setSuccess] = React.useState(null);
+  const [error, setError] = React.useState("");
+
+  const handleActivate = async () => {
+    if (!code.trim()) { setError("Inserisci un codice."); return; }
+    setLoading(true); setError(""); setSuccess(null);
+    try {
+      const result = await activatePromoCode(code, user.uid, user.email);
+      const expDate = new Date(result.expiresAt).toLocaleDateString("it-IT");
+      setSuccess({ plan: result.plan, days: result.days, expDate });
+      setCode("");
+      if (onPlanActivated) onPlanActivated(result.plan);
+    } catch(e) {
+      setError(e.message);
+    }
+    setLoading(false);
+  };
+
+  return React.createElement("div", { style: {flex:1, padding:36, overflowY:"auto"} },
+    React.createElement("h2", { style: {fontFamily:"'Playfair Display',serif", color:"#f5c842", fontSize:26, marginBottom:4} }, "🎁 Codice Promozionale"),
+    React.createElement("p", { style: {color:"#7a7890", marginBottom:28, fontSize:14} }, "Hai ricevuto un codice promo? Inseriscilo qui per attivare il tuo piano."),
+
+    React.createElement("div", { style: {background:"#12111e", border:"1px solid #2e2d3e", borderRadius:14, padding:28, maxWidth:480} },
+      success ? React.createElement("div", { style: {textAlign:"center"} },
+        React.createElement("div", { style: {fontSize:48, marginBottom:12} }, "🎉"),
+        React.createElement("div", { style: {fontSize:20, fontFamily:"'Playfair Display',serif", color:"#4ade80", marginBottom:8} }, "Piano PRO Attivato!"),
+        React.createElement("div", { style: {color:"#c8c6d8", fontSize:14, lineHeight:1.6} },
+          `Hai ${success.days} giorni di accesso PRO completo.`,
+          React.createElement("br"),
+          `Scade il: ${success.expDate}`
+        )
+      ) : React.createElement("div", null,
+        React.createElement("div", { style: {fontSize:11, color:"#5a5870", marginBottom:8, textTransform:"uppercase", letterSpacing:1} }, "Il tuo codice"),
+        React.createElement("input", {
+          value: code,
+          onChange: e => setCode(e.target.value.toUpperCase()),
+          onKeyDown: e => e.key === "Enter" && handleActivate(),
+          placeholder: "es. BF-X7K2-PRO1",
+          style: {background:"#1a1829", border:"1px solid #2e2d3e", borderRadius:8, padding:"14px 16px", color:"#f5c842", fontSize:18, outline:"none", width:"100%", boxSizing:"border-box", fontFamily:"monospace", letterSpacing:2, marginBottom:16}
+        }),
+        error && React.createElement("div", { style: {color:"#ef4444", fontSize:13, marginBottom:12} }, "❌ " + error),
+        React.createElement("button", {
+          onClick: handleActivate,
+          disabled: loading || !code.trim(),
+          style: {width:"100%", padding:"14px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:15, cursor:"pointer", opacity:loading||!code.trim()?0.6:1}
+        }, loading ? "⏳ Verifica in corso..." : "✅ Attiva Codice")
+      )
+    )
+  );
+}
+
 function KDPAnalyzerPanel({book}){
   const wordCount=book.chapters.reduce((a,c)=>a+(_optionalChain([c, 'access', _114 => _114.content, 'optionalAccess', _115 => _115.trim, 'call', _116 => _116()])?c.content.trim().split(/\s+/).length:0),0);
   const pageCount=Math.ceil(wordCount/250);
@@ -2388,12 +2616,14 @@ function AppInner({user, handleLogout}){
   const [book,setBook]=useState(null);
   const [active,setActive]=useState("write");
   const [savedAt,setSavedAt]=useState(null);
+  const [userPlan,setUserPlan]=useState("free");
   const saveTimer=useRef(null);
 
   useEffect(()=>{
     const t=setTimeout(()=>setAppStatus("projects"),2000);
     (async()=>{
       try{const list=await loadProjectsList();setProjects(list);}catch (e11){}
+      try{const plan=await getUserPlan(user.uid);setUserPlan(plan);}catch(e){}
       clearTimeout(t);setAppStatus("projects");
     })();
     return()=>clearTimeout(t);
@@ -2471,6 +2701,8 @@ function AppInner({user, handleLogout}){
             , active==="publish"   &&React.createElement(PublishPanel, {   book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1905}} )
             , active==="marketanalyzer"&&React.createElement(MarketAnalyzerPanel, { setActive: setActive, setBook: setBook, book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
             , active==="kdpanalyzer"&&React.createElement(KDPAnalyzerPanel, { book: book, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1906}} )
+            , active==="promo"&&React.createElement(PromoPanel, { user: user, onPlanActivated: (plan)=>setUserPlan(plan) })
+            , active==="admin"&&user.email===ADMIN_EMAIL&&React.createElement(AdminPanel, { user: user })
           )
         )
       )
