@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/claude", "destination": "/api/claude.js" },
+    { "source": "/api/deepl", "destination": "/api/deepl.js" },
+    { "source": "/legal.html", "destination": "/legal.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
