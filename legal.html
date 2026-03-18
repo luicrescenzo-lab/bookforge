@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BookForge — Documenti Legali</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Georgia,'Times New Roman',serif;background:#0f0e17;color:#c8c6d8;line-height:1.8;font-size:15px;}
+.header{background:#0c0b18;border-bottom:1px solid #1a1929;padding:28px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.logo{font-family:'Playfair Display',Georgia,serif;font-size:24px;color:#f5c842;}
+.logo span{font-size:11px;color:#5a5870;display:block;letter-spacing:2px;margin-top:2px;}
+.lang-switch{display:flex;gap:8px;}
+.lang-btn{padding:7px 18px;border-radius:6px;border:1px solid #2e2d3e;background:transparent;color:#7a7890;cursor:pointer;font-size:13px;font-family:Georgia,serif;transition:all 0.2s;}
+.lang-btn.active{background:linear-gradient(135deg,#f5c842,#e8a020);color:#0f0e17;border-color:transparent;font-weight:700;}
+.nav{background:#0c0b18;border-bottom:1px solid #1a1929;padding:0 40px;display:flex;gap:0;overflow-x:auto;}
+.nav-btn{padding:16px 24px;border:none;background:transparent;color:#5a5870;cursor:pointer;font-size:13px;font-family:Georgia,serif;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.2s;}
+.nav-btn.active{color:#f5c842;border-bottom-color:#f5c842;}
+.nav-btn:hover{color:#c8c6d8;}
+.content{max-width:860px;margin:0 auto;padding:48px 40px;}
+.doc{display:none;}
+.doc.active{display:block;}
+.lang-it,.lang-en{display:none;}
+h1{font-family:Georgia,serif;font-size:28px;color:#f5c842;margin-bottom:8px;line-height:1.3;}
+.subtitle{font-size:13px;color:#5a5870;margin-bottom:40px;letter-spacing:1px;}
+h2{font-size:18px;color:#e8e6f0;margin:36px 0 12px;font-family:Georgia,serif;border-left:3px solid #f5c842;padding-left:14px;}
+h3{font-size:15px;color:#c084fc;margin:24px 0 8px;font-family:Georgia,serif;}
+p{margin-bottom:14px;color:#a8a6b8;}
+ul,ol{margin:10px 0 16px 24px;color:#a8a6b8;}
+li{margin-bottom:6px;}
+a{color:#f5c842;text-decoration:none;}
+a:hover{text-decoration:underline;}
+.highlight{background:#1a1829;border:1px solid #2e2d3e;border-radius:10px;padding:20px 24px;margin:24px 0;}
+.highlight p{margin:0;color:#c8c6d8;}
+.info-box{background:#0d1a2e;border:1px solid #1e3a5e;border-radius:10px;padding:16px 20px;margin:20px 0;}
+.info-box p{margin:0;color:#c8daf0;font-size:14px;}
+.warning-box{background:#1a0d0d;border:1px solid #5e1a1a;border-radius:10px;padding:16px 20px;margin:20px 0;}
+.warning-box p{margin:0;color:#f0c8c8;font-size:14px;}
+.divider{height:1px;background:#1e1d2e;margin:40px 0;}
+.footer{text-align:center;padding:32px 40px;border-top:1px solid #1a1929;font-size:12px;color:#3a3850;}
+table{width:100%;border-collapse:collapse;margin:16px 0;}
+th{text-align:left;padding:10px 14px;background:#1a1829;color:#f5c842;font-size:13px;font-weight:normal;}
+td{padding:10px 14px;border-bottom:1px solid #1e1d2e;color:#a8a6b8;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+@media(max-width:600px){.content{padding:32px 20px;}.header{padding:20px;}.nav{padding:0 20px;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">📖 BookForge <span>DOCUMENTI LEGALI · LEGAL DOCUMENTS</span></div>
+  <div class="lang-switch">
+    <button class="lang-btn active" onclick="setLang('it')">🇮🇹 Italiano</button>
+    <button class="lang-btn" onclick="setLang('en')">🇬🇧 English</button>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showDoc('terms')">📋 Termini e Condizioni</button>
+  <button class="nav-btn" onclick="showDoc('privacy')">🔒 Privacy Policy</button>
+  <button class="nav-btn" onclick="showDoc('cookie')">🍪 Cookie Policy</button>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TERMINI E CONDIZIONI -->
+<!-- ══════════════════════════════════════════ -->
+<div class="doc active" id="doc-terms">
+<div class="content">
+
+<!-- ITALIANO -->
+<div class="lang-it active">
+  <h1>Termini e Condizioni di Utilizzo</h1>
+  <div class="subtitle">Ultimo aggiornamento: Marzo 2026 — Versione 1.0</div>
+
+  <div class="highlight">
+    <p>Leggendo e utilizzando BookForge, l'utente accetta integralmente i presenti Termini e Condizioni. Se non accetti queste condizioni, ti preghiamo di non utilizzare il servizio.</p>
+  </div>
+
+  <h2>1. Informazioni sul Titolare</h2>
+  <p>BookForge è un servizio offerto da <strong>Fenice di JT</strong>, con sede in Italia, operante in regime forfettario ai sensi dell'art. 1, commi 54-89, Legge n. 190/2014.</p>
+  <ul>
+    <li>Ragione sociale: Fenice di JT</li>
+    <li>Sito web: <a href="https://bookforge.live">bookforge.live</a></li>
+    <li>Email: support@bookforge.live</li>
+  </ul>
+
+  <h2>2. Descrizione del Servizio</h2>
+  <p>BookForge è una piattaforma SaaS (Software as a Service) che consente agli utenti di:</p>
+  <ul>
+    <li>Scrivere e organizzare libri con assistenza dell'intelligenza artificiale</li>
+    <li>Generare copertine, impaginare e esportare contenuti in formato PDF ed EPUB</li>
+    <li>Tradurre contenuti in 11 lingue tramite DeepL e intelligenza artificiale</li>
+    <li>Analizzare mercati editoriali globali</li>
+    <li>Pubblicare opere su Amazon KDP</li>
+  </ul>
+
+  <h2>3. Piani e Abbonamenti</h2>
+  <p>BookForge è disponibile nei seguenti piani:</p>
+  <table>
+    <tr><th>Piano</th><th>Prezzo</th><th>Rinnovo</th></tr>
+    <tr><td>FREE</td><td>Gratuito</td><td>—</td></tr>
+    <tr><td>BASE</td><td>€19/mese</td><td>Mensile automatico</td></tr>
+    <tr><td>PRO</td><td>€39/mese</td><td>Mensile automatico</td></tr>
+    <tr><td>BUSINESS</td><td>€99/mese</td><td>Mensile automatico</td></tr>
+    <tr><td>Una Tantum</td><td>€299</td><td>Pagamento unico</td></tr>
+  </table>
+  <p>I pagamenti sono gestiti da <strong>Lemon Squeezy</strong>, Merchant of Record, che emette fattura per conto del venditore e gestisce l'IVA applicabile secondo la legislazione del paese dell'acquirente.</p>
+
+  <h2>4. Disdetta e Rimborsi</h2>
+  <p>Gli abbonamenti a rinnovo mensile possono essere cancellati in qualsiasi momento dall'area personale. La cancellazione ha effetto al termine del periodo già pagato.</p>
+  <div class="info-box">
+    <p>📌 Diritto di recesso: ai sensi del D.Lgs. 206/2005 (Codice del Consumo), l'utente ha diritto di recedere entro <strong>14 giorni</strong> dall'attivazione del piano, salvo che il servizio sia stato già pienamente fruito. Per esercitare il recesso scrivere a support@bookforge.live.</p>
+  </div>
+
+  <h2>5. Proprietà Intellettuale</h2>
+  <h3>5.1 Contenuti dell'utente</h3>
+  <p>I testi, le idee, le trame e i contenuti creativi inseriti dall'utente rimangono di esclusiva proprietà dell'utente. BookForge non rivendica alcun diritto sui contenuti creati.</p>
+  <h3>5.2 Contenuti generati dall'AI</h3>
+  <p>I contenuti generati dall'intelligenza artificiale su richiesta dell'utente sono attribuiti all'utente stesso. L'utente è responsabile del loro utilizzo e della verifica della loro originalità prima della pubblicazione.</p>
+  <h3>5.3 Piattaforma BookForge</h3>
+  <p>Il software, il codice, il design, i loghi e i materiali grafici di BookForge sono di proprietà esclusiva di Fenice di JT e protetti dalle leggi sul diritto d'autore.</p>
+
+  <h2>6. Limitazioni di Responsabilità</h2>
+  <p>BookForge è fornito "così com'è". Fenice di JT non garantisce:</p>
+  <ul>
+    <li>L'assenza di interruzioni o errori del servizio</li>
+    <li>La compatibilità dei contenuti esportati con tutti i sistemi terzi</li>
+    <li>L'accettazione da parte di Amazon KDP dei contenuti prodotti tramite AI</li>
+    <li>L'accuratezza delle traduzioni automatiche</li>
+  </ul>
+  <div class="warning-box">
+    <p>⚠️ I contenuti generati dall'AI non sostituiscono la revisione professionale. Prima di pubblicare su Amazon KDP, ti consigliamo di far revisionare il testo da un editor professionista.</p>
+  </div>
+
+  <h2>7. Utilizzo Accettabile</h2>
+  <p>È vietato utilizzare BookForge per:</p>
+  <ul>
+    <li>Generare contenuti illegali, diffamatori, violenti, pornografici o discriminatori</li>
+    <li>Violare diritti d'autore di terzi</li>
+    <li>Attività di spam o phishing</li>
+    <li>Tentare di accedere senza autorizzazione ai sistemi della piattaforma</li>
+    <li>Rivendere o sublicenziare il servizio senza autorizzazione scritta</li>
+  </ul>
+
+  <h2>8. Sospensione e Chiusura Account</h2>
+  <p>Fenice di JT si riserva il diritto di sospendere o chiudere account che violino i presenti Termini, senza obbligo di rimborso per il periodo residuo in caso di violazione grave.</p>
+
+  <h2>9. Modifiche al Servizio</h2>
+  <p>Fenice di JT si riserva il diritto di modificare, aggiornare o interrompere il servizio con un preavviso di almeno 30 giorni comunicato via email all'indirizzo registrato.</p>
+
+  <h2>10. Legge Applicabile e Foro Competente</h2>
+  <p>I presenti Termini sono regolati dalla legge italiana. Per qualsiasi controversia è competente il Tribunale del luogo di residenza del consumatore, ai sensi del D.Lgs. 206/2005.</p>
+
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#5a5870;">Per domande: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+</div>
+
+<!-- ENGLISH -->
+<div class="lang-en">
+  <h1>Terms and Conditions of Use</h1>
+  <div class="subtitle">Last updated: March 2026 — Version 1.0</div>
+
+  <div class="highlight">
+    <p>By accessing and using BookForge, you agree to be fully bound by these Terms and Conditions. If you do not accept these terms, please do not use the service.</p>
+  </div>
+
+  <h2>1. Service Provider Information</h2>
+  <p>BookForge is a service provided by <strong>Fenice di JT</strong>, based in Italy.</p>
+  <ul>
+    <li>Business name: Fenice di JT</li>
+    <li>Website: <a href="https://bookforge.live">bookforge.live</a></li>
+    <li>Email: support@bookforge.live</li>
+  </ul>
+
+  <h2>2. Service Description</h2>
+  <p>BookForge is a SaaS (Software as a Service) platform that allows users to:</p>
+  <ul>
+    <li>Write and organize books with AI assistance</li>
+    <li>Generate covers, format and export content as PDF and EPUB</li>
+    <li>Translate content into 11 languages via DeepL and AI</li>
+    <li>Analyze global publishing markets</li>
+    <li>Publish works on Amazon KDP</li>
+  </ul>
+
+  <h2>3. Plans and Subscriptions</h2>
+  <p>BookForge is available in the following plans:</p>
+  <table>
+    <tr><th>Plan</th><th>Price</th><th>Renewal</th></tr>
+    <tr><td>FREE</td><td>Free</td><td>—</td></tr>
+    <tr><td>BASE</td><td>€19/month</td><td>Monthly automatic</td></tr>
+    <tr><td>PRO</td><td>€39/month</td><td>Monthly automatic</td></tr>
+    <tr><td>BUSINESS</td><td>€99/month</td><td>Monthly automatic</td></tr>
+    <tr><td>Lifetime</td><td>€299</td><td>One-time payment</td></tr>
+  </table>
+  <p>Payments are processed by <strong>Lemon Squeezy</strong>, acting as Merchant of Record, which issues invoices on behalf of the seller and handles applicable VAT according to the buyer's country legislation.</p>
+
+  <h2>4. Cancellation and Refunds</h2>
+  <p>Monthly subscriptions can be cancelled at any time from your personal account area. Cancellation takes effect at the end of the already paid period.</p>
+  <div class="info-box">
+    <p>📌 Right of withdrawal: users in the EU have the right to withdraw within <strong>14 days</strong> of activating a plan, unless the service has already been fully used. To exercise withdrawal, write to support@bookforge.live.</p>
+  </div>
+
+  <h2>5. Intellectual Property</h2>
+  <h3>5.1 User Content</h3>
+  <p>Texts, ideas, plots and creative content entered by the user remain the exclusive property of the user. BookForge claims no rights over created content.</p>
+  <h3>5.2 AI-Generated Content</h3>
+  <p>Content generated by artificial intelligence at the user's request is attributed to the user. The user is responsible for its use and for verifying its originality before publication.</p>
+  <h3>5.3 BookForge Platform</h3>
+  <p>The software, code, design, logos and graphic materials of BookForge are the exclusive property of Fenice di JT and protected by copyright laws.</p>
+
+  <h2>6. Limitation of Liability</h2>
+  <p>BookForge is provided "as is". Fenice di JT does not guarantee:</p>
+  <ul>
+    <li>Uninterrupted or error-free service</li>
+    <li>Compatibility of exported content with all third-party systems</li>
+    <li>Acceptance by Amazon KDP of AI-produced content</li>
+    <li>Accuracy of automatic translations</li>
+  </ul>
+  <div class="warning-box">
+    <p>⚠️ AI-generated content does not replace professional editing. Before publishing on Amazon KDP, we recommend having your text reviewed by a professional editor.</p>
+  </div>
+
+  <h2>7. Acceptable Use</h2>
+  <p>It is prohibited to use BookForge to:</p>
+  <ul>
+    <li>Generate illegal, defamatory, violent, pornographic or discriminatory content</li>
+    <li>Infringe third-party copyrights</li>
+    <li>Conduct spam or phishing activities</li>
+    <li>Attempt unauthorized access to platform systems</li>
+    <li>Resell or sublicense the service without written authorization</li>
+  </ul>
+
+  <h2>8. Account Suspension and Closure</h2>
+  <p>Fenice di JT reserves the right to suspend or close accounts that violate these Terms, without obligation to refund the remaining period in case of serious violation.</p>
+
+  <h2>9. Service Changes</h2>
+  <p>Fenice di JT reserves the right to modify, update or discontinue the service with at least 30 days' notice communicated via email to the registered address.</p>
+
+  <h2>10. Governing Law and Jurisdiction</h2>
+  <p>These Terms are governed by Italian law. For international users, disputes shall be resolved in accordance with applicable local consumer protection laws.</p>
+
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#5a5870;">Questions: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PRIVACY POLICY -->
+<!-- ══════════════════════════════════════════ -->
+<div class="doc" id="doc-privacy">
+<div class="content">
+
+<!-- ITALIANO -->
+<div class="lang-it active">
+  <h1>Privacy Policy</h1>
+  <div class="subtitle">Ultimo aggiornamento: Marzo 2026 — Conforme al GDPR (Reg. UE 2016/679)</div>
+
+  <div class="highlight">
+    <p>Fenice di JT tratta i dati personali degli utenti nel pieno rispetto del Regolamento Generale sulla Protezione dei Dati (GDPR) e della normativa italiana vigente.</p>
+  </div>
+
+  <h2>1. Titolare del Trattamento</h2>
+  <p><strong>Fenice di JT</strong><br/>
+  Email: support@bookforge.live<br/>
+  Sito web: bookforge.live</p>
+
+  <h2>2. Dati Raccolti</h2>
+  <h3>2.1 Dati forniti direttamente dall'utente</h3>
+  <ul>
+    <li>Indirizzo email (per registrazione e comunicazioni)</li>
+    <li>Nome e cognome o nome utente</li>
+    <li>Dati di pagamento (gestiti da Lemon Squeezy — non archiviati da BookForge)</li>
+    <li>Contenuti inseriti nella piattaforma (testi, titoli, progetti)</li>
+  </ul>
+  <h3>2.2 Dati raccolti automaticamente</h3>
+  <ul>
+    <li>Indirizzo IP</li>
+    <li>Tipo di browser e dispositivo</li>
+    <li>Pagine visitate e durata della sessione</li>
+    <li>Cookie tecnici (vedi Cookie Policy)</li>
+  </ul>
+
+  <h2>3. Finalità del Trattamento</h2>
+  <table>
+    <tr><th>Finalità</th><th>Base giuridica</th></tr>
+    <tr><td>Erogazione del servizio</td><td>Esecuzione del contratto</td></tr>
+    <tr><td>Gestione pagamenti</td><td>Esecuzione del contratto</td></tr>
+    <tr><td>Comunicazioni di servizio</td><td>Legittimo interesse</td></tr>
+    <tr><td>Sicurezza e prevenzione frodi</td><td>Legittimo interesse</td></tr>
+    <tr><td>Newsletter e marketing (solo con consenso)</td><td>Consenso</td></tr>
+    <tr><td>Adempimenti fiscali e legali</td><td>Obbligo legale</td></tr>
+  </table>
+
+  <h2>4. Conservazione dei Dati</h2>
+  <ul>
+    <li>Dati account: per tutta la durata del rapporto contrattuale + 10 anni per obblighi fiscali</li>
+    <li>Dati di navigazione: massimo 12 mesi</li>
+    <li>Contenuti utente: eliminati entro 30 giorni dalla chiusura dell'account su richiesta</li>
+  </ul>
+
+  <h2>5. Condivisione dei Dati</h2>
+  <p>I dati personali sono condivisi esclusivamente con:</p>
+  <ul>
+    <li><strong>Firebase (Google)</strong> — autenticazione e database (USA, con garanzie adeguate GDPR)</li>
+    <li><strong>Anthropic</strong> — elaborazione AI dei contenuti (USA, con garanzie adeguate GDPR)</li>
+    <li><strong>DeepL</strong> — servizio di traduzione (Germania, UE)</li>
+    <li><strong>Lemon Squeezy</strong> — gestione pagamenti (USA, Merchant of Record)</li>
+    <li><strong>Cloudflare</strong> — hosting e sicurezza (USA, con garanzie adeguate GDPR)</li>
+    <li><strong>Vercel</strong> — hosting frontend (USA, con garanzie adeguate GDPR)</li>
+  </ul>
+  <p>I dati non sono mai venduti a terzi per finalità di marketing.</p>
+
+  <h2>6. Diritti dell'Utente</h2>
+  <p>Ai sensi del GDPR, l'utente ha diritto di:</p>
+  <ul>
+    <li>Accedere ai propri dati personali</li>
+    <li>Rettificare dati inesatti</li>
+    <li>Richiedere la cancellazione ("diritto all'oblio")</li>
+    <li>Limitare o opporsi al trattamento</li>
+    <li>Portabilità dei dati</li>
+    <li>Revocare il consenso in qualsiasi momento</li>
+    <li>Proporre reclamo al Garante Privacy italiano (www.garanteprivacy.it)</li>
+  </ul>
+  <p>Per esercitare i propri diritti: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+
+  <h2>7. Minori</h2>
+  <p>BookForge non è destinato a utenti di età inferiore ai 16 anni. Non raccogliamo consapevolmente dati di minori. Se sei a conoscenza di dati di minori nel nostro sistema, contattaci immediatamente.</p>
+
+  <h2>8. Modifiche alla Privacy Policy</h2>
+  <p>Eventuali modifiche saranno comunicate via email con almeno 30 giorni di preavviso e pubblicate su questa pagina.</p>
+
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#5a5870;">Contatto privacy: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+</div>
+
+<!-- ENGLISH -->
+<div class="lang-en">
+  <h1>Privacy Policy</h1>
+  <div class="subtitle">Last updated: March 2026 — GDPR Compliant (EU Reg. 2016/679)</div>
+
+  <div class="highlight">
+    <p>Fenice di JT processes users' personal data in full compliance with the General Data Protection Regulation (GDPR) and applicable Italian legislation.</p>
+  </div>
+
+  <h2>1. Data Controller</h2>
+  <p><strong>Fenice di JT</strong><br/>
+  Email: support@bookforge.live<br/>
+  Website: bookforge.live</p>
+
+  <h2>2. Data Collected</h2>
+  <h3>2.1 Data provided directly by the user</h3>
+  <ul>
+    <li>Email address (for registration and communications)</li>
+    <li>Name or username</li>
+    <li>Payment data (managed by Lemon Squeezy — not stored by BookForge)</li>
+    <li>Content entered on the platform (texts, titles, projects)</li>
+  </ul>
+  <h3>2.2 Automatically collected data</h3>
+  <ul>
+    <li>IP address</li>
+    <li>Browser and device type</li>
+    <li>Pages visited and session duration</li>
+    <li>Technical cookies (see Cookie Policy)</li>
+  </ul>
+
+  <h2>3. Purposes of Processing</h2>
+  <table>
+    <tr><th>Purpose</th><th>Legal basis</th></tr>
+    <tr><td>Service delivery</td><td>Contract performance</td></tr>
+    <tr><td>Payment management</td><td>Contract performance</td></tr>
+    <tr><td>Service communications</td><td>Legitimate interest</td></tr>
+    <tr><td>Security and fraud prevention</td><td>Legitimate interest</td></tr>
+    <tr><td>Newsletter and marketing (with consent only)</td><td>Consent</td></tr>
+    <tr><td>Tax and legal obligations</td><td>Legal obligation</td></tr>
+  </table>
+
+  <h2>4. Data Retention</h2>
+  <ul>
+    <li>Account data: for the duration of the contract + 10 years for tax obligations</li>
+    <li>Navigation data: maximum 12 months</li>
+    <li>User content: deleted within 30 days of account closure upon request</li>
+  </ul>
+
+  <h2>5. Data Sharing</h2>
+  <p>Personal data is shared exclusively with:</p>
+  <ul>
+    <li><strong>Firebase (Google)</strong> — authentication and database (USA, with adequate GDPR safeguards)</li>
+    <li><strong>Anthropic</strong> — AI content processing (USA, with adequate GDPR safeguards)</li>
+    <li><strong>DeepL</strong> — translation service (Germany, EU)</li>
+    <li><strong>Lemon Squeezy</strong> — payment management (USA, Merchant of Record)</li>
+    <li><strong>Cloudflare</strong> — hosting and security (USA, with adequate GDPR safeguards)</li>
+    <li><strong>Vercel</strong> — frontend hosting (USA, with adequate GDPR safeguards)</li>
+  </ul>
+  <p>Data is never sold to third parties for marketing purposes.</p>
+
+  <h2>6. User Rights</h2>
+  <p>Under the GDPR, users have the right to:</p>
+  <ul>
+    <li>Access their personal data</li>
+    <li>Rectify inaccurate data</li>
+    <li>Request erasure ("right to be forgotten")</li>
+    <li>Restrict or object to processing</li>
+    <li>Data portability</li>
+    <li>Withdraw consent at any time</li>
+    <li>Lodge a complaint with the relevant supervisory authority</li>
+  </ul>
+  <p>To exercise your rights: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+
+  <h2>7. Minors</h2>
+  <p>BookForge is not intended for users under the age of 16. We do not knowingly collect data from minors. If you are aware of minor data in our system, please contact us immediately.</p>
+
+  <h2>8. Changes to Privacy Policy</h2>
+  <p>Any changes will be communicated via email with at least 30 days' notice and published on this page.</p>
+
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#5a5870;">Privacy contact: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- COOKIE POLICY -->
+<!-- ══════════════════════════════════════════ -->
+<div class="doc" id="doc-cookie">
+<div class="content">
+
+<!-- ITALIANO -->
+<div class="lang-it active">
+  <h1>Cookie Policy</h1>
+  <div class="subtitle">Ultimo aggiornamento: Marzo 2026 — Conforme al GDPR e al Provvedimento Garante Privacy 2021</div>
+
+  <div class="highlight">
+    <p>BookForge utilizza un numero minimo di cookie, tutti strettamente necessari al funzionamento del servizio. Non utilizziamo cookie di profilazione o di terze parti per scopi pubblicitari.</p>
+  </div>
+
+  <h2>1. Cosa sono i Cookie</h2>
+  <p>I cookie sono piccoli file di testo che i siti web salvano sul dispositivo dell'utente durante la navigazione. Servono a memorizzare preferenze, sessioni di accesso e altre informazioni utili al funzionamento del sito.</p>
+
+  <h2>2. Cookie Utilizzati da BookForge</h2>
+
+  <h3>2.1 Cookie Tecnici (strettamente necessari)</h3>
+  <p>Questi cookie sono indispensabili per il funzionamento del servizio e non richiedono il consenso dell'utente:</p>
+  <table>
+    <tr><th>Cookie</th><th>Finalità</th><th>Durata</th></tr>
+    <tr><td>firebase-auth-token</td><td>Mantiene la sessione di accesso dell'utente</td><td>Sessione / 30 giorni</td></tr>
+    <tr><td>bf_counter_*</td><td>Conta le operazioni AI giornaliere per piano</td><td>1 giorno</td></tr>
+    <tr><td>bookforge_projects_*</td><td>Backup locale dei progetti (localStorage)</td><td>Persistente</td></tr>
+  </table>
+
+  <h3>2.2 Cookie di Analisi (opzionali)</h3>
+  <p>Al momento BookForge non utilizza cookie di analisi o tracciamento. In futuro, qualsiasi strumento di analisi sarà comunicato e soggetto a consenso esplicito.</p>
+
+  <h3>2.3 Cookie di Terze Parti</h3>
+  <p>BookForge si avvale di servizi terzi che possono impostare propri cookie:</p>
+  <table>
+    <tr><th>Servizio</th><th>Finalità</th><th>Privacy</th></tr>
+    <tr><td>Firebase (Google)</td><td>Autenticazione utente</td><td><a href="https://policies.google.com/privacy" target="_blank">Google Privacy</a></td></tr>
+    <tr><td>Lemon Squeezy</td><td>Gestione pagamenti</td><td><a href="https://www.lemonsqueezy.com/privacy" target="_blank">LS Privacy</a></td></tr>
+    <tr><td>Cloudflare</td><td>Sicurezza e performance</td><td><a href="https://www.cloudflare.com/privacypolicy/" target="_blank">CF Privacy</a></td></tr>
+  </table>
+
+  <h2>3. Come Gestire i Cookie</h2>
+  <p>L'utente può gestire o disabilitare i cookie attraverso le impostazioni del proprio browser:</p>
+  <ul>
+    <li><a href="https://support.google.com/chrome/answer/95647" target="_blank">Google Chrome</a></li>
+    <li><a href="https://support.mozilla.org/it/kb/protezione-antitracciamento-avanzata-firefox" target="_blank">Mozilla Firefox</a></li>
+    <li><a href="https://support.apple.com/it-it/guide/safari/sfri11471/mac" target="_blank">Apple Safari</a></li>
+    <li><a href="https://support.microsoft.com/it-it/windows/eliminare-e-gestire-i-cookie" target="_blank">Microsoft Edge</a></li>
+  </ul>
+  <div class="warning-box">
+    <p>⚠️ La disabilitazione dei cookie tecnici potrebbe impedire il corretto funzionamento di BookForge, in particolare il mantenimento della sessione di accesso.</p>
+  </div>
+
+  <h2>4. Modifiche alla Cookie Policy</h2>
+  <p>Eventuali modifiche saranno comunicate via email con almeno 30 giorni di preavviso e pubblicate su questa pagina.</p>
+
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#5a5870;">Per domande sui cookie: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+</div>
+
+<!-- ENGLISH -->
+<div class="lang-en">
+  <h1>Cookie Policy</h1>
+  <div class="subtitle">Last updated: March 2026 — GDPR Compliant</div>
+
+  <div class="highlight">
+    <p>BookForge uses a minimum number of cookies, all strictly necessary for the operation of the service. We do not use profiling or third-party cookies for advertising purposes.</p>
+  </div>
+
+  <h2>1. What are Cookies</h2>
+  <p>Cookies are small text files that websites save on the user's device during browsing. They are used to store preferences, login sessions and other information useful for the site's operation.</p>
+
+  <h2>2. Cookies Used by BookForge</h2>
+
+  <h3>2.1 Technical Cookies (strictly necessary)</h3>
+  <p>These cookies are essential for the service to function and do not require user consent:</p>
+  <table>
+    <tr><th>Cookie</th><th>Purpose</th><th>Duration</th></tr>
+    <tr><td>firebase-auth-token</td><td>Maintains the user's login session</td><td>Session / 30 days</td></tr>
+    <tr><td>bf_counter_*</td><td>Counts daily AI operations per plan</td><td>1 day</td></tr>
+    <tr><td>bookforge_projects_*</td><td>Local backup of projects (localStorage)</td><td>Persistent</td></tr>
+  </table>
+
+  <h3>2.2 Analytics Cookies (optional)</h3>
+  <p>BookForge currently does not use analytics or tracking cookies. In the future, any analytics tool will be communicated and subject to explicit consent.</p>
+
+  <h3>2.3 Third-Party Cookies</h3>
+  <table>
+    <tr><th>Service</th><th>Purpose</th><th>Privacy</th></tr>
+    <tr><td>Firebase (Google)</td><td>User authentication</td><td><a href="https://policies.google.com/privacy" target="_blank">Google Privacy</a></td></tr>
+    <tr><td>Lemon Squeezy</td><td>Payment management</td><td><a href="https://www.lemonsqueezy.com/privacy" target="_blank">LS Privacy</a></td></tr>
+    <tr><td>Cloudflare</td><td>Security and performance</td><td><a href="https://www.cloudflare.com/privacypolicy/" target="_blank">CF Privacy</a></td></tr>
+  </table>
+
+  <h2>3. Managing Cookies</h2>
+  <p>Users can manage or disable cookies through their browser settings:</p>
+  <ul>
+    <li><a href="https://support.google.com/chrome/answer/95647" target="_blank">Google Chrome</a></li>
+    <li><a href="https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop" target="_blank">Mozilla Firefox</a></li>
+    <li><a href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac" target="_blank">Apple Safari</a></li>
+    <li><a href="https://support.microsoft.com/en-us/windows/delete-and-manage-cookies" target="_blank">Microsoft Edge</a></li>
+  </ul>
+  <div class="warning-box">
+    <p>⚠️ Disabling technical cookies may prevent BookForge from functioning correctly, particularly maintaining the login session.</p>
+  </div>
+
+  <h2>4. Changes to Cookie Policy</h2>
+  <p>Any changes will be communicated via email with at least 30 days' notice and published on this page.</p>
+
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#5a5870;">Cookie questions: <a href="mailto:support@bookforge.live">support@bookforge.live</a></p>
+</div>
+</div>
+</div>
+
+<div class="footer">
+  © 2026 Fenice di JT — BookForge.live — Tutti i diritti riservati / All rights reserved
+</div>
+
+<script>
+let currentLang = 'it';
+let currentDoc = 'terms';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+  document.querySelectorAll('.lang-it, .lang-en').forEach(el => el.style.display = 'none');
+  document.querySelectorAll(`.lang-${lang}`).forEach(el => el.style.display = 'block');
+}
+
+function showDoc(doc) {
+  currentDoc = doc;
+  document.querySelectorAll('.doc').forEach(d => d.classList.remove('active'));
+  document.getElementById('doc-' + doc).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+setLang('it');
+</script>
+</body>
+</html>
