@@ -2,7 +2,7 @@
   "routes": [
     { "src": "/api/claude", "dest": "/api/claude.js" },
     { "src": "/api/deepl", "dest": "/api/deepl.js" },
-    { "src": "/legal.html", "dest": "/legal.html" },
+    { "src": "/legale.html", "dest": "/legale.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
