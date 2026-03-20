@@ -1,8 +1,8 @@
 {
-  "routes": [
-    { "src": "/api/claude", "dest": "/api/claude.js" },
-    { "src": "/api/deepl", "dest": "/api/deepl.js" },
-    { "src": "/legale.html", "dest": "/legale.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/claude", "destination": "/api/claude.js" },
+    { "source": "/api/deepl", "destination": "/api/deepl.js" },
+    { "source": "/legale.html", "destination": "/public/legale.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
