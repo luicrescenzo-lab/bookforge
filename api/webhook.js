@@ -48,6 +48,9 @@ export default async function handler(req, res) {
   const rawBody = await getRawBody(req);
   const signature = req.headers["x-signature"] || req.headers["X-Signature"];
 
+  console.log("Headers ricevuti:", JSON.stringify(req.headers));
+  console.log("Signature trovata:", signature);
+
   if (!signature) {
     console.error("Webhook: firma mancante");
     return res.status(400).json({ error: "Missing signature" });
