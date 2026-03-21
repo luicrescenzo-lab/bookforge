@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { initializeApp, cert, getApps } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 
 // ─── Firebase Admin init (singleton) ─────────────────────────────────────────
 if (!getApps().length) {
@@ -8,11 +9,12 @@ if (!getApps().length) {
     credential: cert({
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      projectId: process.env.FIREBASE_PROJECT_ID, // aggiungi questa variabile su Vercel
+      projectId: process.env.FIREBASE_PROJECT_ID,
     }),
   });
 }
 const db = getFirestore();
+const auth = getAuth();
 
 // ─── Mappa Variant ID → Piano ─────────────────────────────────────────────────
 const VARIANT_TO_PLAN = {
@@ -37,7 +39,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Leggi raw body per verifica firma
   const rawBody = await getRawBody(req);
   const signature = req.headers["x-signature"];
 
@@ -101,7 +102,6 @@ export default async function handler(req, res) {
 
 // ─── Gestori eventi ───────────────────────────────────────────────────────────
 
-// Acquisto una tantum (es. piano A VITA)
 async function handleOrderCreated(data) {
   const email = data?.attributes?.user_email;
   const variantId = data?.attributes?.first_order_item?.variant_id?.toString();
@@ -116,14 +116,15 @@ async function handleOrderCreated(data) {
     plan,
     status: "active",
     orderId: data?.id,
-    activatedAt: new Date().toISOString(),
-    expiresAt: plan === "A_VITA" ? null : null,
+    activatedAt: Date.now(),
+    expiresAt: null,
+    subscriptionId: null,
+    renewsAt: null,
   });
 
   console.log(`Piano ${plan} attivato per ${email}`);
 }
 
-// Nuova sottoscrizione
 async function handleSubscriptionCreated(data) {
   const email = data?.attributes?.user_email;
   const variantId = data?.attributes?.variant_id?.toString();
@@ -140,14 +141,14 @@ async function handleSubscriptionCreated(data) {
     plan,
     status: "active",
     subscriptionId,
-    activatedAt: new Date().toISOString(),
+    activatedAt: Date.now(),
     renewsAt: renewsAt || null,
+    expiresAt: null,
   });
 
   console.log(`Subscription ${plan} creata per ${email}`);
 }
 
-// Aggiornamento sottoscrizione (es. upgrade/downgrade)
 async function handleSubscriptionUpdated(data) {
   const email = data?.attributes?.user_email;
   const variantId = data?.attributes?.variant_id?.toString();
@@ -159,16 +160,15 @@ async function handleSubscriptionUpdated(data) {
 
   const updateData = {
     status: status === "active" ? "active" : status,
-    updatedAt: new Date().toISOString(),
+    updatedAt: Date.now(),
     renewsAt: renewsAt || null,
   };
   if (plan) updateData.plan = plan;
 
   await updateUserPlan(email, updateData);
-  console.log(`Subscription aggiornata per ${email}: ${plan || "piano invariato"} — ${status}`);
+  console.log(`Subscription aggiornata per ${email}`);
 }
 
-// Cancellazione (il piano rimane attivo fino a fine periodo)
 async function handleSubscriptionCancelled(data) {
   const email = data?.attributes?.user_email;
   const endsAt = data?.attributes?.ends_at;
@@ -177,31 +177,30 @@ async function handleSubscriptionCancelled(data) {
 
   await updateUserPlan(email, {
     status: "cancelled",
-    cancelledAt: new Date().toISOString(),
+    cancelledAt: Date.now(),
     expiresAt: endsAt || null,
   });
 
-  console.log(`Subscription cancellata per ${email}, scade: ${endsAt}`);
+  console.log(`Subscription cancellata per ${email}`);
 }
 
-// Scadenza abbonamento
 async function handleSubscriptionExpired(data) {
   const email = data?.attributes?.user_email;
 
   if (!email) return;
 
   await updateUserPlan(email, {
-    plan: "FREE",
+    plan: "free",
     status: "expired",
-    expiredAt: new Date().toISOString(),
+    expiredAt: Date.now(),
     renewsAt: null,
     expiresAt: null,
+    subscriptionId: null,
   });
 
-  console.log(`Subscription scaduta per ${email} — downgrade a FREE`);
+  console.log(`Subscription scaduta per ${email} — downgrade a free`);
 }
 
-// Pagamento periodico riuscito
 async function handleSubscriptionPaymentSuccess(data) {
   const email = data?.attributes?.user_email;
   const renewsAt = data?.attributes?.renews_at;
@@ -210,37 +209,36 @@ async function handleSubscriptionPaymentSuccess(data) {
 
   await updateUserPlan(email, {
     status: "active",
-    lastPaymentAt: new Date().toISOString(),
+    lastPaymentAt: Date.now(),
     renewsAt: renewsAt || null,
   });
 
   console.log(`Pagamento riuscito per ${email}`);
 }
 
-// ─── Helper Firestore ─────────────────────────────────────────────────────────
+// ─── Helper: trova UID da email e aggiorna users/{UID}/settings/plan ──────────
 
-async function updateUserPlan(email, data) {
-  // Cerca utente per email nella collection "users"
-  const usersRef = db.collection("users");
-  const snapshot = await usersRef.where("email", "==", email).limit(1).get();
+async function updateUserPlan(email, planData) {
+  let uid;
 
-  if (snapshot.empty) {
-    // Utente non trovato — crea documento con email come chiave
-    console.warn(`Utente non trovato per email ${email}, creo documento`);
-    await usersRef.doc(email).set(
-      {
-        email,
-        ...data,
-        createdByWebhook: true,
-      },
-      { merge: true }
-    );
+  try {
+    const userRecord = await auth.getUserByEmail(email);
+    uid = userRecord.uid;
+    console.log(`Utente trovato: ${email} → UID: ${uid}`);
+  } catch (err) {
+    console.error(`Utente non trovato in Firebase Auth per email: ${email}`, err.message);
     return;
   }
 
-  // Aggiorna documento esistente
-  const userDoc = snapshot.docs[0];
-  await userDoc.ref.update(data);
+  // Aggiorna users/{UID}/settings/plan — struttura esatta di BookForge
+  const planRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("settings")
+    .doc("plan");
+
+  await planRef.set(planData, { merge: true });
+  console.log(`Firestore aggiornato: users/${uid}/settings/plan`, planData);
 }
 
 // ─── Helper: leggi raw body ───────────────────────────────────────────────────
