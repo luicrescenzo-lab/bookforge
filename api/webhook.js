@@ -3,6 +3,12 @@ const { initializeApp, cert, getApps } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 // ─── Firebase Admin init (singleton) ─────────────────────────────────────────
 if (!getApps().length) {
   initializeApp({
