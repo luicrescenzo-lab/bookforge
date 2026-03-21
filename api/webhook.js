@@ -102,10 +102,12 @@ export default async function handler(req, res) {
         console.log(`Evento non gestito: ${eventName}`);
     }
 
-    return res.status(200).json({ ok: true });
+    res.status(200).json({ ok: true });
   } catch (err) {
     console.error(`Errore gestione evento ${eventName}:`, err);
-    return res.status(500).json({ error: "Internal server error" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 }
 
