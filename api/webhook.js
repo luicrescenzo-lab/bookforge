@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   }
 
   const rawBody = await getRawBody(req);
-  const signature = req.headers["x-signature"];
+  const signature = req.headers["x-signature"] || req.headers["X-Signature"];
 
   if (!signature) {
     console.error("Webhook: firma mancante");
