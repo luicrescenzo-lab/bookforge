@@ -2,6 +2,7 @@
   "routes": [
     { "src": "/api/claude", "dest": "/api/claude.js" },
     { "src": "/api/deepl", "dest": "/api/deepl.js" },
+    { "src": "/api/webhook", "dest": "/api/webhook.js" },
     { "src": "/legale.html", "dest": "/public/legale.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
