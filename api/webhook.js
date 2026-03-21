@@ -237,14 +237,15 @@ async function updateUserPlan(email, planData) {
   } catch (err) {
     console.error(`Utente non trovato in Firebase Auth per email: ${email}`, err.message);
     return;
-  }
+ }
 
-  // Aggiorna users/{UID}/settings/plan — struttura esatta di BookForge
-  const planRef = db
-    .collection("users")
-    .doc(uid)
-    .collection("settings")
-    .doc("plan");
+    await db.collection("users").doc(uid).set({ email }, { merge: true });
+
+   const planRef = db
+          .collection("users")
+          .doc(uid)
+          .collection("settings")
+          .doc("plan");
 
   await planRef.set(planData, { merge: true });
   console.log(`Firestore aggiornato: users/${uid}/settings/plan`, planData);
