@@ -24,10 +24,10 @@ const auth = getAuth();
 
 // ─── Mappa Variant ID → Piano ─────────────────────────────────────────────────
 const VARIANT_TO_PLAN = {
-  "862ab501-264d-4e3f-a4a7-8372dfb8a6ce": "BASE",
-  "976a0f6c-7207-4ab8-a3ec-0d3b1bb40719": "PRO",
-  "bc3a7bb3-db1b-4f60-872e-a778294a3111": "BUSINESS",
-  "2db4ab8d-2ff6-411f-9ef1-96bd5beb8459": "A_VITA",
+"1427013": "BASE",
+  "1427039": "PRO",
+  "1427057": "BUSINESS",
+  "1427050": "A_VITA",
 };
 
 // ─── Verifica firma Lemon Squeezy ─────────────────────────────────────────────
