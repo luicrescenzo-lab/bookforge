@@ -191,14 +191,14 @@ async function getUserPlan(uid) {
     const doc = await db.collection('users').doc(uid).collection('settings').doc('plan').get();
     if (doc.exists) {
       const data = doc.data();
-      if (data.plan === 'pro' || data.plan === 'base') {
-        // Verifica scadenza
-        if (data.expiresAt && data.expiresAt < Date.now()) {
-          return 'free';
-        }
-        return data.plan;
+      // Normalizza in minuscolo e mappa A_VITA → pro
+      const rawPlan = (data.plan || 'free').toLowerCase();
+      const plan = rawPlan === 'a_vita' ? 'pro' : rawPlan;
+      // Verifica scadenza
+      if (data.expiresAt && data.expiresAt < Date.now()) {
+        return 'free';
       }
-      return data.plan || 'free';
+      return plan;
     }
   } catch(e) {}
   return 'free';
