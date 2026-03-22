@@ -654,7 +654,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sideba
         , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginTop:3,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "Write · Format · Publish"    )
         , React.createElement('div', { style: {marginTop:10,padding:"8px 10px",background:"#1a1829",borderRadius:8,border:"1px solid #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}
           , React.createElement('div', { style: {fontSize:11,color:"#f5c842",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 284}}, user.displayName||user.email)
-          , React.createElement('div', { style: {fontSize:10,color:userPlan==="pro"?"#c084fc":userPlan==="base"?"#38bdf8":"#5a5870",marginTop:2,fontWeight:700} }, userPlan==="pro"?"⭐ PRO":userPlan==="base"?"✅ BASE":"FREE")
+          , React.createElement('div', { style: {fontSize:10,color:userPlan==="pro"?"#c084fc":userPlan==="base"?"#38bdf8":"#5a5870",marginTop:2,fontWeight:700} }, userPlan==="pro"?""⭐ PRO":userPlan==="base"?"✅ BASE":userPlan==="business"?"🏢 BUSINESS":userPlan==="a_vita"?"💎 A VITA":"FREE"
           , React.createElement('button', { onClick: handleLogout, style: {background:"none",border:"none",color:"#5a5870",fontSize:10,cursor:"pointer",padding:0,marginTop:2,textDecoration:"underline"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 285}}, "Esci")
         )
       )
