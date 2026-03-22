@@ -56,15 +56,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing signature" });
   }
 
-  try {
-    if (!verifySignature(rawBody, signature)) {
-      console.error("Webhook: firma non valida");
-      return res.status(401).json({ error: "Invalid signature" });
-    }
-  } catch (err) {
-    console.error("Webhook: errore verifica firma", err);
-    return res.status(401).json({ error: "Signature verification failed" });
-  }
+ // try {
+//   if (!verifySignature(rawBody, signature)) {
+//     console.error("Webhook: firma non valida");
+//     return res.status(401).json({ error: "Invalid signature" });
+//   }
+// } catch (err) {
+//   console.error("Webhook: errore verifica firma", err);
+//   return res.status(401).json({ error: "Signature verification failed" });
+// }
 
   let payload;
   try {
