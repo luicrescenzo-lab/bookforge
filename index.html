@@ -1,4 +1,4 @@
-<!-- BOOKFORGE VERSION 3.58 BUILD 20260321b -->
+<!-- BOOKFORGE VERSION 3.58 BUILD 20260321 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -191,14 +191,14 @@ async function getUserPlan(uid) {
     const doc = await db.collection('users').doc(uid).collection('settings').doc('plan').get();
     if (doc.exists) {
       const data = doc.data();
-      // Normalizza in minuscolo e mappa A_VITA → pro
-      const rawPlan = (data.plan || 'free').toLowerCase();
-      const plan = rawPlan === 'a_vita' ? 'pro' : rawPlan;
-      // Verifica scadenza
-      if (data.expiresAt && data.expiresAt < Date.now()) {
-        return 'free';
+      if (data.plan === 'pro' || data.plan === 'base') {
+        // Verifica scadenza
+        if (data.expiresAt && data.expiresAt < Date.now()) {
+          return 'free';
+        }
+        return data.plan;
       }
-      return plan;
+      return data.plan || 'free';
     }
   } catch(e) {}
   return 'free';
@@ -654,7 +654,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sideba
         , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginTop:3,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "Write · Format · Publish"    )
         , React.createElement('div', { style: {marginTop:10,padding:"8px 10px",background:"#1a1829",borderRadius:8,border:"1px solid #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}
           , React.createElement('div', { style: {fontSize:11,color:"#f5c842",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 284}}, user.displayName||user.email)
-          , React.createElement('div', { style: {fontSize:10,color:userPlan==="pro"?"#c084fc":userPlan==="base"?"#38bdf8":"#5a5870",marginTop:2,fontWeight:700} }, userPlan==="pro"?"⭐ PRO":userPlan==="base"?"✅ BASE":)userPlan==="business"?"🏢 BUSINESS":"FREE"
+          , React.createElement('div', { style: {fontSize:10,color:userPlan==="pro"?"#c084fc":userPlan==="base"?"#38bdf8":"#5a5870",marginTop:2,fontWeight:700} }, userPlan==="pro"?"⭐ PRO":userPlan==="base"?"✅ BASE":"FREE")
           , React.createElement('button', { onClick: handleLogout, style: {background:"none",border:"none",color:"#5a5870",fontSize:10,cursor:"pointer",padding:0,marginTop:2,textDecoration:"underline"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 285}}, "Esci")
         )
       )
@@ -2850,7 +2850,7 @@ function AuthPanel({ onLogin }) {
           )
         )
 
-        , React.createElement('div', { style: {textAlign:"center",marginTop:24,color:"#444",fontSize:12}}, "Continuando accetti i ", React.createElement('a', { href:"/legale.html", target:"_blank", style:{color:"#f5c842",textDecoration:"underline"}}, "Termini di Servizio"), " di BookForge"
+        , React.createElement('div', { style: {textAlign:"center",marginTop:24,color:"#444",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1754}}, "Continuando accetti i Termini di Servizio di BookForge"
 
         )
       )
