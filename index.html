@@ -2030,16 +2030,16 @@ Rispondi SOLO con un oggetto JSON valido su una riga:
         )
       ),
 
-      // Tasto analizza
+ // Tasto analizza
       React.createElement("button", {
         onClick: analyze,
         disabled: loading || !niche.trim(),
         style: {width:"100%", padding:"14px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:15, cursor:"pointer", opacity:loading||!niche.trim()?0.6:1, marginBottom:24}
       }, loading ? `⏳ Analisi ${currentMarket}... (${completedMarkets}/${selectedMarkets.length})` : `🔍 Analizza su ${selectedMarkets.length} mercato${selectedMarkets.length>1?"i":""}`),
-completedMarkets > 0 && React.createElement("button", {
-  onClick: () => { setResults({}); setNiche(""); setError(""); setCurrentMarket(""); },
-  style: {width:"100%", padding:"12px", borderRadius:10, border:"1px solid #2e2d3e", background:"transparent", color:"#7a7890", cursor:"pointer", fontSize:14, marginBottom:24, marginTop:8}
-}, "🔄 Nuova ricerca"),
+      completedMarkets > 0 && React.createElement("button", {
+        onClick: () => { setResults({}); setNiche(""); setError(""); setCurrentMarket(""); },
+        style: {width:"100%", padding:"12px", borderRadius:10, border:"1px solid #2e2d3e", background:"transparent", color:"#7a7890", cursor:"pointer", fontSize:14, marginBottom:24, marginTop:8}
+      }, "🔄 Nuova ricerca"),
 
       // Risultati
       completedMarkets > 0 && React.createElement("div", null,
