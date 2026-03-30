@@ -1,10 +1,10 @@
-<!-- GOLDBOOK VERSION 3.58 BUILD 20260321 -->
+<!-- BOOKFORGE VERSION 3.58 BUILD 20260321 -->
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Goldbook v3.58 — Scrivi e Pubblica con AI</title>
+  <title>BookForge v3.58 — Scrivi e Pubblica con AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -117,7 +117,7 @@ const FONTS = ["Georgia","Palatino Linotype","Times New Roman","Garamond","Book 
 const TONES = ["Letterario","Semplice e diretto","Poetico","Drammatico","Ironico","Filosofico","Avventuroso","Romantico","Oscuro","Umoristico"];
 const POV = ["Prima persona (Io)","Terza persona (Lui/Lei)","Seconda persona (Tu)","Narratore onnisciente"];
 const CHAPTER_LENGTHS = ["Breve (300-500 parole)","Medio (500-1000 parole)","Lungo (1000-2000 parole)","Molto lungo (2000+ parole)"];
-const PROJECTS_INDEX_KEY = "goldbook_projects_index";
+const PROJECTS_INDEX_KEY = "bookforge_projects_index";
 const ADMIN_EMAIL = "luicrescenzo@gmail.com";
 
 const PLAN_LIMITS = {
@@ -250,7 +250,7 @@ async function getAllPromoCodes() {
 }
 
 async function callDeepL(text, targetLang) {
-  // Mappa codici lingua Goldbook -> codici DeepL
+  // Mappa codici lingua BookForge -> codici DeepL
   const langMap = {
     "en": "EN-GB", "es": "ES", "fr": "FR", "de": "DE",
     "pt": "PT-PT", "it": "IT", "pl": "PL", "ru": "RU",
@@ -650,7 +650,7 @@ function Sidebar({book,setBook,active,setActive,savedAt,user,handleLogout,sideba
   return(
     React.createElement('aside', { className: `bf-sidebar${sidebarOpen?' open':''}`, style: {width:240,background:"#0c0b18",borderRight:"1px solid #1a1929",display:"flex",flexDirection:"column",flexShrink:0}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}
       , React.createElement('div', { style: {padding:"20px 20px 16px",borderBottom:"1px solid #1a1929"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 280}}
-        , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "📖 Goldbook" )
+        , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#f5c842"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "📖 BookForge" )
         , React.createElement('div', { style: {fontSize:10,color:"#5a5870",marginTop:3,fontFamily:"monospace"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "Write · Format · Publish"    )
         , React.createElement('div', { style: {marginTop:10,padding:"8px 10px",background:"#1a1829",borderRadius:8,border:"1px solid #2e2d3e"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 283}}
           , React.createElement('div', { style: {fontSize:11,color:"#f5c842",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 284}}, user.displayName||user.email)
@@ -966,7 +966,7 @@ function CoverPanel({book}){
       let sx=0,sy=0,sw=bgImage.width,sh=bgImage.height;
       if(imgR>canR){sw=bgImage.height*canR;sx=(bgImage.width-sw)/2;}
       else{sh=bgImage.width/canR;sy=(bgImage.height-sh)/2;}
-      ctx.drawImage(bgImage,sx,sy,sw,sh,0,0,W,H);ctx.fillStyle="rgba(0,0,0,0.55)";ctx.fillRect(0,0,W,H);}else{const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,t.bg);grad.addColorStop(1,t.accent+"44");ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);ctx.strokeStyle=t.accent+"33";ctx.lineWidth=1;for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(W*0.72,H*0.28,40+i*30,0,Math.PI*2);ctx.stroke();}}ctx.fillStyle=t.accent;ctx.fillRect(40,60,W-80,2);ctx.font="bold 16px monospace";ctx.fillStyle=t.accent;ctx.fillText((book.genre||"").toUpperCase(),44,45);const fs=title.length>15?44:56;ctx.font=`bold ${fs}px serif`;ctx.fillStyle=t.text;ctx.shadowColor=t.accent;ctx.shadowBlur=20;const titleLines=wrapText(ctx,title,44,H*0.38,W-88,65);ctx.shadowBlur=0;if(subtitle){ctx.font="italic 18px serif";ctx.fillStyle=t.accent;wrapText(ctx,subtitle,44,H*0.38+titleLines*65+20,W-88,26);}if(aiTagline){ctx.font="16px Georgia";ctx.fillStyle=t.text+"bb";wrapText(ctx,`"${aiTagline}"`,44,H*0.72,W-88,22);}ctx.fillStyle=t.accent;ctx.fillRect(40,H-80,W-80,1);ctx.font="bold 22px serif";ctx.fillStyle=t.text;ctx.fillText(author.toUpperCase(),44,H-50);ctx.font="10px monospace";ctx.fillStyle=t.text+"44";ctx.fillText("Goldbook Edition",44,H-30);}
+      ctx.drawImage(bgImage,sx,sy,sw,sh,0,0,W,H);ctx.fillStyle="rgba(0,0,0,0.55)";ctx.fillRect(0,0,W,H);}else{const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,t.bg);grad.addColorStop(1,t.accent+"44");ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);ctx.strokeStyle=t.accent+"33";ctx.lineWidth=1;for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(W*0.72,H*0.28,40+i*30,0,Math.PI*2);ctx.stroke();}}ctx.fillStyle=t.accent;ctx.fillRect(40,60,W-80,2);ctx.font="bold 16px monospace";ctx.fillStyle=t.accent;ctx.fillText((book.genre||"").toUpperCase(),44,45);const fs=title.length>15?44:56;ctx.font=`bold ${fs}px serif`;ctx.fillStyle=t.text;ctx.shadowColor=t.accent;ctx.shadowBlur=20;const titleLines=wrapText(ctx,title,44,H*0.38,W-88,65);ctx.shadowBlur=0;if(subtitle){ctx.font="italic 18px serif";ctx.fillStyle=t.accent;wrapText(ctx,subtitle,44,H*0.38+titleLines*65+20,W-88,26);}if(aiTagline){ctx.font="16px Georgia";ctx.fillStyle=t.text+"bb";wrapText(ctx,`"${aiTagline}"`,44,H*0.72,W-88,22);}ctx.fillStyle=t.accent;ctx.fillRect(40,H-80,W-80,1);ctx.font="bold 22px serif";ctx.fillStyle=t.text;ctx.fillText(author.toUpperCase(),44,H-50);ctx.font="10px monospace";ctx.fillStyle=t.text+"44";ctx.fillText("BookForge Edition",44,H-30);}
   const genTagline=async()=>{setAiLoading(true);const r=await callClaude(`Genera UNA sola frase tagline (max 10 parole) per il libro "${title}" genere "${book.genre||"narrativa"}". Solo la frase, niente altro.`);setAiTagline(r.trim().replace(/^["']|["']$/g,""));setAiLoading(false);};
   const download=()=>{const a=document.createElement("a");a.href=canvasRef.current.toDataURL("image/png");a.download=`copertina_${title.replace(/\s+/g,"_")}.png`;a.click();};
   return(React.createElement('div', { style: {display:"flex",flex:1,overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('div', { style: {width:280,background:"#0f0e1b",borderRight:"1px solid #1a1929",overflowY:"auto",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('div', { style: {fontSize:12,color:"#f5c842",marginBottom:4,fontFamily:"'Playfair Display',serif"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "COPERTINA AI" ), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "Tema visivo" ), React.createElement('div', { style: {display:"flex",flexWrap:"wrap",gap:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, COVER_THEMES.map((ct,i)=>(React.createElement('button', { key: i, onClick: ()=>setTheme(i), style: {padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:12,border:theme===i?`1px solid ${ct.accent}`:"1px solid #2e2d3e",background:theme===i?ct.accent+"22":"transparent",color:theme===i?ct.accent:"#7a7890"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, ct.label)))), React.createElement('input', { type:"file", accept:"image/*", ref:fileInputRef, onChange:handleBgUpload, style:{display:"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}), React.createElement('button', { onClick:()=>fileInputRef.current.click(), style:{width:"100%",padding:"9px",borderRadius:8,border:"1px solid #2e2d3e",background:"transparent",color:"#7a7890",cursor:"pointer",fontSize:12,marginBottom:8,textAlign:"left"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, bgImage?"✅ Foto caricata — clicca per cambiare":"📷 Carica foto di sfondo"), bgImage&&React.createElement('button', { onClick:()=>setBgImage(null), style:{width:"100%",padding:"6px",borderRadius:8,border:"1px solid #5e2a2a",background:"transparent",color:"#ff6b6b",cursor:"pointer",fontSize:11,marginBottom:8}}, "✕ Rimuovi foto"), React.createElement(Lbl, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "Sottotitolo"), React.createElement('input', { value: subtitle, onChange: e=>setSubtitle(e.target.value), placeholder: "es. Un racconto di..."   , style: inp, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}} ), React.createElement('button', { onClick: genTagline, disabled: aiLoading, style: {...goldBtn,width:"100%",marginTop:16,fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, aiLoading?"⏳ Generando...":"✨ Genera tagline AI"), aiTagline&&React.createElement('div', { style: {background:"#1a1829",borderRadius:8,padding:10,marginTop:8,fontSize:12,color:"#f5c842",fontStyle:"italic",border:"1px solid #f5c84244"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "\"", aiTagline, "\""), React.createElement('div', { style: {height:1,background:"#1e1d2e",margin:"20px 0"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}} ), React.createElement('button', { onClick: download, style: {...goldBtn,width:"100%",fontSize:13}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "📥 Scarica PNG"  ), React.createElement('div', { style: {fontSize:11,color:"#5a5870",marginTop:8,textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, "Dimensioni: 400×600px" , React.createElement('br', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}), "KDP richiede min 1000px"   )), React.createElement('div', { style: {flex:1,background:"#080712",display:"flex",alignItems:"center",justifyContent:"center",padding:40}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('div', { style: {boxShadow:"0 30px 80px rgba(0,0,0,0.8)",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}}, React.createElement('canvas', { ref: canvasRef, width: 400, height: 600, style: {display:"block",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 532}} )))));
@@ -1426,7 +1426,7 @@ function PublishPanel({book,setBook}){
               {step:1,icon:"🔐",title:"Accedi a KDP",body:"Vai su kdp.amazon.com con il tuo account Amazon. Se è la prima volta, completa il profilo autore con nome, bio e informazioni fiscali (necessarie per ricevere le royalty)."},
               {step:2,icon:"➕",title:"Crea un nuovo titolo",body:"Clicca '+ Crea' nel pannello KDP. Scegli Ebook Kindle per la versione digitale (Kindle) o Libro cartaceo per la versione stampata (print-on-demand). Puoi pubblicare entrambe le versioni dello stesso libro."},
               {step:3,icon:"📝",title:"Inserisci i metadati",body:"Copia titolo, autore, descrizione e keywords che hai generato nel passaggio precedente. Seleziona 2 categorie Amazon appropriate per il tuo genere."},
-              {step:4,icon:"⬆️",title:"Carica i file",body:"Per Kindle: carica il file EPUB. Per cartaceo: carica il file PDF. Carica anche la copertina (vai su 'Copertina AI' in Goldbook per crearla, poi ridimensionala a 2560×1600px con Canva o simili)."},
+              {step:4,icon:"⬆️",title:"Carica i file",body:"Per Kindle: carica il file EPUB. Per cartaceo: carica il file PDF. Carica anche la copertina (vai su 'Copertina AI' in BookForge per crearla, poi ridimensionala a 2560×1600px con Canva o simili)."},
               {step:5,icon:"👁",title:"Anteprima e verifica",body:"Usa lo strumento anteprima di KDP per controllare ogni pagina: margini, font, impaginazione delle immagini. Se hai pubblicato in più lingue, verifica ogni versione separatamente."},
               {step:6,icon:"💰",title:"Imposta il prezzo",body:"Ebook: royalty 70% se il prezzo è tra €2,99 e €9,99 — fuori da questa fascia è 35%. Cartaceo: KDP calcola il costo di stampa e tu imposti il prezzo finale di vendita."},
               {step:7,icon:"🚀",title:"Pubblica!",body:"Clicca 'Pubblica' per ogni versione linguistica che hai caricato. Il libro sarà disponibile su Amazon globale entro 24-72 ore dalla revisione."},
@@ -1446,7 +1446,7 @@ function PublishPanel({book,setBook}){
             , React.createElement('div', { style: {...card,marginTop:8,background:"#0c1a0c",border:"1px solid #4ade8033",textAlign:"center",padding:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 971}}
               , React.createElement('div', { style: {fontSize:40,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 972}}, "🎉")
               , React.createElement('div', { style: {fontFamily:"'Playfair Display',serif",fontSize:20,color:"#4ade80",marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 973}}, "Sei pronto a pubblicare!"   )
-              , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 974}}, "Hai completato tutti i passaggi di Goldbook. In bocca al lupo con la pubblicazione!"             )
+              , React.createElement('div', { style: {color:"#7a7890",fontSize:13,marginBottom:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 974}}, "Hai completato tutti i passaggi di BookForge. In bocca al lupo con la pubblicazione!"             )
               , React.createElement('a', { href: "https://kdp.amazon.com", target: "_blank", rel: "noopener noreferrer" , style: {...goldBtn,textDecoration:"none",display:"inline-block"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 975}}, "🚀 Vai su Amazon KDP"    )
             )
 
@@ -1823,12 +1823,12 @@ Rispondi con SOLO questo JSON:\n{"title":"titolo","summary":"cosa succede 80 cha
 }
 
 /* ─────────────────────────────────────────────
-   KDP ANALYZER PANEL — integrato in Goldbook
+   KDP ANALYZER PANEL — integrato in BookForge
    Analizza profittabilità del libro in lavorazione
    su tutti i mercati Amazon usando formule KDP std.
 ───────────────────────────────────────────── */
 
-// Mappa generi Goldbook → categorie KDP
+// Mappa generi BookForge → categorie KDP
 const GENRE_TO_KDP = {
   "Romanzo":       { label:"Romanzi & Narrativa",           bsrBase:18000, priceEbook:3.99, pricePaper:12.99, opp:58 },
   "Romance":       { label:"Romance & Storie d'Amore",      bsrBase:8000,  priceEbook:4.49, pricePaper:11.99, opp:90 },
@@ -2030,16 +2030,12 @@ Rispondi SOLO con un oggetto JSON valido su una riga:
         )
       ),
 
- // Tasto analizza
+      // Tasto analizza
       React.createElement("button", {
         onClick: analyze,
         disabled: loading || !niche.trim(),
         style: {width:"100%", padding:"14px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#f5c842,#e8a020)", color:"#0f0e17", fontWeight:700, fontSize:15, cursor:"pointer", opacity:loading||!niche.trim()?0.6:1, marginBottom:24}
       }, loading ? `⏳ Analisi ${currentMarket}... (${completedMarkets}/${selectedMarkets.length})` : `🔍 Analizza su ${selectedMarkets.length} mercato${selectedMarkets.length>1?"i":""}`),
-      completedMarkets > 0 && React.createElement("button", {
-        onClick: () => { setResults({}); setNiche(""); setError(""); setCurrentMarket(""); },
-        style: {width:"100%", padding:"12px", borderRadius:10, border:"1px solid #2e2d3e", background:"transparent", color:"#7a7890", cursor:"pointer", fontSize:14, marginBottom:24, marginTop:8}
-      }, "🔄 Nuova ricerca"),
 
       // Risultati
       completedMarkets > 0 && React.createElement("div", null,
@@ -2798,7 +2794,7 @@ function AuthPanel({ onLogin }) {
     React.createElement('div', { style: {minHeight:"100vh",background:"#0f0e17",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1695}}
       , React.createElement('div', { style: {background:"#12111e",border:"1px solid #2e2d3e",borderRadius:20,padding:"48px 40px",width:420,maxWidth:"90vw"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1696}}
         , React.createElement('div', { style: {textAlign:"center",marginBottom:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1697}}
-          , React.createElement('div', { style: {fontSize:36,fontFamily:"Playfair Display,serif",color:"#f5c842",fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1698}}, "Goldbook")
+          , React.createElement('div', { style: {fontSize:36,fontFamily:"Playfair Display,serif",color:"#f5c842",fontWeight:700,marginBottom:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1698}}, "BookForge")
           , React.createElement('div', { style: {color:"#888",fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1699}}, "La tua piattaforma AI per scrittori"     )
         )
 
@@ -2854,7 +2850,7 @@ function AuthPanel({ onLogin }) {
           )
         )
 
-        , React.createElement('div', { style: {textAlign:"center",marginTop:24,color:"#444",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1754}}, "Continuando accetti i Termini di Servizio di Goldbook"
+        , React.createElement('div', { style: {textAlign:"center",marginTop:24,color:"#444",fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1754}}, "Continuando accetti i Termini di Servizio di BookForge"
 
         )
       )
@@ -3021,7 +3017,7 @@ function AppInner({user, handleLogout}){
   };
   useEffect(()=>{if(appStatus==="loading")return;saveProjectsList(projects);},[projects]);
 
-  if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "Caricamento Goldbook..." )));
+  if(appStatus==="loading")return(React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#f5c842",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontSize:20,flexDirection:"column",gap:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, React.createElement('div', { style: {fontSize:48}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "📖"), React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 1879}}, "Caricamento BookForge..." )));
 
   return(
     React.createElement('div', { style: {display:"flex",height:"100vh",background:"#0f0e17",color:"#e8e6f0",fontFamily:"Georgia,serif",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1882}}
@@ -3041,7 +3037,7 @@ function AppInner({user, handleLogout}){
       , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, sidebarOpen: sidebarOpen, setSidebarOpen: setSidebarOpen, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
       , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1895}}
         , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, onMarketAnalyzer: ()=>handleSetActive("marketanalyzer"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
-       appStatus==="editor"&&(book||active==="marketanalyzer")&&(
+        , appStatus==="editor"&&book&&(
           React.createElement(React.Fragment, null
             , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1899}} )
             , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1900}} )
@@ -3061,7 +3057,7 @@ function AppInner({user, handleLogout}){
   );
 }
 
-function Goldbook(){
+function BookForge(){
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -3082,7 +3078,7 @@ function Goldbook(){
 
   if(authLoading) return (
     React.createElement('div', { style: {minHeight:"100vh",background:"#0f0e17",display:"flex",alignItems:"center",justifyContent:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1933}}
-      , React.createElement('div', { style: {color:"#f5c842",fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1934}}, "Goldbook")
+      , React.createElement('div', { style: {color:"#f5c842",fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1934}}, "BookForge")
     )
   );
 
@@ -3092,7 +3088,7 @@ function Goldbook(){
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(Goldbook));
+root.render(React.createElement(BookForge));
   </script>
 </body>
 </html>
