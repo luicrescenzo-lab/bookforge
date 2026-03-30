@@ -3037,7 +3037,7 @@ function AppInner({user, handleLogout}){
       , React.createElement(Sidebar, { book: book||DEFAULT_BOOK(), setBook: setBook, active: appStatus==="projects"?"projects":active, setActive: handleSetActive, savedAt: savedAt, user: user, handleLogout: handleLogout, sidebarOpen: sidebarOpen, setSidebarOpen: setSidebarOpen, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1894}})
       , React.createElement('main', { style: {flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1895}}
         , appStatus==="projects"&&React.createElement(ProjectsPanel, { projects: projects, currentId: currentId, onOpen: handleOpenProject, onCreate: handleCreateProject, onDelete: handleDeleteProject, onMarketAnalyzer: ()=>handleSetActive("marketanalyzer"), __self: this, __source: {fileName: _jsxFileName, lineNumber: 1896}} )
-        , appStatus==="editor"&&book&&(
+       appStatus==="editor"&&(book||active==="marketanalyzer")&&(
           React.createElement(React.Fragment, null
             , active==="write"     &&React.createElement(WritePanel, {     book: book, setBook: setBook, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1899}} )
             , active==="aiwriter"  &&React.createElement(AIWriterPanel, {  book: book, setBook: setBook, setActive: setActive, userPlan: userPlan, __self: this, __source: {fileName: _jsxFileName, lineNumber: 1900}} )
